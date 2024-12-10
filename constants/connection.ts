@@ -1,6 +1,7 @@
 import 'dotenv/config'
-import { IConnection } from '../types/connection'
 
-export const CONNECTIONS: IConnection = {
-  PORT: process.env.PORT as unknown as number
-} 
+export const CONNECTIONS = {
+  PORT: process.env.PORT ?? 3000,
+  PASSWORD: process.env.PASSWORD || '',
+  DATABASE_NAME: process.env.DATABASE_NAME || 'test',
+}
