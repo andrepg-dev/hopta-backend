@@ -1,0 +1,39 @@
+import mongoose, { model } from "mongoose";
+
+const realStateSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  address: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  images: {
+    type: [String],
+    required: true
+  },
+  city: {
+    type: String,
+    required: true
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  created: {
+    type: Date,
+    default: Date.now
+  }
+})
+
+export const RealStateModel = model('RealState', realStateSchema)

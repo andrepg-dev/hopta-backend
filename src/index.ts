@@ -1,22 +1,36 @@
+import { connectToDatabase } from '@/connection/connect';
+import { CONNECTIONS } from '@/constants/connection';
 import cors from 'cors';
 import express from 'express';
-import { CONNECTIONS } from '../constants/connection';
+import { errorHandler } from './handlers/error-handler';
+import s3Router from './routes/aws/s3/s3-services';
+import RealStateRouter from './routes/new-real-state-property/route';
+import userRouter from './routes/user/route';
+import bodyParser from 'body-parser';
 
-// routes
-import { connectToDatabase } from '../connection/connect';
-
+// Database connection
 connectToDatabase()
 
+// Express configuration
 const app = express()
+
+// App configuration
 app.use(cors())
-app.use(express.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
 
 const port = CONNECTIONS.PORT;
 
-app.use('/', (req, res) => {
-  res.send('Hello World!')
+app.get('/', (req, res) => {
+  res.send('Hello from Hopta')
 })
 
+app.use('/s3', s3Router)
+app.use('/real-state', RealStateRouter)
+app.use('/user', userRouter)
+
+app.use(errorHandler)
+
 app.listen(port, () => {
-  console.log(`Server is running! http://localhost:${port}`)
+  console.log(`Hopta server is running! http://localhost:${port}`)
 })
