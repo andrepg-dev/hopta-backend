@@ -1,12 +1,12 @@
 import { connectToDatabase } from '@/connection/connect';
 import { CONNECTIONS } from '@/constants/connection';
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './handlers/error-handler';
 import s3Router from './routes/aws/s3/s3-services';
 import RealStateRouter from './routes/new-real-state-property/route';
 import userRouter from './routes/user/route';
-import bodyParser from 'body-parser';
 
 // Database connection
 connectToDatabase()
@@ -28,7 +28,6 @@ app.get('/', (req, res) => {
 app.use('/s3', s3Router)
 app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
-
 app.use(errorHandler)
 
 app.listen(port, () => {

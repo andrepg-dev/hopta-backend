@@ -5,15 +5,23 @@ import { Request, Response, Router } from 'express';
 
 const userRouter = Router();
 
-userRouter.get('/', asyncHandler((req: Request, res: Response) => {
-  userModel.find().then(users => res.send({ users, success: true }))
+userRouter.get('/', asyncHandler(async (req: Request, res: Response) => {
+  await userModel.find().populate('properties').then(users => res.send(users))
 }))
 
-userRouter.post('/', asyncHandler((req: Request, res: Response) => {
-  console.log(req.body)
-
+userRouter.post('/', asyncHandler(async (req: Request, res: Response) => {
   if (!req.body.name || !req.body.email || !req.body.phone) throw new AppError('name, email and phone are required.', 400);
-  userModel.create(req.body).then(user => res.send({ user, success: true }))
+  await userModel.create(req.body).then(user => res.send(user))
+}))
+
+userRouter.delete('/', asyncHandler(async (req: Request, res: Response) => {
+  if (!req.body.email) throw new AppError('email is required.', 400);
+  await userModel.deleteOne({ email: req.body.email }).then(user => res.send(user))
+}))
+
+userRouter.put('/', asyncHandler(async (req: Request, res: Response) => {
+  if (!req.body.email) throw new AppError('email is required.', 400);
+  await userModel.updateOne({ email: req.body.email }, req.body).then(user => res.send(user))
 }))
 
 export default userRouter;
