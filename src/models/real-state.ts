@@ -1,4 +1,4 @@
-import mongoose, { model } from "mongoose";
+import mongoose, { model } from 'mongoose'
 
 const realStateSchema = new mongoose.Schema({
   title: {
@@ -6,10 +6,6 @@ const realStateSchema = new mongoose.Schema({
     required: true
   },
   description: {
-    type: String,
-    required: true
-  },
-  address: {
     type: String,
     required: true
   },
@@ -21,7 +17,7 @@ const realStateSchema = new mongoose.Schema({
     type: [String],
     required: true
   },
-  city: {
+  location: {
     type: String,
     required: true
   },

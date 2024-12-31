@@ -15,16 +15,14 @@ export const putObject = async ({ bucketName, key, filePath, ...params }: PutObj
     const response = await client.send(command)
     return response
   } catch (err) {
-    if (err instanceof S3ServiceException && err.name === "EntityTooLarge") {
+    if (err instanceof S3ServiceException && err.name === 'EntityTooLarge') {
       console.error(
         `Error from S3 while uploading object to ${bucketName}. \
 The object was too large. To upload objects larger than 5GB, use the S3 console (160GB max) \
-or the multipart upload API (5TB max).`,
-      );
+or the multipart upload API (5TB max).`
+      )
     } else if (err instanceof S3ServiceException) {
-      console.error(
-        `Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`,
-      );
+      console.error(`Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`)
     } else {
       throw err
     }

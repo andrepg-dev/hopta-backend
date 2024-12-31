@@ -1,1 +1,1 @@
-export const BUCKET_NAME = process.env.AWS_BUCKET_NAME as string;
+export const BUCKET_NAME = process.env.AWS_BUCKET_NAME as string
