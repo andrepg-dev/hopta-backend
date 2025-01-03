@@ -14,7 +14,6 @@ declare global {
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization
-
   if (!authHeader) throw new AppError('Unauthorized', 401)
 
   const [bearer, token] = authHeader.split(' ')

@@ -29,7 +29,7 @@ app.get('/', authMiddleware, (req, res) => {
 })
 
 app.use('/s3', s3Router)
-app.use('/real-state', RealStateRouter)
+app.use('/real-state', authMiddleware, RealStateRouter)
 app.use('/user', userRouter)
 app.use(errorHandler)
 

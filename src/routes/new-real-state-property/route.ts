@@ -1,7 +1,9 @@
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/models/real-state'
 import { userModel } from '@/src/models/user'
+import { realStateSchema } from '@/src/zod/real-state'
 import { Request, Response, Router } from 'express'
 
 const RealStateRouter = Router()
@@ -9,31 +11,38 @@ const RealStateRouter = Router()
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
+    const { user } = req.session.user // Get user id from the session
+    const { _id } = user
+
     // Sending all properties
-    await RealStateModel.find().then((properties) => {
-      res.send(properties)
-    })
+    const properties = await RealStateModel.find({ owner: _id }).populate('owner', 'name email phone')
+    res.json(properties)
   })
 )
 
 RealStateRouter.post(
   '/',
+  validateRequest(realStateSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { body } = req
-    const { title, description, address, price, images, city, owner } = body
-    if (!title || !description || !address || !price || !images || !city || !owner) throw new AppError('Missing required fields', 400)
+    const { title, description, price, images, city, location } = body
 
-    const user = await userModel.findById(owner)
-    if (!user) throw new AppError('User not found', 404)
+    const { user } = req.session.user // Get user id from the session
+    const { _id: owner } = user
+
+    console.log({ user, owner })
+
+    const foundUser = await userModel.findById(owner)
+    if (!foundUser) throw new AppError('User not found', 404)
 
     try {
-      const property = await RealStateModel.create({ price, address, city, description, images, title, owner })
+      const property = await RealStateModel.create({ price, location, city, description, images, title, owner })
 
       await userModel.updateOne({ _id: owner }, { properties: [...(user.properties || []), property._id] })
 
       res.status(201).send(property)
     } catch (error) {
-      throw new AppError('Error creating property', 500)
+      throw new AppError('Sorry, there is a server error creating your property.', 500)
     }
   })
 )
