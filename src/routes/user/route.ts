@@ -1,36 +1,22 @@
+import { COOKIES } from '@/constants/cookie-user-name'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { validateRequest } from '@/src/middlewares/validate-request'
 import { userModel } from '@/src/models/user'
 import { validateEmailFormat } from '@/src/utils/validate-email-format'
+import { createUserSchema, UserLoginSchema } from '@/src/zod-schemas/user'
+import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
-import z from 'zod'
+import jwt from 'jsonwebtoken'
+
+interface UserI {
+  name: string
+  email: string
+  phone: string
+  password: string
+}
 
 const userRouter = Router()
-
-const createUserSchema = z.object({
-  name: z.string().min(8, 'Name must be at least 8 characters long.'),
-  email: z.string().email('Invalid email address.'),
-  password: z.string().min(8, 'Password must be at least 8 characters long.'),
-  phone: z.string().min(6, 'Phone number must be at least 6 characters long.')
-})
-
-const validateRequest = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body)
-    next()
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const formattedErrors = error.errors.map((e) => ({
-        path: e.path.join('.'),
-        message: e.message
-      }))
-      res.status(400).json({ success: false, errors: formattedErrors })
-      return
-    }
-
-    next(error)
-  }
-}
 
 userRouter.get(
   '/',
@@ -43,12 +29,63 @@ userRouter.get(
 )
 
 userRouter.post(
-  '/',
+  '/register',
   validateRequest(createUserSchema),
-  asyncHandler(async (req: Request<{}, {}, { name: string; email: string; phone: string; password: string }>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
     const { name, email, password, phone } = req.body
 
-    await userModel.create({ name, email, password, phone }).then((user) => res.send(user))
+    // Encrypt password
+    const hashedPassword = await bcrypt.hash(password, 10)
+    console.log({ password: hashedPassword })
+
+    // Save user
+    const user = await userModel.create({ name, email, password: hashedPassword, phone }).catch((err) => {
+      throw new AppError('User already exists', 404)
+    })
+
+    res.json(user)
+  })
+)
+
+userRouter.post(
+  '/login',
+  validateRequest(UserLoginSchema),
+  asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
+    const { email, password } = req.body
+
+    // verify is the user is on the database
+    const user = await userModel.findOne({ email }).catch((err) => {
+      throw new AppError(err, 500)
+    })
+
+    if (!user) throw new AppError('User not found', 404)
+
+    const userPassword = await bcrypt.compare(password, user.password)
+
+    if (user.email == email && userPassword) {
+      // Crear el token con json web token y enviarlo a las cookies
+      const token = jwt.sign({ user }, COOKIES.JWT_SECRET_KEY, {
+        expiresIn: COOKIES.expiresIn
+      })
+
+      res
+        .cookie(COOKIES.cookies_token_name, token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production', // Si está en producción, solo aceptar post mediante HTTP
+          sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
+          maxAge: 1000 * 60 * 60 // 1 hora
+        })
+        .json({ success: true, user, token })
+    }
+
+    throw new AppError('Password or email incorrect', 404)
+  })
+)
+
+userRouter.get(
+  '/logout',
+  asyncHandler(async (req: Request, res: Response) => {
+    res.clearCookie(COOKIES.cookies_token_name).json({ success: true })
   })
 )
 
