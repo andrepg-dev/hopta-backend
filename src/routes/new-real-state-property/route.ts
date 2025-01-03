@@ -21,8 +21,7 @@ RealStateRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { body } = req
     const { title, description, address, price, images, city, owner } = body
-    if (!title || !description || !address || !price || !images || !city || !owner)
-      throw new AppError('Missing required fields', 400)
+    if (!title || !description || !address || !price || !images || !city || !owner) throw new AppError('Missing required fields', 400)
 
     const user = await userModel.findById(owner)
     if (!user) throw new AppError('User not found', 404)

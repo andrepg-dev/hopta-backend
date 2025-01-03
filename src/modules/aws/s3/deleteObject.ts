@@ -20,10 +20,7 @@ export const deleteObject = async ({ bucketName, key, ...params }: IDeleteObject
     if (caught instanceof S3ServiceException && caught.name === 'NoSuchBucket') {
       throw new AppError(`Error from S3 while deleting object from ${bucketName}. The bucket doesn't exist.`, 400)
     } else if (caught instanceof S3ServiceException) {
-      throw new AppError(
-        `Error from S3 while deleting object from ${bucketName}.  ${caught.name}: ${caught.message}`,
-        400
-      )
+      throw new AppError(`Error from S3 while deleting object from ${bucketName}.  ${caught.name}: ${caught.message}`, 400)
     } else {
       throw new AppError(caught, 500)
     }
