@@ -38,14 +38,29 @@ userRouter.post(
 
     // Encrypt password
     const hashedPassword = await bcrypt.hash(password, 10)
-    console.log({ password: hashedPassword })
 
     // Save user
     const user = await userModel.create({ name, email, password: hashedPassword, phone }).catch((err) => {
       throw new AppError('User already exists', 404)
     })
 
-    res.json(user)
+    // Transfer only the necessary data
+    const userData = user.toObject()
+    const { password: _, ...userDataWithoutPassword } = userData
+
+    // Crear el token con json web token y enviarlo a las cookies
+    const token = jwt.sign({ userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
+      expiresIn: COOKIES.expiresIn
+    })
+
+    res
+      .cookie(COOKIES.cookies_token_name, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Si está en producción, solo aceptar post mediante HTTP
+        sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
+        maxAge: 1000 * 60 * 60 // 1 hora
+      })
+      .json({ success: true, user: userDataWithoutPassword, token })
   })
 )
 
@@ -61,12 +76,15 @@ userRouter.post(
     })
 
     if (!user) throw new AppError('User not found', 404)
-
     const userPassword = await bcrypt.compare(password, user.password)
 
     if (user.email == email && userPassword) {
+      // Transfer only the necessary data
+      const userData = user.toObject()
+      const { password: _, ...userDataWithoutPassword } = userData
+
       // Crear el token con json web token y enviarlo a las cookies
-      const token = jwt.sign({ user }, COOKIES.JWT_SECRET_KEY, {
+      const token = jwt.sign({ userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
         expiresIn: COOKIES.expiresIn
       })
 
@@ -77,7 +95,7 @@ userRouter.post(
           sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
           maxAge: 1000 * 60 * 60 // 1 hora
         })
-        .json({ success: true, user, token })
+        .json({ success: true, user: userDataWithoutPassword, token })
     }
 
     throw new AppError('Password or email incorrect', 404)

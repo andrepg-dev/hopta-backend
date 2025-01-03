@@ -30,8 +30,6 @@ RealStateRouter.post(
     const { user } = req.session.user // Get user id from the session
     const { _id: owner } = user
 
-    console.log({ user, owner })
-
     const foundUser = await userModel.findById(owner)
     if (!foundUser) throw new AppError('User not found', 404)
 

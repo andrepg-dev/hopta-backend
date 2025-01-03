@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: 'RealState',
       required: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      required: true
     }
   },
   { versionKey: false }

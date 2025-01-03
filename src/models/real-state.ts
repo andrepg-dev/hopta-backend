@@ -27,7 +27,7 @@ const realStateSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
-    created: {
+    createdAt: {
       type: Date,
       default: Date.now
     }
