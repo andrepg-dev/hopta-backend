@@ -8,6 +8,7 @@ import { errorHandler } from './handlers/error-handler'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/new-real-state-property/route'
 import userRouter from './routes/user/route'
+import { authMiddleware } from './middlewares/authMiddleware'
 
 // Database connection
 connectToDatabase()
@@ -23,7 +24,7 @@ app.use(cookieParser())
 
 const port = CONNECTIONS.PORT
 
-app.get('/', (req, res) => {
+app.get('/', authMiddleware, (req, res) => {
   res.send('Hello from Hopta')
 })
 

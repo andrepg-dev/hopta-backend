@@ -1,6 +1,7 @@
 import { COOKIES } from '@/constants/cookie-user-name'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { userModel } from '@/src/models/user'
 import { validateEmailFormat } from '@/src/utils/validate-email-format'
@@ -20,6 +21,7 @@ const userRouter = Router()
 
 userRouter.get(
   '/',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await userModel
       .find()
@@ -84,6 +86,7 @@ userRouter.post(
 
 userRouter.get(
   '/logout',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     res.clearCookie(COOKIES.cookies_token_name).json({ success: true })
   })
@@ -91,6 +94,7 @@ userRouter.get(
 
 userRouter.delete(
   '/',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.body.email) throw new AppError('email is required.', 400)
     const { email } = req.body
@@ -104,6 +108,7 @@ userRouter.delete(
 
 userRouter.put(
   '/',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.body.email) throw new AppError('email is required.', 400)
     await userModel.updateOne({ email: req.body.email }, req.body).then((user) => res.send(user))
