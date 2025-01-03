@@ -5,10 +5,10 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
 import { errorHandler } from './handlers/error-handler'
+import { authMiddleware } from './middlewares/authMiddleware'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/new-real-state-property/route'
 import userRouter from './routes/user/route'
-import { authMiddleware } from './middlewares/authMiddleware'
 
 // Database connection
 connectToDatabase()
