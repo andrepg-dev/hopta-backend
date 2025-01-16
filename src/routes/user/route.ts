@@ -23,10 +23,9 @@ userRouter.get(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    await userModel
-      .find()
-      .populate('properties')
-      .then((users) => res.send(users))
+    const { user } = req.session
+    const { password, ...userData } = user
+    res.json(userData)
   })
 )
 
@@ -49,8 +48,8 @@ userRouter.post(
     const { password: _, ...userDataWithoutPassword } = userData
 
     // Crear el token con json web token y enviarlo a las cookies
-    const token = jwt.sign({ userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
-      expiresIn: COOKIES.expiresIn
+    const token = jwt.sign({ user: userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
+      expiresIn: COOKIES.expiresIn.hourString
     })
 
     res
@@ -58,7 +57,7 @@ userRouter.post(
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Si está en producción, solo aceptar post mediante HTTP
         sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
-        maxAge: 1000 * 60 * 60 // 1 hora
+        maxAge: COOKIES.expiresIn.hourInt // 1 hora
       })
       .json({ success: true, user: userDataWithoutPassword, token })
   })
@@ -84,8 +83,8 @@ userRouter.post(
       const { password: _, ...userDataWithoutPassword } = userData
 
       // Crear el token con json web token y enviarlo a las cookies
-      const token = jwt.sign({ userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
-        expiresIn: COOKIES.expiresIn
+      const token = jwt.sign({ user: userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
+        expiresIn: COOKIES.expiresIn.hourString
       })
 
       res
@@ -129,6 +128,7 @@ userRouter.put(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.body.email) throw new AppError('email is required.', 400)
+
     await userModel.updateOne({ email: req.body.email }, req.body).then((user) => res.send(user))
   })
 )
