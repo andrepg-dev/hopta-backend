@@ -1,3 +1,4 @@
+import { RealStateI } from '@/types/real-state/type'
 import mongoose, { model } from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
@@ -51,79 +52,79 @@ const realStateSchema = new mongoose.Schema(
       interior_extras: {
         water_tank: {
           type: Boolean,
-          default: false
+          required: false
         },
         water_cistern: {
           type: Boolean,
-          default: false
+          required: false
         },
         closets: {
           type: Boolean,
-          default: false
+          required: false
         },
         furnished: {
           type: Boolean,
-          default: false
+          required: false
         },
         air_conditioning: {
           type: Boolean,
-          default: false
+          required: false
         },
         '24_7_security': {
           type: Boolean,
-          default: false
+          required: false
         },
         garage: {
           type: Boolean,
-          default: false
+          required: false
         }
       },
       extras_from_outside: {
         balcony: {
           type: Boolean,
-          default: false
+          required: false
         },
         patio: {
           type: Boolean,
-          default: false
+          required: false
         },
         terrace: {
           type: Boolean,
-          default: false
+          required: false
         },
         garden: {
           type: Boolean,
-          default: false
+          required: false
         },
         swimming_pool: {
           type: Boolean,
-          default: false
+          required: false
         }
       },
       community_extras: {
         gym: {
           type: Boolean,
-          default: false
+          required: false
         },
         parks: {
           type: Boolean,
-          default: false
+          required: false
         },
         schools: {
           type: Boolean,
-          default: false
+          required: false
         },
         shopping_malls: {
           type: Boolean,
-          default: false
+          required: false
         },
         supermarkets: {
           type: Boolean,
-          default: false
+          required: false
         },
         elevator: {
           type: Boolean,
-          default: false
+          required: false
         }
       }
     },
@@ -150,7 +151,9 @@ const realStateSchema = new mongoose.Schema(
     },
     created_at: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      required: true,
+      immutable: true
     }
   },
   { versionKey: false }
@@ -158,10 +161,6 @@ const realStateSchema = new mongoose.Schema(
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document {}
+interface RealStateDocument extends mongoose.Document, RealStateI {}
 
-export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>(
-  'RealState',
-  realStateSchema,
-  'real-state'
-)
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)

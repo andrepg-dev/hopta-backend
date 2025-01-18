@@ -1,3 +1,4 @@
+import { UserI } from '@/types/login/user'
 import mongoose from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
@@ -84,7 +85,8 @@ const userSchema = new mongoose.Schema(
     created_at: {
       type: Date,
       default: Date.now,
-      required: true
+      required: true,
+      immutable: true
     },
     social_media: {
       facebook: {
@@ -110,6 +112,6 @@ const userSchema = new mongoose.Schema(
 
 userSchema.plugin(mongoosePaginate)
 
-interface UserDocument extends mongoose.Document {}
+interface UserDocument extends mongoose.Document, UserI {}
 
-export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema, 'users')
+export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

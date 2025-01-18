@@ -11,7 +11,7 @@ export async function getPagination({ page, limit, Model }: Pagination) {
     const options = {
       page,
       limit,
-      sort: { createdAt: -1 }
+      sort: { created_at: -1 }
     }
 
     const result = await Model.paginate({}, options)

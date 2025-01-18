@@ -14,6 +14,9 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 - [x] Comprar un dominio: admin@hopta.hn
 
+#### Tokens 
+- Refresh token
+
 #### Crear esquemas
 
 1. Esquemas tanto de mongodb como de zod
@@ -41,3 +44,5 @@ Estos serán los pasos que voy a estar siguiendo en el app
 #### Accesibilidad
 
 - Paginación
+- Filtros
+- Ordenamiento

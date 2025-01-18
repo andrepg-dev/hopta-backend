@@ -3,11 +3,13 @@ import z from 'zod'
 export const createUserSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.'),
   last_name: z.string().min(3, 'Last name must be at least 3 characters long.'),
-  contact: z.object({
-    phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').optional(),
-    is_phone_number_verified: z.boolean().optional(),
-    email_contact: z.string().email('Invalid email address.').optional()
-  }).optional(),
+  contact: z
+    .object({
+      phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').optional(),
+      is_phone_number_verified: z.boolean().optional(),
+      email_contact: z.string().email('Invalid email address.').optional()
+    })
+    .optional(),
   email: z.string().email('Invalid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters long.'),
   reviews: z
@@ -33,6 +35,8 @@ export const createUserSchema = z.object({
     .optional(),
   identity_number: z.string().optional()
 })
+
+export const isValidEmail = z.string().email('Invalid email address.')
 
 export const UserLoginSchema = z.object({
   email: z.string().email('Invalid email address.'),

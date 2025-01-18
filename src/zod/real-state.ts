@@ -44,10 +44,9 @@ export const realStateSchema = z.object({
       })
       .optional()
   }),
-  owner: z.string().max(300), // Aquí se pasará el id del usuario
   house_status: z.object({
-    is_available: z.boolean(),
-    is_sold: z.boolean(),
+    is_available: z.boolean().default(true),
+    is_sold: z.boolean().default(false),
     sold_date: z.date().optional()
   })
 })

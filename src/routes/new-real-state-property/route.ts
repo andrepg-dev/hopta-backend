@@ -3,7 +3,9 @@ import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/models/real-state/real-state'
 import { userModel } from '@/src/models/user'
+import { getPagination } from '@/src/utils/get-pagination'
 import { realStateSchema } from '@/src/zod/real-state'
+import { RealStateI } from '@/types/real-state/type'
 import { Request, Response, Router } from 'express'
 
 const RealStateRouter = Router()
@@ -14,10 +16,24 @@ RealStateRouter.get(
     const { user } = req.session.user // Get user id from the session
     const { _id } = user
 
+    // Get all properties from the user with pagination
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+
+    const paginatedData = await getPagination({
+      limit,
+      page,
+      Model: RealStateModel
+    })
+
+    if (!paginatedData) throw new AppError('Properties not found', 404)
+    res.json(paginatedData)
+    return
+
     // Sending all properties
-    const properties = await RealStateModel.find({ owner: _id }).populate('owner', 'name email phone')
-    if (!properties) throw new AppError('Properties not found', 404)
-    res.json(properties)
+    // const properties = await RealStateModel.find({ owner: _id }).populate('owner', 'name last_name email phone')
+    // if (!properties) throw new AppError('Properties not found', 404)
+    // res.json(properties)
   })
 )
 
@@ -26,7 +42,7 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    const property = await RealStateModel.findById(id).populate('owner', 'name email phone')
+    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone')
     if (!property) throw new AppError('Property not found', 404)
     res.json(property)
   })
@@ -35,9 +51,9 @@ RealStateRouter.get(
 RealStateRouter.post(
   '/',
   validateRequest(realStateSchema),
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, RealStateI>, res: Response) => {
     const { body } = req
-    const { title, description, price, images, city, location } = body
+    const { title, description, price, images, house_feautures, house_status, location, square_meters, currency, population } = body
 
     const { user } = req.session.user // Get user id from the session
     const { _id: owner } = user
@@ -46,7 +62,19 @@ RealStateRouter.post(
     if (!foundUser) throw new AppError('User not found', 404)
 
     try {
-      const property = await RealStateModel.create({ price, location, city, description, images, title, owner })
+      const property = await RealStateModel.create({
+        price,
+        location,
+        house_status,
+        house_feautures,
+        population,
+        currency,
+        square_meters,
+        description,
+        images,
+        title,
+        owner
+      })
       await userModel.updateOne({ _id: owner }, { properties: [...(user.properties || []), property._id] })
       res.status(201).send(property)
     } catch (error) {

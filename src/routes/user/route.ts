@@ -4,18 +4,12 @@ import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { userModel } from '@/src/models/user'
-import { validateEmailFormat } from '@/src/utils/validate-email-format'
-import { createUserSchema, UserLoginSchema } from '@/src/zod/user'
+
+import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
+import { CreateUserI, UserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
 import jwt from 'jsonwebtoken'
-
-interface UserI {
-  name: string
-  email: string
-  phone: string
-  password: string
-}
 
 const userRouter = Router()
 
@@ -24,24 +18,51 @@ userRouter.get(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const { user } = req.session
-    const { password, ...userData } = user
-    res.json(userData)
+    res.json(user)
   })
 )
 
 userRouter.post(
   '/register',
   validateRequest(createUserSchema),
-  asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
-    const { name, email, password, phone } = req.body
+  asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
+    const {
+      name,
+      last_name,
+      email,
+      password,
+      contact,
+      is_verified,
+      social_media,
+      favorites_properties,
+      identity_number,
+      location,
+      profile_picture,
+      properties
+    } = req.body
 
     // Encrypt password
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Save user
-    const user = await userModel.create({ name, email, password: hashedPassword, phone }).catch((err) => {
-      throw new AppError('User already exists', 404)
-    })
+    const user = await userModel
+      .create({
+        name,
+        email,
+        password: hashedPassword,
+        last_name,
+        contact,
+        is_verified,
+        social_media,
+        favorites_properties,
+        identity_number,
+        location,
+        profile_picture,
+        properties
+      })
+      .catch((err) => {
+        throw new AppError('User already exists', 404)
+      })
 
     // Transfer only the necessary data
     const userData = user.toObject()
@@ -111,15 +132,12 @@ userRouter.get(
 
 userRouter.delete(
   '/',
+  validateRequest(isValidEmail),
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.body.email) throw new AppError('email is required.', 400)
     const { email } = req.body
-
-    const isValid = validateEmailFormat(email)
-    if (isValid === false) throw new AppError('Your email address is invalid', 404)
-
-    await userModel.deleteOne({ email: req.body.email }).then((user) => res.send(user))
+    await userModel.deleteOne({ email: email }).then((user) => res.send(user))
   })
 )
 
