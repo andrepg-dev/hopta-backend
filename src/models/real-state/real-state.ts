@@ -1,4 +1,5 @@
 import mongoose, { model } from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const realStateSchema = new mongoose.Schema(
   {
@@ -155,4 +156,12 @@ const realStateSchema = new mongoose.Schema(
   { versionKey: false }
 )
 
-export const RealStateModel = model('RealState', realStateSchema)
+realStateSchema.plugin(mongoosePaginate)
+
+interface RealStateDocument extends mongoose.Document {}
+
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>(
+  'RealState',
+  realStateSchema,
+  'real-state'
+)

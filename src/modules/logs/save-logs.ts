@@ -2,12 +2,12 @@ import winston from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
 class Logs {
-  paths = {
+  private paths = {
     app: 'logs/app-%DATE%.log',
     error: 'logs/error-%DATE%.log'
   }
 
-  logs_configuration = {
+  private logs_configuration = {
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
     maxSize: '20m',

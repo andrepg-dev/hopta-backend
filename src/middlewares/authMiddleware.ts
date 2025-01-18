@@ -3,9 +3,11 @@ import jwt from 'jsonwebtoken'
 import { AppError } from '../handlers/error-handler'
 
 declare global {
+  // no-dd-sa:typescript-best-practices/no-namespace
   namespace Express {
     interface Request {
       session: {
+        // no-dd-sa:typescript-best-practices/no-explicit-any
         user: any
       }
     }
@@ -22,7 +24,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY ?? '')
     req.session = { user: decoded }
-    console.log(decoded)
     next() // <-- Continue to the next middleware
   } catch (error) {
     throw new AppError('Invalid token', 401)

@@ -1,5 +1,7 @@
 import { connectToDatabase } from '@/connection/connect'
 import { CONNECTIONS } from '@/constants/connection'
+import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security'
+import Logs from '@/src/modules/logs/save-logs'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
@@ -7,7 +9,6 @@ import express from 'express'
 import helmet from 'helmet'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
-import Logs from './modules/logs/save-logs'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/new-real-state-property/route'
 import userRouter from './routes/user/route'
@@ -18,13 +19,11 @@ connectToDatabase()
 // Express configuration
 const app = express()
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
-  })
-)
-app.use(cors())
+app.use(helmet())
+
+// Middlewares
+app.use(RATE_LIMIT)
+app.use(cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -32,7 +31,7 @@ app.use(cookieParser())
 const port = CONNECTIONS.PORT
 
 app.get('/', (req, res) => {
-  res.send('Hello from Hopta')
+  res.json({ message: req.headers })
 })
 
 app.use('/s3', authMiddleware, s3Router)

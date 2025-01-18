@@ -20,22 +20,24 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 `Esquemas completados`
 
-- [x] Esquema de usuario {
-      zod: Hecho
-      mongodb: Hecho
-      }
+- [x] Esquema de usuario
+- zod: ✅
+- mongodb: ✅
 
-- [x] Esquema de la propiedad {
-      zod: Hecho
-      mongodb: Hecho
-      }
+- [x] Esquema de la propiedad
+- zod: ✅
+- mongodb: ✅
 
 #### Seguridad del backend
 
-1. Agregar Rate limit
-2. Configurar CORS
+1. [x] Agregar Rate limit
+2. [x] Configurar CORS
 
 #### Tareas "Más dificiles" (Son un desafío para mi)
 
 - Configurar mi correo electronico para enviar emails sin problemas
 - Configurar los logs para enviarlos a DataDog
+
+#### Accesibilidad
+
+- Paginación

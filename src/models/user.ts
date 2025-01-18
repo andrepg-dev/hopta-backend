@@ -1,5 +1,5 @@
-import { profile } from 'console'
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const userSchema = new mongoose.Schema(
   {
@@ -108,4 +108,8 @@ const userSchema = new mongoose.Schema(
   { versionKey: false }
 )
 
-export const userModel = mongoose.model('User', userSchema)
+userSchema.plugin(mongoosePaginate)
+
+interface UserDocument extends mongoose.Document {}
+
+export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema, 'users')

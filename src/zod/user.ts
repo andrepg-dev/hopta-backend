@@ -24,7 +24,6 @@ export const createUserSchema = z.object({
   is_verified: z.boolean().optional(),
   profile_picture: z.string().optional(),
   location: z.array(z.string()).optional(),
-  created_at: z.date().optional(),
   social_media: z
     .object({
       facebook: z.string().optional(),

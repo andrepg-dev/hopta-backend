@@ -49,6 +49,5 @@ export const realStateSchema = z.object({
     is_available: z.boolean(),
     is_sold: z.boolean(),
     sold_date: z.date().optional()
-  }),
-  created_at: z.date().optional()
+  })
 })
