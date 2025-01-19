@@ -6,9 +6,10 @@ interface Pagination {
   Model: any
   sortBy?: string
   order?: 'asc' | 'desc'
+  filters?: Record<string, any>
 }
 
-export async function getPagination({ page, limit, Model, order = 'desc', sortBy = 'created_at' }: Pagination) {
+export async function getPagination({ page, limit, Model, order = 'desc', sortBy = 'created_at', filters = {} }: Pagination) {
   try {
     const sortOrder = order === 'desc' ? -1 : 1
 
@@ -18,7 +19,7 @@ export async function getPagination({ page, limit, Model, order = 'desc', sortBy
       sort: { [sortBy]: sortOrder }
     }
 
-    const result = await Model.paginate({}, options)
+    const result = await Model.paginate(filters, options)
     return result
   } catch (error) {
     const logger = new Logs()

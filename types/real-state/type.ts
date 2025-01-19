@@ -42,3 +42,8 @@ export interface RealStateI {
     sold_date?: Date
   }
 }
+
+export interface RealStateIWithOwner extends RealStateI {
+  owner: string
+  created_at: Date
+}

@@ -1,4 +1,6 @@
-import { RealStateI } from '@/types/real-state/type'
+import { EmailService } from '@/src/modules/email/email.service'
+import Logs from '@/src/modules/logs/save-logs'
+import { RealStateI, RealStateIWithOwner } from '@/types/real-state/type'
 import mongoose, { model } from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
@@ -158,6 +160,21 @@ const realStateSchema = new mongoose.Schema(
   },
   { versionKey: false }
 )
+
+// Save in the log and send an email to the administrator when a new property is created
+
+realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
+  const emailService = new EmailService()
+
+  emailService.sendEmail({
+    to: 'andreponce417@gmail.com',
+    subject: `New property created`,
+    html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`
+  })
+
+  const logger = new Logs()
+  logger.saveLogs().info(`New property created: ${doc.title} at ${doc.location}`)
+})
 
 realStateSchema.plugin(mongoosePaginate)
 

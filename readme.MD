@@ -14,7 +14,8 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 - [x] Comprar un dominio: admin@hopta.hn
 
-#### Tokens 
+#### Tokens
+
 - Refresh token
 
 #### Crear esquemas
@@ -43,6 +44,12 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 #### Accesibilidad
 
-- Paginación
-- Filtros
-- Ordenamiento
+- Paginación ✅
+- Filtros ✅
+- Ordenamiento ✅
+
+#### Pagos
+
+- Realizar pagos con stripe
+- Realizar pagos con paypal
+- Realizar pagos con tarjeta de crédito

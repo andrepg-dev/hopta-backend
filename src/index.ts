@@ -9,10 +9,10 @@ import express from 'express'
 import helmet from 'helmet'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
+import { EmailService } from './modules/email/email.service'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/new-real-state-property/route'
 import userRouter from './routes/user/route'
-import { EmailService } from './modules/email/email.service'
 
 // Database connection
 connectToDatabase()
