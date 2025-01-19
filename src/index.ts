@@ -12,6 +12,7 @@ import { authMiddleware } from './middlewares/authMiddleware'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/new-real-state-property/route'
 import userRouter from './routes/user/route'
+import { EmailService } from './modules/email/email.service'
 
 // Database connection
 connectToDatabase()
@@ -30,8 +31,22 @@ app.use(cookieParser())
 
 const port = CONNECTIONS.PORT
 
-app.get('/', (req, res) => {
-  res.json({ message: req.headers })
+app.get('/', async (req, res) => {
+  const emailService = new EmailService()
+
+  const response = await emailService
+    .sendEmail({
+      to: 'andreponce417@gmail.com',
+      subject: 'Que lo que mi loco',
+      htmlBody: '<h1>Logs de sistema NOC</h1> <p>Se ha generado un nuevo log de sistema</p>',
+      from: 'admin@hopta.hn'
+    })
+    .catch((err) => console.log(err))
+
+  const logger = new Logs()
+  logger.saveLogs().info(JSON.stringify(response))
+
+  res.json(response)
 })
 
 app.use('/s3', authMiddleware, s3Router)
