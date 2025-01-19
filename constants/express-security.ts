@@ -9,6 +9,7 @@ export const RATE_LIMIT = rateLimit({
   statusCode: 429
 })
 
+// TODO: Cambiar el origen a la URL de producción
 export const CORS_OPTIONS = {
   origin: '*', // Permitir solo este origen
   methods: '*',

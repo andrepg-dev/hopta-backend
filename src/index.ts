@@ -36,15 +36,22 @@ app.get('/', async (req, res) => {
 
   const response = await emailService
     .sendEmail({
-      to: 'andreponce417@gmail.com',
+      to: ['andreponce417@gmail.com', 'asponceg@gmail.com'],
       subject: 'Que lo que mi loco',
-      htmlBody: '<h1>Logs de sistema NOC</h1> <p>Se ha generado un nuevo log de sistema</p>',
-      from: 'admin@hopta.hn'
+      html: '<h1>Logs de sistema NOC</h1> <p>Se ha generado un nuevo log de sistema</p>',
+      from: 'admin@hopta.hn',
+      attachments: [
+        {
+          filename: 'app-2025-01-18.log',
+          path: './logs/app-2025-01-18.log'
+        },
+        {
+          filename: 'app-2025-01-16.log',
+          path: './logs/app-2025-01-16.log'
+        }
+      ]
     })
     .catch((err) => console.log(err))
-
-  const logger = new Logs()
-  logger.saveLogs().info(JSON.stringify(response))
 
   res.json(response)
 })

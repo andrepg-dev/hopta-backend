@@ -1,12 +1,9 @@
 import { envs } from '@/constants/env'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
+import Logs from '../logs/save-logs'
 
-interface SendMailOptions extends nodemailer.SendMailOptions {
-  to: string
-  subject: string
-  htmlBody: string
-}
+interface SendMailOptions extends nodemailer.SendMailOptions {}
 
 export class EmailService {
   private transporter = nodemailer.createTransport({
@@ -20,17 +17,20 @@ export class EmailService {
   async sendEmail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
     return new Promise((resolve, reject) => {
       try {
-        const { to, subject, htmlBody, ...restOptions } = options
-
         const sentInfo = this.transporter.sendMail({
-          to: to,
-          subject,
-          html: htmlBody,
-          ...restOptions
+          ...options
         })
+
+        // Save logs
+        const logger = new Logs()
+        logger.saveLogs().info(JSON.stringify(sentInfo))
 
         resolve(sentInfo)
       } catch (error) {
+        // Save logs
+        const logger = new Logs()
+        logger.saveLogs().error(error)
+
         reject(error)
       }
     })

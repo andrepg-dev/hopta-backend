@@ -13,27 +13,23 @@ const RealStateRouter = Router()
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req.session.user // Get user id from the session
-    const { _id } = user
-
     // Get all properties from the user with pagination
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
+    const sortBy = (req.query.sortBy as string) || 'created_at'
+    const order = (req.query.order as 'asc' | 'desc') || 'desc'
 
     const paginatedData = await getPagination({
       limit,
       page,
-      Model: RealStateModel
+      Model: RealStateModel,
+      sortBy,
+      order
     })
 
     if (!paginatedData) throw new AppError('Properties not found', 404)
     res.json(paginatedData)
     return
-
-    // Sending all properties
-    // const properties = await RealStateModel.find({ owner: _id }).populate('owner', 'name last_name email phone')
-    // if (!properties) throw new AppError('Properties not found', 404)
-    // res.json(properties)
   })
 )
 
