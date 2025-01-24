@@ -1,5 +1,5 @@
 import { EmailService } from '@/src/modules/email/email.service'
-import Logs from '@/src/modules/logs/save-logs'
+import Logs from '@/src/modules/logs/save-logs.service'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/type'
 import mongoose, { model } from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'

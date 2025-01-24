@@ -1,7 +1,7 @@
 import { envs } from '@/constants/env'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
-import Logs from '../logs/save-logs'
+import Logs from '../logs/save-logs.service'
 
 interface SendMailOptions extends nodemailer.SendMailOptions {}
 
