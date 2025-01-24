@@ -4,12 +4,12 @@ import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { userModel } from '@/src/models/user'
-
+import { Cookies } from '@/src/utils/cookies/save-user-info'
+import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
 import { CreateUserI, UserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
-import jwt from 'jsonwebtoken'
 
 const userRouter = Router()
 
@@ -69,18 +69,19 @@ userRouter.post(
     const { password: _, ...userDataWithoutPassword } = userData
 
     // Crear el token con json web token y enviarlo a las cookies
-    const token = jwt.sign({ user: userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
-      expiresIn: COOKIES.expiresIn.hourString
+    const accessToken = TokenManager.accessToken({
+      userId: userDataWithoutPassword._id as string
     })
 
-    res
-      .cookie(COOKIES.cookies_token_name, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Si está en producción, solo aceptar post mediante HTTP
-        sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
-        maxAge: COOKIES.expiresIn.hourInt // 1 hora
-      })
-      .json({ success: true, user: userDataWithoutPassword, token })
+    const refreshToken = await TokenManager.refreshToken({
+      userId: userDataWithoutPassword._id as string
+    })
+
+    // Guardar la cookie en el servidor
+    Cookies.setCookie(res, COOKIES.cookies_token_name, refreshToken)
+
+    // enviar la repuesta al usuario
+    res.json({ success: true, user: userDataWithoutPassword, token: accessToken })
   })
 )
 
@@ -104,18 +105,22 @@ userRouter.post(
       const { password: _, ...userDataWithoutPassword } = userData
 
       // Crear el token con json web token y enviarlo a las cookies
-      const token = jwt.sign({ user: userDataWithoutPassword }, COOKIES.JWT_SECRET_KEY, {
-        expiresIn: COOKIES.expiresIn.hourString
+      const token = TokenManager.accessToken({
+        userId: userDataWithoutPassword._id as string
       })
 
-      res
-        .cookie(COOKIES.cookies_token_name, token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production', // Si está en producción, solo aceptar post mediante HTTP
-          sameSite: 'strict', // La cookie solo se puede acceder del mismo domino
-          maxAge: 1000 * 60 * 60 // 1 hora
-        })
-        .json({ success: true, user: userDataWithoutPassword, token })
+      // Guardar la cookie en el servidor
+
+      // Refresh token
+      const refreshToken = await TokenManager.refreshToken({
+        userId: userDataWithoutPassword._id as string
+      })
+
+      // Guardar el refresh token en las cookies de servidor
+      Cookies.setCookie(res, COOKIES.cookies_token_name, refreshToken)
+
+      // enviar la repuesta al usuario
+      res.json({ success: true, token })
     }
 
     throw new AppError('Password or email incorrect', 404)

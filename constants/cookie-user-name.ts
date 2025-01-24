@@ -4,5 +4,10 @@ export const COOKIES = {
   expiresIn: {
     hourString: '1h',
     hourInt: 1000 * 60 * 60
+  },
+
+  jwt_refresh_token: {
+    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY as string,
+    dayString: '7d'
   }
 }

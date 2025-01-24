@@ -156,6 +156,11 @@ const realStateSchema = new mongoose.Schema(
       default: Date.now,
       required: true,
       immutable: true
+    },
+    updated_at: {
+      type: Date,
+      default: Date.now,
+      required: true
     }
   },
   { versionKey: false }

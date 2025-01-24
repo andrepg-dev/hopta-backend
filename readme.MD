@@ -36,6 +36,7 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 1. [x] Agregar Rate limit
 2. [x] Configurar CORS
+3. Tasa de Reintentos en JWT: Implementa un sistema para limitar el número de intentos de verificación fallidos por usuario.
 
 #### Tareas "Más dificiles" (Son un desafío para mi)
 

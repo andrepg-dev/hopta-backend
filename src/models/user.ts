@@ -88,6 +88,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       immutable: true
     },
+    updated_at: {
+      type: Date,
+      default: Date.now,
+      required: true
+    },
     social_media: {
       facebook: {
         type: String,
