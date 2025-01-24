@@ -1,13 +1,13 @@
-import { COOKIES } from '@/constants/cookie-user-name'
+import { COOKIES } from '@/constants/cookies-manager'
 import { Response } from 'express'
 
-export class Cookies {
-  static setCookie(res: Response, cookieName: string = COOKIES.cookies_token_name, token: string, options = {}) {
+export abstract class Cookies {
+  static setRefreshCookie(res: Response, cookieName: string = COOKIES.cookies_token_name, token: string, options = {}) {
     const defaultOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict' as 'strict' | 'lax' | 'none',
-      maxAge: COOKIES.expiresIn.hourInt // 1 hora por defecto
+      maxAge: COOKIES.jwt_refresh_token.expires // Convert to number
     }
 
     const cookieOptions = { ...defaultOptions, ...options }

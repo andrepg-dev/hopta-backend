@@ -1,8 +1,9 @@
-import { COOKIES } from '@/constants/cookie-user-name'
+import { COOKIES } from '@/constants/cookies-manager'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import { refreshTokenModel } from '@/src/models/refresh-token'
 import { userModel } from '@/src/models/user'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
@@ -66,22 +67,18 @@ userRouter.post(
 
     // Transfer only the necessary data
     const userData = user.toObject()
-    const { password: _, ...userDataWithoutPassword } = userData
+    const { password: _, ...userWithoutPassword } = userData
 
-    // Crear el token con json web token y enviarlo a las cookies
-    const accessToken = TokenManager.accessToken({
-      userId: userDataWithoutPassword._id as string
-    })
+    // Access token
+    const accessToken = TokenManager.accessToken({ userId: userData._id as string })
 
-    const refreshToken = await TokenManager.refreshToken({
-      userId: userDataWithoutPassword._id as string
-    })
+    // Refresh token
+    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string }) // generate
+    Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+    TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
-    // Guardar la cookie en el servidor
-    Cookies.setCookie(res, COOKIES.cookies_token_name, refreshToken)
-
-    // enviar la repuesta al usuario
-    res.json({ success: true, user: userDataWithoutPassword, token: accessToken })
+    // Response
+    res.json({ success: true, user: userWithoutPassword, token: accessToken })
   })
 )
 
@@ -102,24 +99,16 @@ userRouter.post(
     if (user.email == email && userPassword) {
       // Transfer only the necessary data
       const userData = user.toObject()
-      const { password: _, ...userDataWithoutPassword } = userData
 
-      // Crear el token con json web token y enviarlo a las cookies
-      const token = TokenManager.accessToken({
-        userId: userDataWithoutPassword._id as string
-      })
-
-      // Guardar la cookie en el servidor
+      // Access token
+      const token = TokenManager.accessToken({ userId: userData._id as string })
 
       // Refresh token
-      const refreshToken = await TokenManager.refreshToken({
-        userId: userDataWithoutPassword._id as string
-      })
+      const refreshToken = TokenManager.refreshToken({ userId: userData._id as string }) // generate
+      Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+      TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
-      // Guardar el refresh token en las cookies de servidor
-      Cookies.setCookie(res, COOKIES.cookies_token_name, refreshToken)
-
-      // enviar la repuesta al usuario
+      // Response
       res.json({ success: true, token })
     }
 
@@ -127,11 +116,16 @@ userRouter.post(
   })
 )
 
-userRouter.get(
+userRouter.delete(
   '/logout',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    res.clearCookie(COOKIES.cookies_token_name).json({ success: true })
+    const token = req.cookies[COOKIES.jwt_refresh_token.name]
+    if (!token) throw new AppError('Unauthorized', 401)
+
+    await refreshTokenModel.findOneAndDelete({ token })
+    Cookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
+    res.json({ success: true })
   })
 )
 

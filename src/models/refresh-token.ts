@@ -2,7 +2,7 @@ import { refreshTokenI } from '@/types/refresh-token/types'
 import mongoose from 'mongoose'
 
 const refreshToken = new mongoose.Schema({
-  user: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
