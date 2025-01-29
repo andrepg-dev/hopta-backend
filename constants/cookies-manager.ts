@@ -2,8 +2,8 @@ export const COOKIES = {
   cookies_token_name: 'access_token',
   JWT_SECRET_KEY: process.env.JWT_SECRET_KEY as string,
   expiresIn: {
-    hourString: '15s',
-    hourInt: 15
+    hourString: '30m',
+    hourInt: 30 * 60 * 1000 // 30 minutes in milliseconds
   },
 
   jwt_refresh_token: {

@@ -14,17 +14,14 @@ const userSchema = new mongoose.Schema(
     },
     contact: {
       phone_number: {
-        type: String,
-        required: false
+        type: String
       },
       is_phone_number_verified: {
         type: Boolean,
-        required: false
+        default: false
       },
       email_contact: {
-        type: String,
-        required: false,
-        unique: false
+        type: String
       }
     },
     email: {
@@ -34,8 +31,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      unique: false
+      required: true
     },
     reviews: {
       type: [
@@ -61,59 +57,85 @@ const userSchema = new mongoose.Schema(
     },
     properties: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'RealState',
-      required: false
+      ref: 'RealState'
     },
     favorites_properties: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'RealState',
-      required: false
+      ref: 'RealState'
     },
     is_verified: {
       type: Boolean,
-      default: false,
-      required: true
+      default: false
     },
     profile_picture: {
       type: String,
-      required: false
+      validate: {
+        validator: function (v: string) {
+          return /^https?:\/\/.+/i.test(v)
+        },
+        message: 'Invalid URL format for profile picture'
+      }
     },
     location: {
-      type: Array<String>, // Estas son todas las ubicaciones del usuario
-      required: false
+      type: [
+        {
+          lat: { type: Number, required: true },
+          lng: { type: Number, required: true }
+        }
+      ]
     },
     created_at: {
       type: Date,
       default: Date.now,
-      required: true,
       immutable: true
     },
     updated_at: {
       type: Date,
-      default: Date.now,
-      required: true
+      default: Date.now
     },
     social_media: {
       facebook: {
         type: String,
-        required: false
+        validate: {
+          validator: function (v: string) {
+            return /^https?:\/\/(www\.)?facebook\.com\/.+/i.test(v)
+          },
+          message: 'Invalid Facebook URL'
+        }
       },
       instagram: {
         type: String,
-        required: false
+        validate: {
+          validator: function (v: string) {
+            return /^https?:\/\/(www\.)?instagram\.com\/.+/i.test(v)
+          },
+          message: 'Invalid Instagram URL'
+        }
       },
       twitter: {
         type: String,
-        required: false
+        validate: {
+          validator: function (v: string) {
+            return /^https?:\/\/(www\.)?twitter\.com\/.+/i.test(v)
+          },
+          message: 'Invalid Twitter URL'
+        }
       }
     },
     identity_number: {
       type: String,
-      required: false
+      minLength: 13,
+      maxLength: 20
     }
   },
   { versionKey: false }
 )
+
+// Middleware para actualizar `updated_at` automáticamente antes de guardar
+userSchema.pre('save', function (next) {
+  this.updated_at = new Date()
+  next()
+})
 
 userSchema.plugin(mongoosePaginate)
 

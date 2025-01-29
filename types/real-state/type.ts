@@ -1,13 +1,18 @@
+import mongoose from 'mongoose'
+
 export interface RealStateI {
   title: string
   description: string
   images: string[]
-  location: string
-  square_meters: string
+  location: {
+    lat: number
+    lng: number
+  }
+  square_meters: number
   price: number
   currency?: string
   population?: number
-  house_feautures: {
+  house_features: {
     rooms: number
     bathrooms: number
     kitchens?: number
@@ -44,6 +49,6 @@ export interface RealStateI {
 }
 
 export interface RealStateIWithOwner extends RealStateI {
-  owner: string
+  owner: mongoose.Types.ObjectId
   created_at: Date
 }

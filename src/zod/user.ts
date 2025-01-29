@@ -1,39 +1,46 @@
 import z from 'zod'
 
 export const createUserSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters long.'),
-  last_name: z.string().min(3, 'Last name must be at least 3 characters long.'),
+  name: z.string().min(3, 'Name must be at least 3 characters long.').max(120),
+  last_name: z.string().min(3, 'Last name must be at least 3 characters long.').max(120),
   contact: z
     .object({
-      phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').optional(),
-      is_phone_number_verified: z.boolean().optional(),
-      email_contact: z.string().email('Invalid email address.').optional()
+      phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').max(40).optional(),
+      is_phone_number_verified: z.boolean().default(false),
+      email_contact: z.string().email('Invalid email address.').max(120).optional()
     })
     .optional(),
-  email: z.string().email('Invalid email address.'),
-  password: z.string().min(6, 'Password must be at least 6 characters long.'),
+  email: z.string().email('Invalid email address.').max(120),
+  password: z.string().min(6, 'Password must be at least 6 characters long.').max(120),
   reviews: z
     .array(
       z.object({
-        user: z.string(), // This should be a reference to the user that made the review
-        review: z.string(),
-        rating: z.number().min(1).max(5)
+        user: z.string().uuid('Invalid user ID format.'), // Reference to the user who made the review
+        review: z.string().max(4000, 'Review must be at most 4000 characters long.'),
+        rating: z.number().min(1, 'Rating must be at least 1.').max(5, 'Rating must be at most 5.')
       })
     )
     .optional(),
-  properties: z.array(z.string()).optional(),
-  favorites_properties: z.array(z.string()).optional(),
-  is_verified: z.boolean().optional(),
-  profile_picture: z.string().optional(),
-  location: z.array(z.string()).optional(),
+  properties: z.array(z.string().uuid('Invalid property ID format.')).optional(), // References to created properties
+  favorites_properties: z.array(z.string().uuid('Invalid property ID format.')).optional(), // Favorite properties
+  is_verified: z.boolean().default(false),
+  profile_picture: z.string().url('Invalid URL format.').max(500, 'Profile picture URL is too long.').optional(),
+  location: z
+    .array(
+      z.object({
+        lat: z.number().min(-90, 'Latitude must be between -90 and 90.').max(90, 'Latitude must be between -90 and 90.'),
+        lng: z.number().min(-180, 'Longitude must be between -180 and 180.').max(180, 'Longitude must be between -180 and 180.')
+      })
+    )
+    .optional(),
   social_media: z
     .object({
-      facebook: z.string().optional(),
-      instagram: z.string().optional(),
-      twitter: z.string().optional()
+      facebook: z.string().url('Invalid Facebook URL.').max(120).optional(),
+      instagram: z.string().url('Invalid Instagram URL.').max(120).optional(),
+      twitter: z.string().url('Invalid Twitter URL.').max(120).optional()
     })
     .optional(),
-  identity_number: z.string().optional()
+  identity_number: z.string().min(13, 'Identity number must be at least 13 characters long.').max(20).optional()
 })
 
 export const isValidEmail = z.string().email('Invalid email address.')

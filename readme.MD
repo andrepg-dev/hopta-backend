@@ -16,7 +16,7 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 #### Tokens
 
-- Refresh token
+- Refresh token ✅
 
 #### Crear esquemas
 

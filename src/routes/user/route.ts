@@ -27,7 +27,7 @@ userRouter.post(
   '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    const {
+    let {
       name,
       last_name,
       email,
@@ -41,6 +41,10 @@ userRouter.post(
       profile_picture,
       properties
     } = req.body
+
+    if (identity_number && !/^\d{13}$/.test(identity_number)) {
+      throw new AppError('Invalid identity number format. Must be 13 digits.', 400)
+    }
 
     // Encrypt password
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -94,25 +98,23 @@ userRouter.post(
     })
 
     if (!user) throw new AppError('User not found', 404)
-    const userPassword = await bcrypt.compare(password, user.password)
 
-    if (user.email == email && userPassword) {
-      // Transfer only the necessary data
-      const userData = user.toObject()
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+    if (!isPasswordValid) throw new AppError('Password or email incorrect', 404)
 
-      // Access token
-      const token = TokenManager.accessToken({ userId: userData._id as string })
+    // Transfer only the necessary data
+    const userData = user.toObject()
 
-      // Refresh token
-      const refreshToken = TokenManager.refreshToken({ userId: userData._id as string }) // generate
-      Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
-      TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
+    // Access token
+    const token = TokenManager.accessToken({ userId: userData._id as string })
 
-      // Response
-      res.json({ success: true, token })
-    }
+    // Refresh token
+    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
+    Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+    TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
-    throw new AppError('Password or email incorrect', 404)
+    // Response
+    res.json({ success: true, token })
   })
 )
 
@@ -136,7 +138,7 @@ userRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.body.email) throw new AppError('email is required.', 400)
     const { email } = req.body
-    await userModel.deleteOne({ email: email }).then((user) => res.send(user))
+    await userModel.findOneAndDelete({ email: email }).then((user) => res.send(user))
   })
 )
 

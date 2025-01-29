@@ -14,7 +14,7 @@ import asyncHandler from './helpers/try-catch-async-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
 import { EmailService } from './modules/email/email.service'
 import s3Router from './routes/aws/s3/s3-services'
-import RealStateRouter from './routes/new-real-state-property/route'
+import RealStateRouter from './routes/real-state/route'
 import userRouter from './routes/user/route'
 import { TokenManager } from './utils/JWT/tokens-manager'
 
@@ -22,7 +22,7 @@ import { TokenManager } from './utils/JWT/tokens-manager'
 connectToDatabase()
 
 // Express configuration
-const app = express()
+export const app = express()
 
 app.use(helmet())
 

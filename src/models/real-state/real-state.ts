@@ -19,12 +19,17 @@ const realStateSchema = new mongoose.Schema(
       required: true
     },
     location: {
-      type: String,
-      required: true
+      lat: {
+        type: Number,
+        required: true
+      },
+      lng: {
+        type: Number,
+        required: true
+      }
     },
     square_meters: {
-      type: String,
-      required: false
+      type: Number
     },
     price: {
       type: Number,
@@ -35,10 +40,9 @@ const realStateSchema = new mongoose.Schema(
       required: true
     },
     population: {
-      type: Number,
-      required: false
+      type: Number
     },
-    house_feautures: {
+    house_features: {
       rooms: {
         type: Number,
         required: true
@@ -48,86 +52,31 @@ const realStateSchema = new mongoose.Schema(
         required: true
       },
       kitchens: {
-        type: Number,
-        required: false
+        type: Number
       },
       interior_extras: {
-        water_tank: {
-          type: Boolean,
-          required: false
-        },
-        water_cistern: {
-          type: Boolean,
-          required: false
-        },
-        closets: {
-          type: Boolean,
-          required: false
-        },
-        furnished: {
-          type: Boolean,
-          required: false
-        },
-        air_conditioning: {
-          type: Boolean,
-          required: false
-        },
-        '24_7_security': {
-          type: Boolean,
-          required: false
-        },
-        garage: {
-          type: Boolean,
-          required: false
-        }
+        water_tank: Boolean,
+        water_cistern: Boolean,
+        closets: Boolean,
+        furnished: Boolean,
+        air_conditioning: Boolean,
+        '24_7_security': Boolean,
+        garage: Boolean
       },
-      extras_from_outside: {
-        balcony: {
-          type: Boolean,
-          required: false
-        },
-        patio: {
-          type: Boolean,
-          required: false
-        },
-        terrace: {
-          type: Boolean,
-          required: false
-        },
-        garden: {
-          type: Boolean,
-          required: false
-        },
-        swimming_pool: {
-          type: Boolean,
-          required: false
-        }
+      exterior_extras: {
+        balcony: Boolean,
+        patio: Boolean,
+        terrace: Boolean,
+        garden: Boolean,
+        swimming_pool: Boolean
       },
       community_extras: {
-        gym: {
-          type: Boolean,
-          required: false
-        },
-        parks: {
-          type: Boolean,
-          required: false
-        },
-        schools: {
-          type: Boolean,
-          required: false
-        },
-        shopping_malls: {
-          type: Boolean,
-          required: false
-        },
-        supermarkets: {
-          type: Boolean,
-          required: false
-        },
-        elevator: {
-          type: Boolean,
-          required: false
-        }
+        gym: Boolean,
+        parks: Boolean,
+        schools: Boolean,
+        shopping_malls: Boolean,
+        supermarkets: Boolean,
+        elevator: Boolean
       }
     },
     owner: {
@@ -138,51 +87,54 @@ const realStateSchema = new mongoose.Schema(
     house_status: {
       is_available: {
         type: Boolean,
-        default: true,
-        required: true
+        default: true
       },
       is_sold: {
         type: Boolean,
-        default: false,
-        required: true
+        default: false
       },
       sold_date: {
-        type: Date,
-        required: false
+        type: Date
       }
     },
     created_at: {
       type: Date,
       default: Date.now,
-      required: true,
       immutable: true
     },
     updated_at: {
       type: Date,
-      default: Date.now,
-      required: true
+      default: Date.now
     }
   },
   { versionKey: false }
 )
 
-// Save in the log and send an email to the administrator when a new property is created
+realStateSchema.pre('save', function (next) {
+  this.updated_at = new Date()
+  next()
+})
 
 realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
   const emailService = new EmailService()
 
-  emailService.sendEmail({
+  await emailService.sendEmail({
     to: 'andreponce417@gmail.com',
     subject: `New property created`,
     html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`
   })
 
   const logger = new Logs()
-  logger.saveLogs().info(`New property created: ${doc.title} at ${doc.location}`)
+  logger.saveLogs().info(
+    `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
+  )
 })
 
 realStateSchema.plugin(mongoosePaginate)
 
 interface RealStateDocument extends mongoose.Document, RealStateI {}
 
-export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>(
+  'RealState',
+  realStateSchema
+)

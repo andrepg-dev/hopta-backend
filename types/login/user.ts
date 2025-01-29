@@ -21,18 +21,18 @@ export interface SocialMedia {
 export interface UserI {
   name: string
   last_name: string
-  contact: Contact
+  contact?: Contact
   email: string
   password: string
-  reviews: Review[]
+  reviews?: Review[]
   properties?: mongoose.Types.ObjectId[]
   favorites_properties?: mongoose.Types.ObjectId[]
-  is_verified: boolean
+  is_verified?: boolean
   profile_picture?: string
-  location?: string[]
-  created_at: Date
-  social_media: SocialMedia
+  location?: { lat: number; lng: number }[]
+  readonly created_at: Date
+  social_media?: SocialMedia
   identity_number?: string
 }
 
-export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | ''> {}
+export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews'> {}
