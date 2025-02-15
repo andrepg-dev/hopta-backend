@@ -49,8 +49,24 @@ Estos serán los pasos que voy a estar siguiendo en el app
 - Filtros ✅
 - Ordenamiento ✅
 
+# Pendientes ⚠️
+
+Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre.
+
 #### Pagos
 
 - Realizar pagos con stripe
 - Realizar pagos con paypal
 - Realizar pagos con tarjeta de crédito
+
+#### Verificaciones
+
+- Verificar tarjeta de identidad
+- Verificar número de telefóno con código OTP
+- Verificar las imágenes que sean de real state con aws Recognition
+- Aplicar Oauth (LOGUEARSE CON GOOGLE)
+
+
+## Pendientes (Frontend)
+
+- Aprender sobre SEO

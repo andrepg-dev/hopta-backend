@@ -1,22 +1,21 @@
 import { connectToDatabase } from '@/connection/connect'
 import { CONNECTIONS } from '@/constants/connection'
-import { COOKIES } from '@/constants/cookies-manager'
 import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security'
 import Logs from '@/src/modules/logs/save-logs.service'
-import { refreshTokenI } from '@/types/refresh-token/types'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
 import helmet from 'helmet'
-import { AppError, errorHandler } from './handlers/error-handler'
-import asyncHandler from './helpers/try-catch-async-handler'
+import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
 import { EmailService } from './modules/email/email.service'
+import { saveSession } from './modules/scrapping/scrapping'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
+import stripeRouter from './routes/stripe/route'
+import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
-import { TokenManager } from './utils/JWT/tokens-manager'
 
 // Database connection
 connectToDatabase()
@@ -25,6 +24,7 @@ connectToDatabase()
 export const app = express()
 
 app.use(helmet())
+app.set('trust proxy', 1)
 
 // Middlewares
 app.use(RATE_LIMIT)
@@ -34,6 +34,11 @@ app.use(bodyParser.json())
 app.use(cookieParser())
 
 const port = CONNECTIONS.PORT
+
+app.get('/q', () => {
+  // scrapeFacebookGroup()
+  saveSession()
+})
 
 app.get('/', async (req, res) => {
   const emailService = new EmailService()
@@ -63,30 +68,29 @@ app.get('/', async (req, res) => {
 app.use('/s3', authMiddleware, s3Router)
 app.use('/real-state', authMiddleware, RealStateRouter)
 app.use('/user', userRouter)
+app.use('/stripe', stripeRouter)
+app.use('/token', tokenRouter)
 
-app.get(
-  '/token',
-  asyncHandler(async (req: Request, res: Response) => {
-    // Verificar si el formato del header es el correcto
-    const token = req.cookies[COOKIES.jwt_refresh_token.name]
-    if (!token) throw new AppError('Unauthorized', 401)
+const verificationToken = 'testingclaroquesi'
 
-    const logger = new Logs()
-    logger.saveLogs().info(`Token: ${token}`)
+app.get('/webhook', async (req: Request, res: Response) => {
+  const mode = req.query['hub.mode']
+  const token = req.query['hub.verify_token']
+  const challenge = req.query['hub.challenge']
 
-    try {
-      // Verificar el access token
-      const user = TokenManager.verifyRefreshToken(token) as refreshTokenI
-      const refreshToken = await TokenManager.findRefreshTokenInDB({ token })
-      if (!refreshToken) throw new AppError('Token not found', 404) // we dont gonna refresh a token that is not in the database
+  if (mode == 'subscribe' && token == verificationToken) {
+    console.log('Webhook verified')
+    console.log(challenge)
+    res.status(200).send(challenge)
+  } else {
+    res.status(403).send('Forbidden')
+  }
+})
 
-      const accessToken = TokenManager.accessToken({ userId: user.userId })
-      res.json({ accessToken })
-    } catch (error) {
-      throw new AppError('Invalid token' + error, 401)
-    }
-  })
-)
+app.post('/webhook', (req, res) => {
+  console.log('Datos recibidos:', JSON.stringify(req.body, null, 2))
+  res.sendStatus(200)
+})
 
 app.use(errorHandler)
 

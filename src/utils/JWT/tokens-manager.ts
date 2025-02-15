@@ -1,8 +1,8 @@
 import { COOKIES } from '@/constants/cookies-manager'
-import { refreshTokenModel } from '@/src/models/refresh-token'
-import { refreshTokenI } from '@/types/refresh-token/types'
-import jwt from 'jsonwebtoken'
+import { AppError } from '@/src/handlers/error-handler'
+import { refreshTokenModel } from '@/src/models/refresh-token.models'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 export class TokenManager {
   static accessToken({ userId }: { userId: string }) {
@@ -34,13 +34,14 @@ export class TokenManager {
     return token
   }
 
-  static async findRefreshTokenInDB({ ...params }: { [key: string]: any }) {
-    // Desencriptar el token
-    const token = params.token
-    const hashed = bcrypt.hashSync(token, 10)
+  static async findRefreshTokenInDB({ userId, token }: { userId: string; token: string }) {
+    if (!token) throw new AppError('Token not provided', 404)
 
-    if (token) return await refreshTokenModel.findOne({ token: hashed })
-    return await refreshTokenModel.findOne({ ...params })
+    const storedToken = await refreshTokenModel.findOne({ userId })
+    if (!storedToken) throw new AppError('Token not found', 404)
+
+    const isTokenValid = await bcrypt.compare(token, storedToken.token)
+    return isTokenValid
   }
 
   static verifyToken(token: string) {

@@ -63,10 +63,6 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: 'RealState'
     },
-    is_verified: {
-      type: Boolean,
-      default: false
-    },
     profile_picture: {
       type: String,
       validate: {
@@ -122,10 +118,36 @@ const userSchema = new mongoose.Schema(
         }
       }
     },
-    identity_number: {
-      type: String,
-      minLength: 13,
-      maxLength: 20
+    personal_information: {
+      identity_document: {
+        type: String,
+        required: true
+      },
+      email_verified: {
+        type: Boolean,
+        default: false
+      },
+      phone_number_verified: {
+        type: Boolean,
+        default: false
+      }
+    },
+    about: {
+      work_experience: {
+        type: String
+      },
+      education: {
+        type: String
+      },
+      description: {
+        type: String
+      },
+      certifications: {
+        type: [String]
+      },
+      languages: {
+        type: [String]
+      }
     }
   },
   { versionKey: false }
@@ -139,6 +161,6 @@ userSchema.pre('save', function (next) {
 
 userSchema.plugin(mongoosePaginate)
 
-interface UserDocument extends mongoose.Document, UserI {}
+interface UserDocument extends mongoose.Document, UserI { }
 
 export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

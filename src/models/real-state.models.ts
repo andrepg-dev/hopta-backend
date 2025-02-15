@@ -1,6 +1,6 @@
 import { EmailService } from '@/src/modules/email/email.service'
 import Logs from '@/src/modules/logs/save-logs.service'
-import { RealStateI, RealStateIWithOwner } from '@/types/real-state/type'
+import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import mongoose, { model } from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
@@ -29,7 +29,8 @@ const realStateSchema = new mongoose.Schema(
       }
     },
     square_meters: {
-      type: Number
+      type: Number,
+      required: false
     },
     price: {
       type: Number,
@@ -82,7 +83,8 @@ const realStateSchema = new mongoose.Schema(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
+      immutable: true
     },
     house_status: {
       is_available: {
@@ -95,6 +97,74 @@ const realStateSchema = new mongoose.Schema(
       },
       sold_date: {
         type: Date
+      }
+    },
+    visitors: {
+      type: [{
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+          immutable: true
+        },
+        visit_date: {
+          type: Date,
+          default: Date.now
+        },
+        comments: {
+          type: String
+        }
+      }],
+      default: []
+    },
+    saved_by: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      immutable: true
+    }],
+    stats: {
+      total_visits: {
+        type: Number,
+        default: 0
+      },
+      total_saves: {
+        type: Number,
+        default: 0
+      }
+    },
+    ratings: {
+      type: [{
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+          immutable: true
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5
+        },
+        comment: {
+          type: String
+        },
+        created_at: {
+          type: Date,
+          default: Date.now
+        }
+      }],
+      default: []
+    },
+    rating_summary: {
+      average_rating: {
+        type: Number,
+        default: 0
+      },
+      total_ratings: {
+        type: Number,
+        default: 0
       }
     },
     created_at: {
@@ -132,7 +202,7 @@ realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI {}
+interface RealStateDocument extends mongoose.Document, RealStateI { }
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>(
   'RealState',

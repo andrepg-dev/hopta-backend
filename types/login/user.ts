@@ -31,6 +31,7 @@ export interface UserI {
   profile_picture?: string
   location?: { lat: number; lng: number }[]
   readonly created_at: Date
+  readonly updated_at: Date
   social_media?: SocialMedia
   identity_number?: string
 }

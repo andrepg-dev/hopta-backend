@@ -3,8 +3,8 @@ import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import { refreshTokenModel } from '@/src/models/refresh-token'
-import { userModel } from '@/src/models/user'
+import { refreshTokenModel } from '@/src/models/refresh-token.models'
+import { userModel } from '@/src/models/user.models'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
@@ -27,20 +27,7 @@ userRouter.post(
   '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    let {
-      name,
-      last_name,
-      email,
-      password,
-      contact,
-      is_verified,
-      social_media,
-      favorites_properties,
-      identity_number,
-      location,
-      profile_picture,
-      properties
-    } = req.body
+    let { name, last_name, email, password, contact, is_verified, social_media, favorites_properties, identity_number, location, profile_picture, properties } = req.body
 
     if (identity_number && !/^\d{13}$/.test(identity_number)) {
       throw new AppError('Invalid identity number format. Must be 13 digits.', 400)
@@ -50,10 +37,10 @@ userRouter.post(
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Save user
-    const user = await userModel
+    let user = await userModel
       .create({
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         last_name,
         contact,
@@ -90,7 +77,9 @@ userRouter.post(
   '/login',
   validateRequest(UserLoginSchema),
   asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
-    const { email, password } = req.body
+    let { email, password } = req.body
+    
+    email = email.toLowerCase()
 
     // verify is the user is on the database
     const user = await userModel.findOne({ email }).catch((err) => {

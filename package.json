@@ -26,6 +26,7 @@
     "mongoose": "^8.8.4",
     "mongoose-paginate-v2": "^1.9.0",
     "nodemailer": "^6.9.16",
+    "playwright": "^1.50.0",
     "response-time": "^2.3.3",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",

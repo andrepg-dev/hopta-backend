@@ -28,7 +28,7 @@ export const createUserSchema = z.object({
   location: z
     .array(
       z.object({
-        lat: z.number().min(-90, 'Latitude must be between -90 and 90.').max(90, 'Latitude must be between -90 and 90.'),
+        lat: z.number().min(-90, 'Latitude must be between -90 and 90.').max(90, 'Latitude must beimage.png between -90 and 90.'),
         lng: z.number().min(-180, 'Longitude must be between -180 and 180.').max(180, 'Longitude must be between -180 and 180.')
       })
     )
