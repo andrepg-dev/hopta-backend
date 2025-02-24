@@ -131,15 +131,12 @@ const userSchema = new mongoose.Schema(
     personal_information: {
       identity_document: {
         type: String,
-        required: true
       },
       email_verified: {
         type: Boolean,
-        default: false
       },
       phone_number_verified: {
         type: Boolean,
-        default: false
       }
     },
     about: {

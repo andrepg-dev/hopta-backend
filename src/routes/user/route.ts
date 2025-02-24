@@ -10,7 +10,7 @@ import { EmailService } from '@/src/modules/email/email.service'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
-import { CreateUserI, UserI } from '@/types/login/user'
+import { CreateUserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
 
@@ -18,10 +18,9 @@ const userRouter = Router()
 
 userRouter.get(
   '/',
-  authMiddleware,
+  // authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const { user } = req.session
-    res.json(user)
+    await userModel.find().then((user) => res.json(user))
   })
 )
 
@@ -29,10 +28,15 @@ userRouter.post(
   '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    let { name, last_name, email, password, contact, social_media, favorites_properties, identity_number, location, profile_picture, properties } = req.body
+    const { name, last_name, email, auth, contact, social_media, favorites_properties, personal_information, location, profile_picture, properties, about } = req.body
 
-    if (identity_number && !/^\d{13}$/.test(identity_number)) {
-      throw new AppError('Invalid identity number format. Must be 13 digits.', 400)
+    if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
+      throw new AppError('Invalid identity document format. Must be 13 digits.', 400)
+    }
+
+    let password = auth?.local?.password
+    if (!password) {
+      throw new AppError('Password is required for local registration', 400)
     }
 
     // Encrypt password
@@ -43,22 +47,26 @@ userRouter.post(
       .create({
         name,
         email: email.toLowerCase(),
-        password: hashedPassword,
+        auth: {
+          local: {
+            password: hashedPassword
+          }
+        },
         last_name,
         contact,
         social_media,
         favorites_properties,
-        identity_number,
+        personal_information,
         location,
         profile_picture,
         properties,
-        is_verified: false
+        about
       })
       .catch((err) => {
-        throw new AppError('User already exists', 404)
+        throw new AppError(err, 404)
       })
 
-    if (!user?.is_verified) {
+    if (!user?.personal_information?.email_verified) {
       // Send email to verify the account
       const emailContent = `
         <h1>Verify your account</h1>
@@ -80,7 +88,7 @@ userRouter.post(
 
     // Transfer only the necessary data
     const userData = user.toObject()
-    const { password: _, ...userWithoutPassword } = userData
+    const { auth: _, ...userWithoutAuth } = userData
 
     // Access token
     const accessToken = TokenManager.accessToken({ userId: userData._id as string })
@@ -91,14 +99,14 @@ userRouter.post(
     TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
     // Response
-    res.json({ success: true, user: userWithoutPassword, token: accessToken })
+    res.json({ success: true, user: userWithoutAuth, token: accessToken })
   })
 )
 
 userRouter.post(
   '/login',
   validateRequest(UserLoginSchema),
-  asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
+  asyncHandler(async (req: Request<{}, {}, { email: string, password: string }>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
 
     email = email.toLowerCase()
@@ -110,11 +118,15 @@ userRouter.post(
 
     if (!user) throw new AppError('User not found', 404)
 
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const userPassword = user.auth?.local?.password
+    if (!userPassword) throw new AppError('User not registered with local authentication', 404)
+
+    const isPasswordValid = await bcrypt.compare(password, userPassword)
     if (!isPasswordValid) throw new AppError('Password or email incorrect', 404)
 
     // Transfer only the necessary data
     const userData = user.toObject()
+    const { auth: _, ...userWithoutAuth } = userData
 
     // Access token
     const token = TokenManager.accessToken({ userId: userData._id as string })
@@ -125,7 +137,7 @@ userRouter.post(
     TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
     // Response
-    res.json({ success: true, token })
+    res.json({ success: true, user: userWithoutAuth, token })
   })
 )
 

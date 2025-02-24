@@ -30,7 +30,6 @@ const realStateSchema = new mongoose.Schema(
     },
     square_meters: {
       type: Number,
-      required: false
     },
     price: {
       type: Number,

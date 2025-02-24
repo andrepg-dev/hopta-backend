@@ -10,13 +10,11 @@ import helmet from 'helmet'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
 import { EmailService } from './modules/email/email.service'
-import { saveSession } from './modules/scrapping/scrapping'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
-import passport from 'passport'
 
 // Database connection
 connectToDatabase()
@@ -34,15 +32,8 @@ app.use(cookieParser())
 // Middlewares passport
 app.use(helmet())
 app.set('trust proxy', 1)
-app.use(passport.initialize())
-app.use(passport.session())
 
 const port = CONNECTIONS.PORT
-
-app.get('/q', () => {
-  // scrapeFacebookGroup()
-  saveSession()
-})
 
 app.get('/', async (req, res) => {
   const emailService = new EmailService()

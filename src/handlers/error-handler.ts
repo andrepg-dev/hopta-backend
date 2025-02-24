@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
+import Logs from '../modules/logs/save-logs.service'
 
 export class AppError extends Error {
   statusCode: number
@@ -13,6 +14,12 @@ export class AppError extends Error {
 export const errorHandler = (err: AppError, req: Request, res: Response, next: NextFunction) => {
   const statusCode = err.statusCode || 500
   const message = err.message || 'Internal server error'
+
+  if (statusCode == 500) {
+    const logger = new Logs()
+    logger.saveLogs().error(message)
+    throw res.status(statusCode).json({ success: false, error: 'Internal server error' })
+  }
 
   res.status(statusCode).json({ success: false, error: message })
 }
