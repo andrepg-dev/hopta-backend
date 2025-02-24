@@ -3,12 +3,11 @@ import { userModel } from '@/src/models/user.models'
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
-
 passport.use(
   new GoogleStrategy({
-    clientID: '',
-    clientSecret: '',
-    callbackURL: '',
+    clientID: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || '',
   }, async (accessToken, refreshToken, profile, done) => {
     if (!profile.emails) return done(new AppError('No email found', 400))
 
@@ -18,12 +17,15 @@ passport.use(
       .create({
         name: profile.displayName,
         email: profile.emails[0].value,
-        password: accessToken.slice(0, 15),
-        provider: 'google',
-        is_verified: true
+        auth: {
+          google: {
+            id: profile.id
+          }
+        },
+        profile_picture: profile.photos?.[0]?.value || ''
       })
       .catch((err) => {
-        throw new AppError('User already exists', 404)
+        throw new AppError(err, 404)
       })
 
     console.log('[*] User saved in the database'.green)

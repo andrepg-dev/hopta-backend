@@ -4,9 +4,9 @@ import passport from "passport";
 
 const googleRouter = Router()
 
-googleRouter.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+googleRouter.get('/', passport.authenticate('google', { scope: ['profile', 'email'] }))
 
-googleRouter.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: 'https://www.hopta.hn/error-signin' }), (req: any, res: Response) => {
+googleRouter.get('/callback', passport.authenticate('google', { failureRedirect: 'https://www.hopta.hn/error-signin' }), (req: any, res: Response) => {
 
   if (!req.user) {
     throw new AppError('Authentication failed', 401)
@@ -17,8 +17,4 @@ googleRouter.get('/auth/google/callback', passport.authenticate('google', { fail
   res.redirect('https://www.hopta.hn/login-success')
 })
 
-
-
-
-
-
+export default googleRouter

@@ -15,9 +15,10 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
   const statusCode = err.statusCode || 500
   const message = err.message || 'Internal server error'
 
+  const logger = new Logs()
+  logger.saveLogs().error(message)
+
   if (statusCode == 500) {
-    const logger = new Logs()
-    logger.saveLogs().error(message)
     throw res.status(statusCode).json({ success: false, error: 'Internal server error' })
   }
 

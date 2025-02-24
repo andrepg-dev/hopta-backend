@@ -15,6 +15,7 @@ import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
+import googleRouter from './routes/auth/google/google.route'
 
 // Database connection
 connectToDatabase()
@@ -43,17 +44,7 @@ app.get('/', async (req, res) => {
       to: ['andreponce417@gmail.com', 'asponceg@gmail.com'],
       subject: 'Que lo que mi loco',
       html: '<h1>Logs de sistema NOC</h1> <p>Se ha generado un nuevo log de sistema</p>',
-      from: 'admin@hopta.hn',
-      attachments: [
-        {
-          filename: 'app-2025-01-18.log',
-          path: './logs/app-2025-01-18.log'
-        },
-        {
-          filename: 'app-2025-01-16.log',
-          path: './logs/app-2025-01-16.log'
-        }
-      ]
+      from: 'admin@hopta.hn'
     })
     .catch((err) => console.log(err))
 
@@ -63,6 +54,7 @@ app.get('/', async (req, res) => {
 app.use('/s3', authMiddleware, s3Router)
 app.use('/real-state', authMiddleware, RealStateRouter)
 app.use('/user', userRouter)
+app.use('/auth/google', googleRouter )
 app.use('/stripe', stripeRouter)
 app.use('/token', tokenRouter)
 
