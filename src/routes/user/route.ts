@@ -1,10 +1,12 @@
 import { COOKIES } from '@/constants/cookies-manager'
+import { envs } from '@/constants/env'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { refreshTokenModel } from '@/src/models/refresh-token.models'
 import { userModel } from '@/src/models/user.models'
+import { EmailService } from '@/src/modules/email/email.service'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
@@ -27,7 +29,7 @@ userRouter.post(
   '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    let { name, last_name, email, password, contact, is_verified, social_media, favorites_properties, identity_number, location, profile_picture, properties } = req.body
+    let { name, last_name, email, password, contact, social_media, favorites_properties, identity_number, location, profile_picture, properties } = req.body
 
     if (identity_number && !/^\d{13}$/.test(identity_number)) {
       throw new AppError('Invalid identity number format. Must be 13 digits.', 400)
@@ -44,17 +46,37 @@ userRouter.post(
         password: hashedPassword,
         last_name,
         contact,
-        is_verified,
         social_media,
         favorites_properties,
         identity_number,
         location,
         profile_picture,
-        properties
+        properties,
+        is_verified: false
       })
       .catch((err) => {
         throw new AppError('User already exists', 404)
       })
+
+    if (!user?.is_verified) {
+      // Send email to verify the account
+      const emailContent = `
+        <h1>Verify your account</h1>
+        <p>Click <a href="https://www.hopta.hn/verify-email/${user._id}">here</a> to verify your account</p>
+      `
+
+      const emailService = new EmailService()
+
+      const email = await emailService.sendEmail({
+        from: envs.MAILER_EMAIL,
+        to: user.email,
+        subject: 'Verify your account',
+        html: emailContent
+      })
+
+      console.log('[*] Email sent to the user'.green)
+      console.log(email)
+    }
 
     // Transfer only the necessary data
     const userData = user.toObject()
@@ -78,7 +100,7 @@ userRouter.post(
   validateRequest(UserLoginSchema),
   asyncHandler(async (req: Request<{}, {}, UserI>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
-    
+
     email = email.toLowerCase()
 
     // verify is the user is on the database

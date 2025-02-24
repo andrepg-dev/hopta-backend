@@ -23,7 +23,6 @@ export const createUserSchema = z.object({
     .optional(),
   properties: z.array(z.string().uuid('Invalid property ID format.')).optional(), // References to created properties
   favorites_properties: z.array(z.string().uuid('Invalid property ID format.')).optional(), // Favorite properties
-  is_verified: z.boolean().default(false),
   profile_picture: z.string().url('Invalid URL format.').max(500, 'Profile picture URL is too long.').optional(),
   location: z
     .array(

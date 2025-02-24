@@ -20,18 +20,28 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: false
       },
-      email_contact: {
-        type: String
-      }
     },
     email: {
       type: String,
       required: true,
       unique: true
     },
-    password: {
-      type: String,
-      required: true
+    auth: {
+      local: {
+        password: {
+          type: String
+        }
+      },
+      google: {
+        id: { type: String, unique: true, sparse: true }
+      },
+      facebook: {
+        id: { type: String, unique: true, sparse: true }
+      },
+      sms: {
+        phoneNumber: { type: String, unique: true, sparse: true },
+        verified: { type: Boolean, default: false }
+      }
     },
     reviews: {
       type: [
@@ -147,8 +157,14 @@ const userSchema = new mongoose.Schema(
       },
       languages: {
         type: [String]
+      },
+      favorite_song: {
+        type: String
+      },
+      where_im_living: {
+        type: String
       }
-    }
+    },
   },
   { versionKey: false }
 )

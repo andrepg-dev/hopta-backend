@@ -59,6 +59,7 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Realizar pagos con paypal
 - Realizar pagos con tarjeta de crédito
 
+
 #### Verificaciones
 
 - Verificar tarjeta de identidad
@@ -66,7 +67,8 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Verificar las imágenes que sean de real state con aws Recognition
 - Aplicar Oauth (LOGUEARSE CON GOOGLE)
 
-
 ## Pendientes (Frontend)
 
 - Aprender sobre SEO
+
+- Preguntar si se permiten mascostas en el alquiler

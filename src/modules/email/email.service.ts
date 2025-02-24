@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
 import Logs from '../logs/save-logs.service'
 
-interface SendMailOptions extends nodemailer.SendMailOptions {}
+interface SendMailOptions extends nodemailer.SendMailOptions { }
 
 export class EmailService {
   private transporter = nodemailer.createTransport({

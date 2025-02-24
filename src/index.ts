@@ -16,6 +16,7 @@ import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
+import passport from 'passport'
 
 // Database connection
 connectToDatabase()
@@ -23,15 +24,18 @@ connectToDatabase()
 // Express configuration
 export const app = express()
 
-app.use(helmet())
-app.set('trust proxy', 1)
-
 // Middlewares
 app.use(RATE_LIMIT)
 app.use(cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
+
+// Middlewares passport
+app.use(helmet())
+app.set('trust proxy', 1)
+app.use(passport.initialize())
+app.use(passport.session())
 
 const port = CONNECTIONS.PORT
 

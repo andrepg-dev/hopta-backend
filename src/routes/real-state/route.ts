@@ -8,12 +8,38 @@ import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
+import { algoliasearch } from 'algoliasearch'
+import Logs from '@/src/modules/logs/save-logs.service'
 
 const RealStateRouter = Router()
 
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
+
+    const client = algoliasearch('48NSHQPNAV', 'bcc0fa0f9d66506d7f90adb452cc582f');
+
+    const logs = new Logs()
+
+    const processRecords = async () => {
+      const datasetRequest = await RealStateModel.find().lean()
+
+      const objects = datasetRequest.map(doc => ({
+        objectID: doc._id.toString(),
+        ...doc
+      }))
+
+      logs.saveLogs().info(objects)
+
+      return await client.saveObjects({ indexName: 'real_state_index', objects })
+    }
+
+    processRecords().then((response) => {
+      logs.saveLogs().info("Records processed successfully")
+    }).catch((error) => {
+      logs.saveLogs().error(error)
+    })
+
     // Get all properties from the user with pagination
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
