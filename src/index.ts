@@ -5,17 +5,16 @@ import Logs from '@/src/modules/logs/save-logs.service'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import express, { Request, Response } from 'express'
+import express from 'express'
 import helmet from 'helmet'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
-import { EmailService } from './modules/email/email.service'
+import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
-import googleRouter from './routes/auth/google/google.route'
 
 // Database connection
 connectToDatabase()
@@ -36,49 +35,12 @@ app.set('trust proxy', 1)
 
 const port = CONNECTIONS.PORT
 
-app.get('/', async (req, res) => {
-  const emailService = new EmailService()
-
-  const response = await emailService
-    .sendEmail({
-      to: ['andreponce417@gmail.com', 'asponceg@gmail.com'],
-      subject: 'Que lo que mi loco',
-      html: '<h1>Logs de sistema NOC</h1> <p>Se ha generado un nuevo log de sistema</p>',
-      from: 'admin@hopta.hn'
-    })
-    .catch((err) => console.log(err))
-
-  res.json(response)
-})
-
 app.use('/s3', authMiddleware, s3Router)
 app.use('/real-state', authMiddleware, RealStateRouter)
 app.use('/user', userRouter)
-app.use('/auth/google', googleRouter )
+app.use('/auth/google', googleRouter)
 app.use('/stripe', stripeRouter)
 app.use('/token', tokenRouter)
-
-const verificationToken = 'testingclaroquesi'
-
-app.get('/webhook', async (req: Request, res: Response) => {
-  const mode = req.query['hub.mode']
-  const token = req.query['hub.verify_token']
-  const challenge = req.query['hub.challenge']
-
-  if (mode == 'subscribe' && token == verificationToken) {
-    console.log('Webhook verified')
-    console.log(challenge)
-    res.status(200).send(challenge)
-  } else {
-    res.status(403).send('Forbidden')
-  }
-})
-
-app.post('/webhook', (req, res) => {
-  console.log('Datos recibidos:', JSON.stringify(req.body, null, 2))
-  res.sendStatus(200)
-})
-
 app.use(errorHandler)
 
 app.listen(port, () => {
