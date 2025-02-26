@@ -72,3 +72,5 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Aprender sobre SEO
 
 - Preguntar si se permiten mascostas en el alquiler
+
+- Crear templates para enviar emails

@@ -6,6 +6,7 @@ import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { refreshTokenModel } from '@/src/models/refresh-token.models'
 import { userModel } from '@/src/models/user.models'
+import { verificationCodeModel } from '@/src/models/verification-code.models'
 import { EmailService } from '@/src/modules/email/email.service'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
@@ -13,19 +14,19 @@ import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
 import { CreateUserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
+import crypto from 'crypto'
 
 const userRouter = Router()
 
 userRouter.get(
   '/',
-  // authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await userModel.find().then((user) => res.json(user))
   })
 )
 
 userRouter.post(
-  '/register',
+  '/signin',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
     const { name, last_name, email, auth, contact, social_media, favorites_properties, personal_information, location, profile_picture, properties, about } = req.body
@@ -39,52 +40,83 @@ userRouter.post(
       throw new AppError('Password is required for local registration', 400)
     }
 
-    // Encrypt password
+    // Check if user already exists
+    const existingUser = await userModel.findOne({ email: email.toLowerCase() })
+    if (existingUser) {
+      throw new AppError('User already exists', 400)
+    }
+
+    // Generate verification code
+    const verificationCode = crypto.randomInt(100000, 999999).toString()
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Save user
-    let user = await userModel
-      .create({
-        name,
-        email: email.toLowerCase(),
-        auth: {
-          local: {
-            password: hashedPassword
-          }
-        },
-        last_name,
-        contact,
-        social_media,
-        favorites_properties,
-        personal_information,
-        location,
-        profile_picture,
-        properties,
-        about
-      })
-      .catch((err) => {
-        throw new AppError(err, 404)
-      })
-
-    if (!user?.personal_information?.email_verified) {
-      // Send email to verify the account
-      const emailContent = `
-        <h1>Verify your account</h1>
-        <p>Click <a href="https://www.hopta.hn/verify-email/${user._id}">here</a> to verify your account</p>
-      `
-
-      const emailService = new EmailService()
-
-      const email = await emailService.sendEmail({
-        from: envs.MAILER_EMAIL,
-        to: user.email,
-        subject: 'Verify your account',
-        html: emailContent
-      })
-
-      console.log('[*] Email sent to the user'.green)
-      console.log(email)
+    // Store verification data
+    const userData = {
+      name,
+      email: email.toLowerCase(),
+      auth: {
+        local: {
+          password: hashedPassword
+        }
+      },
+      last_name,
+      contact,
+      social_media,
+      favorites_properties,
+      personal_information,
+      location,
+      profile_picture,
+      properties,
+      about
     }
+
+    await verificationCodeModel.create({
+      email: email.toLowerCase(),
+      code: verificationCode,
+      userData
+    })
+
+    // Send verification email
+    const emailService = new EmailService()
+    await emailService.sendEmail({
+      from: envs.MAILER_EMAIL,
+      to: email,
+      subject: 'Verify your email',
+      html: `
+        <h1>Welcome to Hopta!</h1>
+        <p>Your verification code is: <strong>${verificationCode}</strong></p>
+        <p>This code will expire in 30 minutes.</p>
+      `
+    })
+
+    res.json({
+      success: true,
+      message: 'Verification code sent to your email'
+    })
+  })
+)
+
+userRouter.post(
+  '/verify-email',
+  asyncHandler(async (req: Request<{}, {}, { email: string, code: string }>, res: Response) => {
+    const { email, code } = req.body
+
+    const verificationData = await verificationCodeModel.findOne({
+      email: email.toLowerCase(),
+      code
+    })
+
+    if (!verificationData) {
+      throw new AppError('Invalid or expired verification code', 400)
+    }
+
+    // Create user
+    const user = await userModel.create(verificationData.userData)
+
+    // Delete verification data
+    await verificationCodeModel.deleteOne({ _id: verificationData._id })
 
     // Transfer only the necessary data
     const userData = user.toObject()
@@ -94,12 +126,16 @@ userRouter.post(
     const accessToken = TokenManager.accessToken({ userId: userData._id as string })
 
     // Refresh token
-    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string }) // generate
+    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
     Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
     TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
-    // Response
-    res.json({ success: true, user: userWithoutAuth, token: accessToken })
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+      user: userWithoutAuth,
+      token: accessToken
+    })
   })
 )
 
