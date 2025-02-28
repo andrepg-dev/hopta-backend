@@ -13,8 +13,6 @@ googleRouter.get('/callback', passport.authenticate('google', { failureRedirect:
   }
 
   res.json({ user: req.user, token: req.user.token ?? req.token })
-
-  res.redirect('https://www.hopta.hn/login-success')
 })
 
 export default googleRouter

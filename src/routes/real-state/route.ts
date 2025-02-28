@@ -92,7 +92,7 @@ RealStateRouter.post(
       rating_summary
     } = body
 
-    const { user } = req.session
+    const { user } = req as any
     const { userId: owner } = user
 
     const foundUser = await userModel.findById(owner)
@@ -158,7 +158,7 @@ RealStateRouter.put(
     if (!property) throw new AppError('Property not found', 404)
 
     // Optional: Check if user is the owner
-    const { user } = req.session
+    const { user } = req as any
     if (property.owner.toString() !== user.userId) {
       throw new AppError('Not authorized to update this property', 403)
     }

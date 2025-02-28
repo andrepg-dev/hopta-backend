@@ -36,6 +36,8 @@ passport.use(
       done(null, newUser)
       return newUser
     } catch (error) {
+      console.log('[*] Error saving user in the database'.red)
+      console.log(error)
       done(null)
     }
   })

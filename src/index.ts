@@ -6,11 +6,12 @@ import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
+import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
-import './routes/auth/google/google-auth.config' // Import Google Strategy configuration
+import './routes/auth/google/google-auth.config'; // Import Google Strategy configuration
 import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
@@ -30,6 +31,15 @@ app.use(cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
+app.use(session({ // This is necessary for the Google Strategy but it's not used for the JWT
+  secret: 'secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    httpOnly: true,
+  }
+}))
 
 // Initialize Passport
 app.use(passport.initialize())

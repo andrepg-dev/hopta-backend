@@ -1,14 +1,11 @@
+import { UserI } from '@/types/login/user'
 import { NextFunction, Request, Response } from 'express'
 import { AppError } from '../handlers/error-handler'
 import { TokenManager } from '../utils/JWT/tokens-manager'
 
 declare global {
   namespace Express {
-    interface Request {
-      session: {
-        user: any
-      }
-    }
+    interface User extends UserI { }
   }
 }
 
@@ -20,9 +17,9 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   if (bearer !== 'Bearer' || !token) throw new AppError('Invalid token format', 401)
 
   try {
-    const decoded = TokenManager.verifyToken(token) // Verificar el access token
-    req.session = { user: decoded }
-    next() // <-- Continue to the next middleware
+    const decoded = TokenManager.verifyToken(token)
+    req.user = decoded as Express.User
+    next()
   } catch (error) {
     throw new AppError('Invalid token', 401)
   }
