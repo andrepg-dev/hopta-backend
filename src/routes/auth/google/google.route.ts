@@ -1,5 +1,5 @@
 import { AppError } from "@/src/handlers/error-handler";
-import { Router, Request, Response } from "express";
+import { Response, Router } from "express";
 import passport from "passport";
 
 const googleRouter = Router()

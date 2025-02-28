@@ -19,7 +19,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
   logger.saveLogs().error(message)
 
   if (statusCode == 500) {
-    throw res.status(statusCode).json({ success: false, error: 'Internal server error' })
+    throw res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
   }
 
   res.status(statusCode).json({ success: false, error: message })

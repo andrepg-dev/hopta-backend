@@ -11,25 +11,33 @@ passport.use(
   }, async (accessToken, refreshToken, profile, done) => {
     if (!profile.emails) return done(new AppError('No email found', 400))
 
-    console.log('[*] Saving user in the database'.blue)
+    try {
+      console.log('[*] Saving user in the database'.blue)
 
-    let user = await userModel
-      .create({
-        name: profile.displayName,
-        email: profile.emails[0].value,
-        auth: {
-          google: {
-            id: profile.id
-          }
-        },
-        profile_picture: profile.photos?.[0]?.value || ''
-      })
-      .catch((err) => {
-        throw new AppError(err, 404)
-      })
+      const newUser = await userModel
+        .create({
+          name: profile.name?.givenName || '',
+          last_name: profile.name?.familyName || '',
+          email: profile.emails[0].value,
+          auth: {
+            google: {
+              id: profile.id
+            }
+          },
+          profile_picture: profile.photos?.[0]?.value || ''
+        })
+        .catch((err) => {
+          throw new AppError(err, 404)
+        })
 
-    console.log('[*] User saved in the database'.green)
-    console.log(user)
+      console.log('[*] User saved in the database'.green)
+      console.log(newUser)
+
+      done(null, newUser)
+      return newUser
+    } catch (error) {
+      done(null)
+    }
   })
 )
 
