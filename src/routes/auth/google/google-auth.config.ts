@@ -12,7 +12,11 @@ passport.use(
     if (!profile.emails) return done(new AppError('No email found', 400))
 
     try {
-      console.log('[*] Saving user in the database'.blue)
+      const foundUser = await userModel.findOne({ email: profile.emails[0].value })
+      if (foundUser) {
+        done(null, foundUser)
+        return foundUser
+      }
 
       const newUser = await userModel
         .create({
@@ -30,14 +34,9 @@ passport.use(
           throw new AppError(err, 404)
         })
 
-      console.log('[*] User saved in the database'.green)
-      console.log(newUser)
-
       done(null, newUser)
       return newUser
     } catch (error) {
-      console.log('[*] Error saving user in the database'.red)
-      console.log(error)
       done(null)
     }
   })
