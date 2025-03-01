@@ -5,8 +5,8 @@ Estos serán los pasos que voy a estar siguiendo en el app
 #### Logs
 
 1. [x] Crear los logs en local con winston con rotación diaria
-2. Archivo de configuración para los logs
-3. Enviar los logs a DataDog
+2. [x] Archivo de configuración para los logs
+3. [] Enviar los logs a DataDog
 
 #### Configuración de emails
 
@@ -59,18 +59,15 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Realizar pagos con paypal
 - Realizar pagos con tarjeta de crédito
 
-
 #### Verificaciones
 
 - Verificar tarjeta de identidad
 - Verificar número de telefóno con código OTP
 - Verificar las imágenes que sean de real state con aws Recognition
-- Aplicar Oauth (LOGUEARSE CON GOOGLE)
+- Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
 
 ## Pendientes (Frontend)
 
 - Aprender sobre SEO
-
 - Preguntar si se permiten mascostas en el alquiler
-
 - Crear templates para enviar emails

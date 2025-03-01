@@ -32,12 +32,13 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(session({ // This is necessary for the Google Strategy but it's not used for the JWT
-  secret: 'secret',
+  secret: process.env.GOOGLE_SECRET_KEY!,
   resave: false,
   saveUninitialized: true,
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
   }
 }))
 

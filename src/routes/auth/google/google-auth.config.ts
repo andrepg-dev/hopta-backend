@@ -8,7 +8,7 @@ passport.use(
     clientID: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     callbackURL: process.env.GOOGLE_CALLBACK_URL || '',
-  }, async (accessToken, refreshToken, profile, done) => {
+  }, async (_, __, profile, done) => {
     if (!profile.emails) return done(new AppError('No email found', 400))
 
     try {

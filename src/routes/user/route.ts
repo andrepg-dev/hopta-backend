@@ -13,8 +13,8 @@ import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user'
 import { CreateUserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
-import { NextFunction, Request, Response, Router } from 'express'
 import crypto from 'crypto'
+import { NextFunction, Request, Response, Router } from 'express'
 
 const userRouter = Router()
 

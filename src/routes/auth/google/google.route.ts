@@ -2,7 +2,7 @@ import { COOKIES } from "@/constants/cookies-manager";
 import { AppError } from "@/src/handlers/error-handler";
 import { Cookies } from "@/src/utils/cookies/save-user-info";
 import { TokenManager } from "@/src/utils/JWT/tokens-manager";
-import { Request, Response, Router } from "express";
+import { Response, Router } from "express";
 import passport from "passport";
 
 const googleRouter = Router()
