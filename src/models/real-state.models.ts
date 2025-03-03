@@ -193,10 +193,10 @@ realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
     html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`
   })
 
-  const logger = new Logs()
-  logger.saveLogs().info(
-    `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
-  )
+  new Logs({
+    method: 'saveLogs',
+    message: `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
+  })
 })
 
 realStateSchema.plugin(mongoosePaginate)

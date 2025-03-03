@@ -13,8 +13,10 @@ tokenRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
   const token = req.cookies[COOKIES.jwt_refresh_token.name]
   if (!token) throw new AppError('Unauthorized', 401)
 
-  const logger = new Logs()
-  logger.saveLogs().info(`Token: ${token}`)
+  new Logs({
+    method: 'saveLogs',
+    message: `Token: ${token}`
+  })
 
   try {
     // Verificar el access token

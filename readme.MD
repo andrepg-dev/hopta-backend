@@ -66,8 +66,13 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Verificar las imágenes que sean de real state con aws Recognition
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
 
+### Búsqueda
+
+- Buscar propiedades
+- Buscar usuarios
+
 ## Pendientes (Frontend)
 
 - Aprender sobre SEO
-- Preguntar si se permiten mascostas en el alquiler
-- Crear templates para enviar emails
+- Preguntar si se permiten mascostas en el alquiler (No es tan importante)
+- Crear templates para enviar emails 

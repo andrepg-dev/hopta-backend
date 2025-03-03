@@ -14,7 +14,16 @@ class Logs {
     maxFiles: '14d'
   }
 
-  saveLogs() {
+
+  constructor({ method, message }: { method: 'saveLogs' | 'saveErrorLogs', message: any }) {
+    if (method === 'saveLogs') {
+      this.saveLogs().info(message)
+    } else if (method === 'saveErrorLogs') {
+      this.saveLogs().error(message)
+    }
+  }
+
+  private saveLogs() {
     return winston.createLogger({
       level: 'info',
       format: winston.format.json(),

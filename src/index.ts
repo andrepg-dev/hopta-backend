@@ -11,7 +11,7 @@ import helmet from 'helmet'
 import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
-import './routes/auth/google/google-auth.config'; // Import Google Strategy configuration
+import './routes/auth/google/google-auth.config'; // n
 import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
@@ -55,11 +55,13 @@ app.use('/s3', authMiddleware, s3Router)
 app.use('/real-state', authMiddleware, RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
-app.use('/stripe', stripeRouter)
+app.use('/payments', stripeRouter)
 app.use('/token', tokenRouter)
 app.use(errorHandler)
 
 app.listen(port, () => {
-  const logger = new Logs()
-  logger.saveLogs().info(`Hopta server is running! http://localhost:${port}`)
+  new Logs({
+    method: 'saveLogs',
+    message: `Hopta server is running! http://localhost:${port}`
+  })
 })

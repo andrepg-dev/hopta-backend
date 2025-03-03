@@ -4,7 +4,7 @@ import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/models/real-state.models'
 import { userModel } from '@/src/models/user.models'
 import { getPagination } from '@/src/utils/get-pagination.utils'
-import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state'
+import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
@@ -19,7 +19,6 @@ RealStateRouter.get(
 
     const client = algoliasearch('48NSHQPNAV', 'bcc0fa0f9d66506d7f90adb452cc582f');
 
-    const logs = new Logs()
 
     const processRecords = async () => {
       const datasetRequest = await RealStateModel.find().lean()
@@ -29,15 +28,24 @@ RealStateRouter.get(
         ...doc
       }))
 
-      logs.saveLogs().info(objects)
+      new Logs({
+        method: 'saveLogs',
+        message: objects
+      })
 
       return await client.saveObjects({ indexName: 'real_state_index', objects })
     }
 
     processRecords().then((response) => {
-      logs.saveLogs().info("Records processed successfully")
+      new Logs({
+        method: 'saveLogs',
+        message: "Records processed successfully"
+      })
     }).catch((error) => {
-      logs.saveLogs().error(error)
+      new Logs({
+        method: 'saveErrorLogs',
+        message: error
+      })
     })
 
     // Get all properties from the user with pagination

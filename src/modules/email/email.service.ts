@@ -21,16 +21,17 @@ export class EmailService {
           ...options
         })
 
-        // Save logs
-        const logger = new Logs()
-        logger.saveLogs().info(JSON.stringify(sentInfo))
+        new Logs({
+          method: 'saveLogs',
+          message: sentInfo
+        })
 
         resolve(sentInfo)
-      } catch (error) {
-        // Save logs
-        const logger = new Logs()
-        logger.saveLogs().error(error)
-
+      } catch (error: any) {
+        new Logs({
+          method: 'saveErrorLogs',
+          message: error
+        })
         reject(error)
       }
     })

@@ -22,7 +22,9 @@ export async function getPagination({ page, limit, Model, order = 'desc', sortBy
     const result = await Model.paginate(filters, options)
     return result
   } catch (error) {
-    const logger = new Logs()
-    logger.saveLogs().error(error)
+    new Logs({
+      method: 'saveErrorLogs',
+      message: error
+    })
   }
 }
