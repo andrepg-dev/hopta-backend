@@ -12,14 +12,57 @@ import { algoliasearch } from 'algoliasearch'
 import Logs from '@/src/modules/logs/save-logs.service'
 
 const RealStateRouter = Router()
+const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string);
+
+// Helper function to sync with Algolia
+const syncWithAlgolia = async (operation: 'save' | 'update' | 'delete', data: any) => {
+  try {
+    switch (operation) {
+      case 'save':
+      case 'update':
+        await client.saveObjects({ indexName: 'real_state', objects: [data] })
+        break;
+      case 'delete':
+        await client.deleteObject(data._id.toString());
+        break;
+    }
+    new Logs({
+      method: 'saveLogs',
+      message: `Algolia ${operation} operation successful`
+    });
+  } catch (error) {
+    new Logs({
+      method: 'saveErrorLogs',
+      message: `Error syncing with Algolia: ${error}`
+    });
+    throw new AppError(`Error syncing with Algolia: ${error}`, 500);
+  }
+};
+
+RealStateRouter.get('/search', asyncHandler(async (req: Request, res: Response) => {
+  const query = req.query.q as string
+
+  try {
+    const results = await client.search({
+      requests: [
+        {
+          indexName: 'real_state',
+          query
+        }
+      ],
+      strategy: 'none'
+    }) as any
+
+    res.json(results.results[0].hits)
+  } catch (error) {
+    throw new AppError('Error searching properties', 500)
+  }
+}))
+
 
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-
-    const client = algoliasearch('48NSHQPNAV', 'bcc0fa0f9d66506d7f90adb452cc582f');
-
-
     const processRecords = async () => {
       const datasetRequest = await RealStateModel.find().lean()
 
@@ -33,7 +76,7 @@ RealStateRouter.get(
         message: objects
       })
 
-      return await client.saveObjects({ indexName: 'real_state_index', objects })
+      return await client.saveObjects({ indexName: 'real_state', objects })
     }
 
     processRecords().then((response) => {
@@ -127,6 +170,10 @@ RealStateRouter.post(
       })
 
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })
+
+      // Sync with Algolia
+      await syncWithAlgolia('save', property);
+
       res.status(201).send(property)
     } catch (error: any) {
       throw new AppError(error.message || 'Server error creating property', 500)
@@ -144,8 +191,14 @@ RealStateRouter.delete(
     const deletedProperty = await RealStateModel.findByIdAndDelete(id)
     if (!deletedProperty) throw new AppError('Property not found', 404)
 
-    // Ahora TypeScript reconocerá `owner`
-    await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
+    // Update Algolia
+    await syncWithAlgolia('delete', deletedProperty);
+
+    await userModel.updateOne(
+      { _id: (deletedProperty as unknown as RealStateIWithOwner).owner },
+      { $pull: { properties: id } }
+    )
+
     res.json({ success: true, message: 'Property deleted successfully' })
   })
 )
@@ -188,6 +241,9 @@ RealStateRouter.put(
         runValidators: true
       }
     )
+
+    // Sync with Algolia
+    await syncWithAlgolia('update', updatedProperty);
 
     res.json({
       success: true,
