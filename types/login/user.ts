@@ -68,4 +68,7 @@ export interface UserI {
   about?: About
 }
 
-export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews'> { }
+export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | 'auth'> {
+  email: string
+  password: string
+}

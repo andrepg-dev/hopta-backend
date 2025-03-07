@@ -1,6 +1,6 @@
 import { COOKIES } from '@/constants/cookies-manager'
 import { AppError } from '@/src/handlers/error-handler'
-import { refreshTokenModel } from '@/src/models/refresh-token.models'
+import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 

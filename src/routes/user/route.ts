@@ -4,16 +4,18 @@ import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import { refreshTokenModel } from '@/src/models/refresh-token.models'
-import { userModel } from '@/src/models/user.models'
-import { verificationCodeModel } from '@/src/models/verification-code.models'
 import { EmailService } from '@/src/modules/email/email.service'
+import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
+import { userModel } from '@/src/schemas/user.schemas'
+import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
+import { TwilioSendSMS } from '@/src/modules/twilio/twilio-sms-servcice'
 import { Cookies } from '@/src/utils/cookies/save-user-info'
+import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
+import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
-import crypto from 'crypto'
 import { NextFunction, Request, Response, Router } from 'express'
 
 const userRouter = Router()
@@ -26,18 +28,17 @@ userRouter.get(
 )
 
 userRouter.post(
-  '/signin',
+  '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    const { name, last_name, email, auth, contact, social_media, favorites_properties, personal_information, location, profile_picture, properties, about } = req.body
+    const { name, last_name, email, password, contact, social_media, favorites_properties, personal_information, location, profile_picture, properties, about } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
       throw new AppError('Invalid identity document format. Must be 13 digits.', 400)
     }
 
-    let password = auth?.local?.password
     if (!password) {
-      throw new AppError('Password is required for local registration', 400)
+      throw new AppError('Password is required', 400)
     }
 
     // Check if user already exists
@@ -47,7 +48,7 @@ userRouter.post(
     }
 
     // Generate verification code
-    const verificationCode = crypto.randomInt(100000, 999999).toString()
+    const verificationCode = RandomIntUtils.randomInt()
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -210,5 +211,68 @@ userRouter.put(
     await userModel.updateOne({ email: req.body.email }, req.body).then((user) => res.send(user))
   })
 )
+
+userRouter.post('/register-sms', asyncHandler(async (req: Request, res: Response) => {
+  const { phone } = req.body
+
+  if (!phone) {
+    throw new AppError('Phone number is required', 400)
+  }
+
+  // Check if the phone number is valid
+  if (!isPhoneNumber(phone)) {
+    throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+  }
+
+  const alreadyExists = await userModel.findOne({ phone })
+
+  if (alreadyExists) {
+    throw new AppError('An account with this phone number already exists, please login', 400)
+  }
+
+  // Send the SMS
+  const smsTwilioService = new TwilioSendSMS()
+  await smsTwilioService.sendSMSCode({ phone })
+
+  res.json({ success: true, message: 'SMS sent successfully' })
+}))
+
+userRouter.post("/verify-sms", asyncHandler(async (req: Request, res: Response) => {
+  let { phone, code } = req.body
+
+  phone = phone?.toString()
+  code = code?.toString()
+
+  console.log(phone, code)
+
+  if (!phone || !code) {
+    throw new AppError('Phone and code are required', 400)
+  }
+
+  // Check if the code is a number and has 6 digits
+  if (!/^\d{6}$/.test(code)) {
+    throw new AppError('Invalid code format.', 400)
+  }
+
+  // Check if the phone number is valid
+  if (!isPhoneNumber(phone)) {
+    throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+  }
+
+  // Check if the code is valid
+  const smsTwilioService = new TwilioSendSMS()
+  const verification = await smsTwilioService.verifySMSCode({ phone, code })
+
+  if (!verification) {
+    throw new AppError('Invalid or expired verification code', 400)
+  }
+
+  await smsTwilioService.sendSMS({
+    phone,
+    message: `Your account has been created successfully. Welcome to Hopta :)`
+  })
+
+  res.json({ success: true, message: 'User created successfully with phone number: ' + phone })
+}))
 
 export default userRouter

@@ -3,13 +3,13 @@ import { line_items } from '@/constants/stripe/session.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import Logs from '@/src/modules/logs/save-logs.service'
-import { randomInt } from 'crypto'
+import RandomIntUtils from '@/src/utils/random-int.utils'
 import { Request, Response, Router } from 'express'
 
 const paymentRouter = Router()
 
 paymentRouter.get('/create-checkout-session', asyncHandler(async (req: Request, res: Response) => {
-  const code = randomInt(100000, 999999).toString()
+  const code = RandomIntUtils.randomInt()
 
   const { plan } = req.query
 

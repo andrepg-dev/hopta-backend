@@ -1,5 +1,5 @@
 import { AppError } from '@/src/handlers/error-handler'
-import { userModel } from '@/src/models/user.models'
+import { userModel } from '@/src/schemas/user.schemas'
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 

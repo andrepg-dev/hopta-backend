@@ -1,8 +1,8 @@
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import { RealStateModel } from '@/src/models/real-state.models'
-import { userModel } from '@/src/models/user.models'
+import { RealStateModel } from '@/src/schemas/real-state.schemas'
+import { userModel } from '@/src/schemas/user.schemas'
 import { getPagination } from '@/src/utils/get-pagination.utils'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
@@ -10,6 +10,7 @@ import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
 import { algoliasearch } from 'algoliasearch'
 import Logs from '@/src/modules/logs/save-logs.service'
+import { authMiddleware } from '@/src/middlewares/authMiddleware'
 
 const RealStateRouter = Router()
 const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string);
@@ -125,6 +126,7 @@ RealStateRouter.get(
 
 RealStateRouter.post(
   '/',
+  authMiddleware,
   validateRequest(realStateSchema),
   asyncHandler(async (req: Request<{}, {}, RealStateI>, res: Response) => {
     const { body } = req
@@ -183,10 +185,27 @@ RealStateRouter.post(
 
 RealStateRouter.delete(
   '/:id',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
     if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+
+    const { user } = req as any
+    const { userId: owner } = user
+
+    const foundUser = await userModel.findById(owner)
+    if (!foundUser) throw new AppError('User not found', 404)
+
+    const property = await RealStateModel.findById(id) as unknown as RealStateIWithOwner
+    if (!property) throw new AppError('Property not found', 404)
+
+    new Logs({
+      method: 'saveLogs',
+      message: property
+    })
+
+    if (property.owner.toString() !== owner) throw new AppError('You are not the owner of this property', 403)
 
     const deletedProperty = await RealStateModel.findByIdAndDelete(id)
     if (!deletedProperty) throw new AppError('Property not found', 404)

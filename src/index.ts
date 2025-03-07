@@ -52,7 +52,7 @@ app.set('trust proxy', 1)
 const port = CONNECTIONS.PORT
 
 app.use('/s3', authMiddleware, s3Router)
-app.use('/real-state', authMiddleware, RealStateRouter)
+app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
 app.use('/payments', stripeRouter)

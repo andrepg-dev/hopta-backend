@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.705.0",
+    "@types/twilio": "^3.19.2",
     "algoliasearch": "^5.20.3",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
@@ -24,7 +25,6 @@
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
     "helmet": "^8.0.0",
-    "instantsearch.js": "^4.77.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.4",
     "mongoose-paginate-v2": "^1.9.0",
@@ -35,6 +35,7 @@
     "response-time": "^2.3.3",
     "session": "^0.1.0",
     "stripe": "^17.7.0",
+    "twilio": "^5.4.5",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.24.1"

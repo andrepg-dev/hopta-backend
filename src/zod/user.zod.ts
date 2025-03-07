@@ -11,21 +11,7 @@ export const createUserSchema = z.object({
     })
     .optional(),
   email: z.string().email('Invalid email address.').max(120),
-  auth: z.object({
-    local: z.object({
-      password: z.string().min(6, 'Password must be at least 6 characters long.').max(120)
-    }).optional(),
-    google: z.object({
-      id: z.string()
-    }).optional(),
-    facebook: z.object({
-      id: z.string()
-    }).optional(),
-    sms: z.object({
-      phoneNumber: z.string(),
-      verified: z.boolean().default(false)
-    }).optional()
-  }).optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters long.').max(120),
   reviews: z
     .array(
       z.object({

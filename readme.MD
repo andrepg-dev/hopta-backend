@@ -64,16 +64,16 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Verificar tarjeta de identidad ❎
 - Verificar las imágenes que sean de real state con aws Recognition ❎
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
-- Verificar número de telefóno con código OTP ❎ <- TODO: Este es el siguiente paso con Twilio
-- Enviar emails de bienvenida a los usuarios con SendGrid ❎ <- TODO: Este es el siguiente paso con Twilio
+- Verificar número de telefóno con código OTP ✖️ <- TODO: Este es el siguiente paso con Twilio
+- Enviar emails de bienvenida a los usuarios con SendGrid ✖️ <- TODO: Este es el siguiente paso con Twilio
 
 ### Búsqueda
 
 - Buscar propiedades con algolia ✅
-- Buscar usuarios ❎
+- Buscar usuarios ✖️
 
 ## Pendientes (Frontend)
 
-- Aprender sobre SEO ❎
-- Preguntar si se permiten mascostas en el alquiler (No es tan importante) ❎
-- Crear templates para enviar emails ❎
+- Aprender sobre SEO ✖️
+- Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
+- Crear templates para enviar emails ✖️
