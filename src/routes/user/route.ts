@@ -368,6 +368,7 @@ userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Resp
 
   res.json({
     success: true,
+    message: 'Profile completed successfully',
     user: userWithoutAuth,
     token: accessToken
   })
