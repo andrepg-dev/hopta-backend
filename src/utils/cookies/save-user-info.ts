@@ -1,13 +1,14 @@
 import { COOKIES } from '@/constants/cookies.constants'
-import { Response } from 'express'
+import { CookieOptions, Response } from 'express'
 
 export abstract class refreshTokenCookies {
-  static setRefreshCookie(res: Response, cookieName: string = COOKIES.cookies_token_name, token: string, options = {}) {
+  static setRefreshCookie({ res, cookieName = COOKIES.jwt_refresh_token.name, token, options = {} }:
+    { res: Response, cookieName?: string, token: string, options?: CookieOptions }) {
     const defaultOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict' as 'strict' | 'lax' | 'none',
-      maxAge: COOKIES.jwt_refresh_token.expires // Convert to number
+      maxAge: COOKIES.jwt_refresh_token.expires
     }
 
     const cookieOptions = { ...defaultOptions, ...options }

@@ -15,7 +15,7 @@ class Logs {
   }
 
 
-  constructor({ method, message }: { method: 'saveLogs' | 'saveErrorLogs', message: any }) {
+  constructor({ method, message = 'saveLogs'}: { method?: 'saveLogs' | 'saveErrorLogs', message: any }) {
     if (method === 'saveLogs') {
       this.saveLogs().info(message)
     } else if (method === 'saveErrorLogs') {

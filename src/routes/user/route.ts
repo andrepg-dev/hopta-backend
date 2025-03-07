@@ -4,8 +4,11 @@ import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import { Cookies } from '@/src/modules/cookies/cookies.service'
 import { EmailService } from '@/src/modules/email/email.service'
+import Logs from '@/src/modules/logs/save-logs.service'
 import { TwilioSendSMS } from '@/src/modules/twilio/twilio-sms.service'
+import { pedingUserModel } from '@/src/schemas/pending-sms-user.schemas'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
@@ -124,12 +127,15 @@ userRouter.post(
     const { auth: _, ...userWithoutAuth } = userData
 
     // Access token
-    const accessToken = TokenManager.accessToken({ userId: userData._id as string })
+    const accessToken = TokenManager.accessToken({ payload: { userId: userData._id as string } })
 
     // Refresh token
-    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
-    refreshTokenCookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
-    TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
+    refreshTokenCookies.setRefreshCookie({
+      res,
+      token: refreshToken
+    })
+    TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
     res.json({
       success: true,
@@ -166,12 +172,15 @@ userRouter.post(
     const { auth: _, ...userWithoutAuth } = userData
 
     // Access token
-    const token = TokenManager.accessToken({ userId: userData._id as string })
+    const token = TokenManager.accessToken({ payload: { userId: userData._id as string } })
 
     // Refresh token
-    const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
-    refreshTokenCookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
-    TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
+    refreshTokenCookies.setRefreshCookie({
+      res,
+      token: refreshToken
+    })
+    TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
     // Response
     res.json({ success: true, user: userWithoutAuth, token })
@@ -224,7 +233,7 @@ userRouter.post('/register-sms', asyncHandler(async (req: Request, res: Response
     throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
   }
 
-  const alreadyExists = await userModel.findOne({ phone })
+  const alreadyExists = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
 
   if (alreadyExists) {
     throw new AppError('An account with this phone number already exists, please login', 400)
@@ -237,7 +246,7 @@ userRouter.post('/register-sms', asyncHandler(async (req: Request, res: Response
   res.json({ success: true, message: 'SMS sent successfully' })
 }))
 
-userRouter.post("/verify-sms", asyncHandler(async (req: Request, res: Response) => {
+userRouter.post('/verify-sms', asyncHandler(async (req: Request, res: Response) => {
   let { phone, code } = req.body
 
   phone = phone?.toString()
@@ -267,12 +276,90 @@ userRouter.post("/verify-sms", asyncHandler(async (req: Request, res: Response) 
     throw new AppError('Invalid or expired verification code', 400)
   }
 
+  const tempToken = TokenManager.tempToken({ payload: { phone } })
+
+  // Save in cookies 
+  const cookies = new Cookies(req, res)
+  cookies.saveCookie('tempToken', tempToken)
+
+  console.log(tempToken)
+
   await smsTwilioService.sendSMS({
     phone,
-    message: `Your account has been created successfully. Welcome to Hopta :)`
+    message: `You are close to complete your account.`
   })
 
-  res.json({ success: true, message: 'User created successfully with phone number: ' + phone })
+  res.json({ success: true, message: 'SMS sent successfully' })
+}))
+
+userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Response) => {
+  const { name, last_name } = req.body
+
+  const cookies = new Cookies(req, res)
+  const tempToken = cookies.getCookie('tempToken')
+
+  if (!name || !last_name) {
+    throw new AppError('name and last name are required', 400)
+  }
+
+  if (!tempToken) {
+    throw new AppError('Authorization token required', 401)
+  }
+
+  const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
+
+  new Logs({ message: decoded })
+
+  if (!decoded.phone) {
+    throw new AppError('Invalid token', 401)
+  }
+
+  const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+
+  if (!pendingUser) {
+    throw new AppError('Invalid or expired verification', 400)
+  }
+
+  const user = await userModel.create({
+    name,
+    last_name,
+    auth: {
+      sms: {
+        phoneNumber: decoded.phone,
+        verified: true
+      }
+    },
+    contact: {
+      phone_number: decoded.phone,
+      is_phone_number_verified: true
+    },
+  })
+
+  await pedingUserModel.deleteOne({ _id: pendingUser._id })
+
+  const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
+  const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
+
+  refreshTokenCookies.setRefreshCookie({
+    res,
+    token: refreshToken
+  })
+
+  await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
+
+  const { auth: _, ...userWithoutAuth } = user.toObject()
+
+  const smsTwilioService = new TwilioSendSMS()
+  await smsTwilioService.sendSMS({
+    phone: decoded.phone,
+    message: `Hi ${name} ${last_name}, welcome to Hopta :)`
+  })
+
+  res.json({
+    success: true,
+    user: userWithoutAuth,
+    token: accessToken
+  })
 }))
 
 export default userRouter

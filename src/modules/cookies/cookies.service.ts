@@ -9,7 +9,7 @@ export class Cookies {
     this.res = res
   }
 
-  saveCookie(name: string, value: string, options: CookieOptions) {
+  saveCookie(name: string, value: string, options?: CookieOptions) {
     this.res.cookie(name, value, options ? options : {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

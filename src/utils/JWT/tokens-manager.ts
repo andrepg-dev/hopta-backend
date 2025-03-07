@@ -5,28 +5,28 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
 export class TokenManager {
-  static accessToken({ userId }: { userId: string }) {
-    return jwt.sign({ userId }, COOKIES.JWT_SECRET_KEY, {
-      expiresIn: COOKIES.expiresIn.hourString
+  static accessToken({ payload }: { payload: any }) {
+    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, {
+      expiresIn: COOKIES.expiresIn.hourString,
     })
   }
 
-  static refreshToken({ userId }: { userId: string }) {
-    const refreshToken = jwt.sign({ userId }, COOKIES.jwt_refresh_token.SECRET_KEY, {
+  static refreshToken({ payload }: { payload: any }) {
+    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY, {
       expiresIn: COOKIES.jwt_refresh_token.dayString
     })
 
     return refreshToken
   }
 
-  static async saveRefreshTokenInDB({ userId }: { userId: string }) {
-    const token = this.refreshToken({ userId })
+  static async saveRefreshTokenInDB({ payload }: { payload: any }) {
+    const token = this.refreshToken({ payload })
 
     // Encriptar el refresh token en la base de datos
     const hashed = bcrypt.hashSync(token, 10)
 
     await refreshTokenModel.create({
-      userId,
+      payload,
       token: hashed,
       expires: new Date(Date.now() + COOKIES.jwt_refresh_token.expires)
     })
@@ -34,10 +34,10 @@ export class TokenManager {
     return token
   }
 
-  static async findRefreshTokenInDB({ userId, token }: { userId: string; token: string }) {
+  static async findRefreshTokenInDB({ payload, token }: { payload: any; token: string }) {
     if (!token) throw new AppError('Token not provided', 404)
 
-    const storedToken = await refreshTokenModel.findOne({ userId })
+    const storedToken = await refreshTokenModel.findOne({ payload })
     if (!storedToken) throw new AppError('Token not found', 404)
 
     const isTokenValid = await bcrypt.compare(token, storedToken.token)
@@ -49,15 +49,26 @@ export class TokenManager {
   }
 
   static verifyRefreshToken(token: string) {
-    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY) as { userId: string }
+    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY) as { payload: any }
   }
 
-  static async revokeToken({ userId }: { userId: string }) {
-    await refreshTokenModel.findOneAndDelete({ user: userId })
+  static async revokeToken({ payload }: { payload: any }) {
+    await refreshTokenModel.findOneAndDelete({ payload })
   }
 
   // Create a cron job to clean the expired tokens
   static async cleanExpiredTokens() {
     await refreshTokenModel.deleteMany({ expires: { $lt: new Date() } })
   }
+
+  static tempToken({ payload }: { payload: any }) {
+    return jwt.sign(payload, COOKIES.general.SECRET_KEY, {
+      expiresIn: COOKIES.general.expiresIn.hourString
+    })
+  }
+
+  static verifyTempToken(token: string) {
+    return jwt.verify(token, COOKIES.general.SECRET_KEY)
+  }
+
 }

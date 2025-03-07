@@ -13,9 +13,12 @@ googleRouter.get('/callback', passport.authenticate('google', { failureRedirect:
 
   const { user } = req
 
-  const token = TokenManager.accessToken({ userId: user._id as string })
-  const refreshToken = TokenManager.refreshToken({ userId: user._id as string })
-  refreshTokenCookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+  const token = TokenManager.accessToken({ payload: { userId: user._id as string } })
+  const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
+  refreshTokenCookies.setRefreshCookie({
+    res,
+    token: refreshToken
+  })
 
   if (!req.user) {
     throw new AppError('Authentication failed', 401)

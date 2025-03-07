@@ -20,11 +20,14 @@ tokenRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
 
   try {
     // Verificar el access token
-    const user = TokenManager.verifyRefreshToken(token) as refreshTokenI
-    const refreshToken = await TokenManager.findRefreshTokenInDB({ token, userId: user.userId })
+    const decodedToken = TokenManager.verifyRefreshToken(token)
+    const refreshToken = await TokenManager.findRefreshTokenInDB({
+      token,
+      payload: { userId: decodedToken.payload.userId }
+    })
 
-    if (!refreshToken) throw new AppError('Token not found', 404) // we dont gonna refresh a token that is not in the database
-    const accessToken = TokenManager.accessToken({ userId: user.userId })
+    if (!refreshToken) throw new AppError('Token not found', 404)
+    const accessToken = TokenManager.accessToken({ payload: { userId: decodedToken.payload.userId } })
     res.json({ accessToken })
   } catch (error) {
     throw new AppError('Invalid token ' + error, 401)
