@@ -1,6 +1,6 @@
 import { connectToDatabase } from '@/connection/connect'
-import { CONNECTIONS } from '@/constants/connection'
-import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security'
+import { CONNECTIONS } from '@/constants/connection.constants'
+import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security.constants'
 import Logs from '@/src/modules/logs/save-logs.service'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'

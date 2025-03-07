@@ -1,15 +1,15 @@
-import { COOKIES } from '@/constants/cookies-manager'
-import { envs } from '@/constants/env'
+import { COOKIES } from '@/constants/cookies.constants'
+import { envs } from '@/constants/env.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { EmailService } from '@/src/modules/email/email.service'
+import { TwilioSendSMS } from '@/src/modules/twilio/twilio-sms-servcice'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
-import { TwilioSendSMS } from '@/src/modules/twilio/twilio-sms-servcice'
-import { Cookies } from '@/src/utils/cookies/save-user-info'
+import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
@@ -128,7 +128,7 @@ userRouter.post(
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
-    Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+    refreshTokenCookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
     TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
     res.json({
@@ -170,7 +170,7 @@ userRouter.post(
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ userId: userData._id as string })
-    Cookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
+    refreshTokenCookies.setRefreshCookie(res, COOKIES.jwt_refresh_token.name, refreshToken)
     TokenManager.saveRefreshTokenInDB({ userId: userData._id as string })
 
     // Response
@@ -186,7 +186,7 @@ userRouter.delete(
     if (!token) throw new AppError('Unauthorized', 401)
 
     await refreshTokenModel.findOneAndDelete({ token })
-    Cookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
+    refreshTokenCookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
     res.json({ success: true })
   })
 )

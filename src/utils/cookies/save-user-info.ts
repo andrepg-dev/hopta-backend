@@ -1,7 +1,7 @@
-import { COOKIES } from '@/constants/cookies-manager'
+import { COOKIES } from '@/constants/cookies.constants'
 import { Response } from 'express'
 
-export abstract class Cookies {
+export abstract class refreshTokenCookies {
   static setRefreshCookie(res: Response, cookieName: string = COOKIES.cookies_token_name, token: string, options = {}) {
     const defaultOptions = {
       httpOnly: true,

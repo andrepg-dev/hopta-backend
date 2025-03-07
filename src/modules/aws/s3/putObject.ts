@@ -1,4 +1,4 @@
-import { client } from '@/constants/aws/s3/credential'
+import { client } from '@/constants/aws/s3/credential.constants'
 import { PutObjectParams } from '@/types/aws/s3.model'
 import { PutObjectCommand, S3ServiceException } from '@aws-sdk/client-s3'
 import { readFile } from 'node:fs/promises'

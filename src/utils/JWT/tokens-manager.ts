@@ -1,4 +1,4 @@
-import { COOKIES } from '@/constants/cookies-manager'
+import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import bcrypt from 'bcrypt'

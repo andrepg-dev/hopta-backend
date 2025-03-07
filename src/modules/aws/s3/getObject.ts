@@ -1,4 +1,4 @@
-import { client } from '@/constants/aws/s3/credential'
+import { client } from '@/constants/aws/s3/credential.constants'
 import { IGetObjectParams } from '@/types/aws/s3.model'
 import { GetObjectCommand, NoSuchKey, S3ServiceException } from '@aws-sdk/client-s3'
 

@@ -1,4 +1,4 @@
-import { client } from '@/constants/aws/s3/credential'
+import { client } from '@/constants/aws/s3/credential.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import { IDeleteObjectParams } from '@/types/aws/s3.model'
 import { DeleteObjectCommand, S3ServiceException, waitUntilObjectNotExists } from '@aws-sdk/client-s3'

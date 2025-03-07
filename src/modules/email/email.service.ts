@@ -1,4 +1,4 @@
-import { envs } from '@/constants/env'
+import { envs } from '@/constants/env.constants'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
 import Logs from '../logs/save-logs.service'

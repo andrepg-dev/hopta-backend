@@ -1,4 +1,4 @@
-import { COOKIES } from "@/constants/cookies-manager";
+import { COOKIES } from "@/constants/cookies.constants";
 import { AppError } from "@/src/handlers/error-handler";
 import asyncHandler from "@/src/helpers/try-catch-async-handler";
 import Logs from "@/src/modules/logs/save-logs.service";
