@@ -26,7 +26,7 @@ export class TokenManager {
     const hashed = bcrypt.hashSync(token, 10)
 
     await refreshTokenModel.create({
-      payload,
+      userId: payload.userId,
       token: hashed,
       expires: new Date(Date.now() + COOKIES.jwt_refresh_token.expires)
     })

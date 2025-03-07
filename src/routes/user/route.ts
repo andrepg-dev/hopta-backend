@@ -282,14 +282,17 @@ userRouter.post('/verify-sms', asyncHandler(async (req: Request, res: Response) 
   const cookies = new Cookies(req, res)
   cookies.saveCookie('tempToken', tempToken)
 
-  console.log(tempToken)
+  // Save user in pending user to complete the profile
+  await pedingUserModel.create({ phone })
 
   await smsTwilioService.sendSMS({
     phone,
-    message: `You are close to complete your account.`
+    message: `Phone number verified successfully. Complete the profile with the next step to complete.`
+  }).catch(err => {
+    new Logs({ message: err, method: 'saveErrorLogs' })
   })
 
-  res.json({ success: true, message: 'SMS sent successfully' })
+  res.json({ success: true, message: 'Phone number verified successfully. Complete the profile with the next step to complete.' })
 }))
 
 userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Response) => {
@@ -297,6 +300,10 @@ userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Resp
 
   const cookies = new Cookies(req, res)
   const tempToken = cookies.getCookie('tempToken')
+
+  console.log({ tempToken, name, last_name })
+
+  new Logs({ message: { tempToken, cookies, name, last_name } })
 
   if (!name || !last_name) {
     throw new AppError('name and last name are required', 400)
@@ -308,13 +315,15 @@ userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Resp
 
   const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
 
-  new Logs({ message: decoded })
+  console.log({ decoded, phone: decoded.phone })
 
   if (!decoded.phone) {
     throw new AppError('Invalid token', 401)
   }
 
   const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+
+  new Logs({ message: pendingUser })
 
   if (!pendingUser) {
     throw new AppError('Invalid or expired verification', 400)
@@ -353,6 +362,8 @@ userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Resp
   await smsTwilioService.sendSMS({
     phone: decoded.phone,
     message: `Hi ${name} ${last_name}, welcome to Hopta :)`
+  }).catch(err => {
+    new Logs({ message: err, method: 'saveErrorLogs' })
   })
 
   res.json({

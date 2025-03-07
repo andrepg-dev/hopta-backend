@@ -14,8 +14,7 @@ export class Cookies {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict' as 'strict' | 'lax' | 'none',
-      signed: true,
-      maxAge: 1800000. // Convert to number
+      maxAge: 1800000,
     })
   }
 

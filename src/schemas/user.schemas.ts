@@ -12,18 +12,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    contact: {
-      phone_number: {
-        type: String
-      },
-      is_phone_number_verified: {
-        type: Boolean,
-        default: false
-      },
-    },
     email: {
       type: String,
-      required: true,
       unique: true
     },
     auth: {
@@ -42,6 +32,15 @@ const userSchema = new mongoose.Schema(
         phoneNumber: { type: String, unique: true, sparse: true },
         verified: { type: Boolean, default: false }
       }
+    },
+    contact: {
+      phone_number: {
+        type: String
+      },
+      is_phone_number_verified: {
+        type: Boolean,
+        default: false
+      },
     },
     reviews: {
       type: [
