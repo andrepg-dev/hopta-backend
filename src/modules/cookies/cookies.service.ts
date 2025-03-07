@@ -10,7 +10,13 @@ export class Cookies {
   }
 
   saveCookie(name: string, value: string, options: CookieOptions) {
-    this.res.cookie(name, value, options)
+    this.res.cookie(name, value, options ? options : {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as 'strict' | 'lax' | 'none',
+      signed: true,
+      maxAge: 1800000. // Convert to number
+    })
   }
 
   getCookie(name: string) {
@@ -19,5 +25,11 @@ export class Cookies {
 
   deleteCookie(name: string) {
     this.res.clearCookie(name)
+  }
+
+  deleteAllCookies() {
+    Object.keys(this.req.cookies).forEach(key => {
+      this.res.clearCookie(key)
+    })
   }
 }
