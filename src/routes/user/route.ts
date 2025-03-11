@@ -85,14 +85,18 @@ userRouter.post(
     // Send verification email
     const emailService = new EmailService()
     await emailService.sendEmail({
-      from: envs.MAILER_EMAIL,
-      to: email,
+      to: {
+        email: email.toLowerCase(),
+        name: `${name} ${last_name}`
+      },
       subject: 'Verify your email',
       html: `
         <h1>Welcome to Hopta!</h1>
         <p>Your verification code is: <strong>${verificationCode}</strong></p>
         <p>This code will expire in 30 minutes.</p>
-      `
+        <p>If you did not request this verification code, please ignore this email.</p>
+      `,
+      provider: 'sendgrid'
     })
 
     res.json({

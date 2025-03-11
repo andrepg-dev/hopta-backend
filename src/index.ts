@@ -11,6 +11,7 @@ import helmet from 'helmet'
 import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
+import { EmailService } from './modules/email/email.service'
 import './routes/auth/google/google-auth.config'; // n
 import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
@@ -56,7 +57,20 @@ app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
 app.use('/payments', stripeRouter)
-app.use('/token', tokenRouter)
+app.use('/refresh-token', tokenRouter)
+
+app.get("/email", async (req, res) => {
+  const email = new EmailService()
+  const response = await email.sendEmail({
+    to: {
+      email: 'asponceg@gmail.com'
+    },
+    subject: 'Test email',
+    html: 'Test email'
+  })
+  res.send(response)
+})
+
 app.use(errorHandler)
 
 app.listen(port, () => {

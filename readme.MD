@@ -56,15 +56,15 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 #### Pagos
 
 - Realizar pagos con stripe ✅
-- Realizar pagos con paypal 
+- Realizar pagos con paypal
 - Realizar pagos con tarjeta de crédito ✅
 
 #### Verificaciones
 
 - Verificar tarjeta de identidad ❎
-- Verificar las imágenes que sean de real state con aws Recognition ❎
+- Verificar las imágenes que sean de real state con aws Recognition ✖️
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
-- Verificar número de telefóno con código OTP ✖️ <- TODO: Este es el siguiente paso con Twilio
+- Verificar número de telefóno con código OTP ✅
 - Enviar emails de bienvenida a los usuarios con SendGrid ✖️ <- TODO: Este es el siguiente paso con Twilio
 
 ### Búsqueda
@@ -74,6 +74,6 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 ## Pendientes (Frontend)
 
-- Aprender sobre SEO ✖️
+- Aprender sobre SEO en NextJS ✖️
 - Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
 - Crear templates para enviar emails ✖️
