@@ -7,7 +7,7 @@ import Logs from '../logs/save-logs.service'
 interface SendMailOptions extends nodemailer.SendMailOptions { }
 
 const templates = {
-  verification_code: 'd-4c5c66eae47f47919e5d58f1b302539d'
+  verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd'
 }
 
 class EmailServiceSendGrid {

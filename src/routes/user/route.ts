@@ -105,7 +105,8 @@ userRouter.post(
       template: 'verification_code',
       dynamicTemplateData: {
         name: `${name} ${last_name}`,
-        code: verificationCode
+        code: verificationCode,
+        email: email.toLowerCase()
       }
     })
 
@@ -116,14 +117,18 @@ userRouter.post(
   })
 )
 
-userRouter.post(
+userRouter.get(
   '/verify-email',
-  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response) => {
-    const { email, code } = req.body
+  asyncHandler(async (req: Request<{}, {}, {}, { email: string; code: string }>, res: Response) => {
+    const { email, code } = req.query
+
+    if (!email || !code) {
+      throw new AppError('Email and code are required', 400)
+    }
 
     const verificationData = await verificationCodeModel.findOne({
-      email: email.toLowerCase(),
-      code
+      email: email?.toString().toLowerCase(),
+      code: code?.toString()
     })
 
     if (!verificationData) {

@@ -53,6 +53,8 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre.
 
+- Crear templates para enviar emails ✅
+
 #### Pagos
 
 - Realizar pagos con stripe ✅
@@ -76,4 +78,3 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 - Aprender sobre SEO en NextJS ✖️
 - Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
-- Crear templates para enviar emails ✖️
