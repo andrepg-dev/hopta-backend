@@ -29,7 +29,7 @@ const realStateSchema = new mongoose.Schema(
       }
     },
     square_meters: {
-      type: Number,
+      type: Number
     },
     price: {
       type: Number,
@@ -99,29 +99,33 @@ const realStateSchema = new mongoose.Schema(
       }
     },
     visitors: {
-      type: [{
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-          required: true,
-          immutable: true
-        },
-        visit_date: {
-          type: Date,
-          default: Date.now
-        },
-        comments: {
-          type: String
+      type: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            immutable: true
+          },
+          visit_date: {
+            type: Date,
+            default: Date.now
+          },
+          comments: {
+            type: String
+          }
         }
-      }],
+      ],
       default: []
     },
-    saved_by: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      immutable: true
-    }],
+    saved_by: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        immutable: true
+      }
+    ],
     stats: {
       total_visits: {
         type: Number,
@@ -133,27 +137,29 @@ const realStateSchema = new mongoose.Schema(
       }
     },
     ratings: {
-      type: [{
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-          required: true,
-          immutable: true
-        },
-        rating: {
-          type: Number,
-          required: true,
-          min: 1,
-          max: 5
-        },
-        comment: {
-          type: String
-        },
-        created_at: {
-          type: Date,
-          default: Date.now
+      type: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            immutable: true
+          },
+          rating: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5
+          },
+          comment: {
+            type: String
+          },
+          created_at: {
+            type: Date,
+            default: Date.now
+          }
         }
-      }],
+      ],
       default: []
     },
     rating_summary: {
@@ -202,9 +208,6 @@ realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI { }
+interface RealStateDocument extends mongoose.Document, RealStateI {}
 
-export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>(
-  'RealState',
-  realStateSchema
-)
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)

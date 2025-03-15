@@ -39,20 +39,24 @@ export const createUserSchema = z.object({
       twitter: z.string().url('Invalid Twitter URL.').max(120).optional()
     })
     .optional(),
-  personal_information: z.object({
-    identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.'),
-    email_verified: z.boolean().default(false),
-    phone_number_verified: z.boolean().default(false)
-  }).optional(),
-  about: z.object({
-    work_experience: z.string().optional(),
-    education: z.string().optional(),
-    description: z.string().optional(),
-    certifications: z.array(z.string()).optional(),
-    languages: z.array(z.string()).optional(),
-    favorite_song: z.string().optional(),
-    where_im_living: z.string().optional()
-  }).optional()
+  personal_information: z
+    .object({
+      identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.'),
+      email_verified: z.boolean().default(false),
+      phone_number_verified: z.boolean().default(false)
+    })
+    .optional(),
+  about: z
+    .object({
+      work_experience: z.string().optional(),
+      education: z.string().optional(),
+      description: z.string().optional(),
+      certifications: z.array(z.string()).optional(),
+      languages: z.array(z.string()).optional(),
+      favorite_song: z.string().optional(),
+      where_im_living: z.string().optional()
+    })
+    .optional()
 })
 
 export const isValidEmail = z.string().email('Invalid email address.')

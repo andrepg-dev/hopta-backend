@@ -1,5 +1,4 @@
 import { COOKIES } from '@/constants/cookies.constants'
-import { envs } from '@/constants/env.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
@@ -16,7 +15,7 @@ import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
-import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
+import { createUserSchema, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
@@ -34,7 +33,20 @@ userRouter.post(
   '/register',
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    const { name, last_name, email, password, contact, social_media, favorites_properties, personal_information, location, profile_picture, properties, about } = req.body
+    const {
+      name,
+      last_name,
+      email,
+      password,
+      contact,
+      social_media,
+      favorites_properties,
+      personal_information,
+      location,
+      profile_picture,
+      properties,
+      about
+    } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
       throw new AppError('Invalid identity document format. Must be 13 digits.', 400)
@@ -89,26 +101,24 @@ userRouter.post(
         email: email.toLowerCase(),
         name: `${name} ${last_name}`
       },
-      subject: 'Verify your email',
-      html: `
-        <h1>Welcome to Hopta!</h1>
-        <p>Your verification code is: <strong>${verificationCode}</strong></p>
-        <p>This code will expire in 30 minutes.</p>
-        <p>If you did not request this verification code, please ignore this email.</p>
-      `,
-      provider: 'sendgrid'
+      provider: 'sendgrid',
+      template: 'verification_code',
+      dynamicTemplateData: {
+        name: `${name} ${last_name}`,
+        code: verificationCode
+      }
     })
 
     res.json({
       success: true,
-      message: 'Verification code sent to your email'
+      message: 'Verification code sent, please check your email.'
     })
   })
 )
 
 userRouter.post(
   '/verify-email',
-  asyncHandler(async (req: Request<{}, {}, { email: string, code: string }>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response) => {
     const { email, code } = req.body
 
     const verificationData = await verificationCodeModel.findOne({
@@ -153,7 +163,7 @@ userRouter.post(
 userRouter.post(
   '/login',
   validateRequest(UserLoginSchema),
-  asyncHandler(async (req: Request<{}, {}, { email: string, password: string }>, res: Response, next: NextFunction) => {
+  asyncHandler(async (req: Request<{}, {}, { email: string; password: string }>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
 
     email = email.toLowerCase()
@@ -191,27 +201,22 @@ userRouter.post(
   })
 )
 
-userRouter.delete(
+userRouter.get(
   '/logout',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const token = req.cookies[COOKIES.jwt_refresh_token.name]
-    if (!token) throw new AppError('Unauthorized', 401)
-
-    await refreshTokenModel.findOneAndDelete({ token })
+    await refreshTokenModel.findOneAndDelete({ userId: req.user?.userId })
     refreshTokenCookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
-    res.json({ success: true })
+    res.json({ success: true, message: 'Logged out successfully' })
   })
 )
 
 userRouter.delete(
-  '/',
-  validateRequest(isValidEmail),
+  '/delete-account',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.body.email) throw new AppError('email is required.', 400)
-    const { email } = req.body
-    await userModel.findOneAndDelete({ email: email }).then((user) => res.send(user))
+    await userModel.findOneAndDelete({ _id: req.user?.userId })
+    res.json({ success: true, message: 'Account deleted successfully' })
   })
 )
 
@@ -219,163 +224,177 @@ userRouter.put(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.body.email) throw new AppError('email is required.', 400)
-
-    await userModel.updateOne({ email: req.body.email }, req.body).then((user) => res.send(user))
+    await userModel.updateOne({ _id: req.user?.userId }, req.body).then((user) => res.send(user))
   })
 )
 
-userRouter.post('/register-sms', asyncHandler(async (req: Request, res: Response) => {
-  const { phone } = req.body
+userRouter.post(
+  '/register-sms',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { phone } = req.body
 
-  if (!phone) {
-    throw new AppError('Phone number is required', 400)
-  }
+    if (!phone) {
+      throw new AppError('Phone number is required', 400)
+    }
 
-  // Check if the phone number is valid
-  if (!isPhoneNumber(phone)) {
-    throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
-  }
+    // Check if the phone number is valid
+    if (!isPhoneNumber(phone)) {
+      throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+    }
 
-  const alreadyExists = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
+    const alreadyExists = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
 
-  if (alreadyExists) {
-    throw new AppError('An account with this phone number already exists, please login', 400)
-  }
+    if (alreadyExists) {
+      throw new AppError('An account with this phone number already exists, please login', 400)
+    }
 
-  // Send the SMS
-  const smsTwilioService = new TwilioSendSMS()
-  await smsTwilioService.sendSMSCode({ phone })
+    // Send the SMS
+    const smsTwilioService = new TwilioSendSMS()
+    await smsTwilioService.sendSMSCode({ phone })
 
-  res.json({ success: true, message: 'SMS sent successfully' })
-}))
-
-userRouter.post('/verify-sms', asyncHandler(async (req: Request, res: Response) => {
-  let { phone, code } = req.body
-
-  phone = phone?.toString()
-  code = code?.toString()
-
-  console.log(phone, code)
-
-  if (!phone || !code) {
-    throw new AppError('Phone and code are required', 400)
-  }
-
-  // Check if the code is a number and has 6 digits
-  if (!/^\d{6}$/.test(code)) {
-    throw new AppError('Invalid code format.', 400)
-  }
-
-  // Check if the phone number is valid
-  if (!isPhoneNumber(phone)) {
-    throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
-  }
-
-  // Check if the code is valid
-  const smsTwilioService = new TwilioSendSMS()
-  const verification = await smsTwilioService.verifySMSCode({ phone, code })
-
-  if (!verification) {
-    throw new AppError('Invalid or expired verification code', 400)
-  }
-
-  const tempToken = TokenManager.tempToken({ payload: { phone } })
-
-  // Save in cookies 
-  const cookies = new Cookies(req, res)
-  cookies.saveCookie('tempToken', tempToken)
-
-  // Save user in pending user to complete the profile
-  await pedingUserModel.create({ phone })
-
-  await smsTwilioService.sendSMS({
-    phone,
-    message: `Phone number verified successfully. Complete the profile with the next step to complete.`
-  }).catch(err => {
-    new Logs({ message: err, method: 'saveErrorLogs' })
+    res.json({ success: true, message: 'SMS sent successfully' })
   })
+)
 
-  res.json({ success: true, message: 'Phone number verified successfully. Complete the profile with the next step to complete.' })
-}))
+userRouter.post(
+  '/verify-sms',
+  asyncHandler(async (req: Request, res: Response) => {
+    let { phone, code } = req.body
 
-userRouter.post('/complete-profile', asyncHandler(async (req: Request, res: Response) => {
-  const { name, last_name } = req.body
+    phone = phone?.toString()
+    code = code?.toString()
 
-  const cookies = new Cookies(req, res)
-  const tempToken = cookies.getCookie('tempToken')
+    console.log(phone, code)
 
-  console.log({ tempToken, name, last_name })
+    if (!phone || !code) {
+      throw new AppError('Phone and code are required', 400)
+    }
 
-  new Logs({ message: { tempToken, cookies, name, last_name } })
+    // Check if the code is a number and has 6 digits
+    if (!/^\d{6}$/.test(code)) {
+      throw new AppError('Invalid code format.', 400)
+    }
 
-  if (!name || !last_name) {
-    throw new AppError('name and last name are required', 400)
-  }
+    // Check if the phone number is valid
+    if (!isPhoneNumber(phone)) {
+      throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+    }
 
-  if (!tempToken) {
-    throw new AppError('Authorization token required', 401)
-  }
+    // Check if the code is valid
+    const smsTwilioService = new TwilioSendSMS()
+    const verification = await smsTwilioService.verifySMSCode({ phone, code })
 
-  const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
+    if (!verification) {
+      throw new AppError('Invalid or expired verification code', 400)
+    }
 
-  console.log({ decoded, phone: decoded.phone })
+    const tempToken = TokenManager.tempToken({ payload: { phone } })
 
-  if (!decoded.phone) {
-    throw new AppError('Invalid token', 401)
-  }
+    // Save in cookies
+    const cookies = new Cookies(req, res)
+    cookies.saveCookie('tempToken', tempToken)
 
-  const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+    // Save user in pending user to complete the profile
+    await pedingUserModel.create({ phone })
 
-  new Logs({ message: pendingUser })
+    await smsTwilioService
+      .sendSMS({
+        phone,
+        message: `Phone number verified successfully. Complete the profile with the next step to complete.`
+      })
+      .catch((err) => {
+        new Logs({ message: err, method: 'saveErrorLogs' })
+      })
 
-  if (!pendingUser) {
-    throw new AppError('Invalid or expired verification', 400)
-  }
+    res.json({
+      success: true,
+      message: 'Phone number verified successfully. Complete the profile with the next step to complete.'
+    })
+  })
+)
 
-  const user = await userModel.create({
-    name,
-    last_name,
-    auth: {
-      sms: {
-        phoneNumber: decoded.phone,
-        verified: true
+userRouter.post(
+  '/complete-profile',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, last_name } = req.body
+
+    const cookies = new Cookies(req, res)
+    const tempToken = cookies.getCookie('tempToken')
+
+    console.log({ tempToken, name, last_name })
+
+    new Logs({ message: { tempToken, cookies, name, last_name } })
+
+    if (!name || !last_name) {
+      throw new AppError('name and last name are required', 400)
+    }
+
+    if (!tempToken) {
+      throw new AppError('Authorization token required', 401)
+    }
+
+    const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
+
+    console.log({ decoded, phone: decoded.phone })
+
+    if (!decoded.phone) {
+      throw new AppError('Invalid token', 401)
+    }
+
+    const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+
+    new Logs({ message: pendingUser })
+
+    if (!pendingUser) {
+      throw new AppError('Invalid or expired verification', 400)
+    }
+
+    const user = await userModel.create({
+      name,
+      last_name,
+      auth: {
+        sms: {
+          phoneNumber: decoded.phone,
+          verified: true
+        }
+      },
+      contact: {
+        phone_number: decoded.phone,
+        is_phone_number_verified: true
       }
-    },
-    contact: {
-      phone_number: decoded.phone,
-      is_phone_number_verified: true
-    },
+    })
+
+    await pedingUserModel.deleteOne({ _id: pendingUser._id })
+
+    const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
+
+    refreshTokenCookies.setRefreshCookie({
+      res,
+      token: refreshToken
+    })
+
+    await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
+
+    const { auth: _, ...userWithoutAuth } = user.toObject()
+
+    const smsTwilioService = new TwilioSendSMS()
+    await smsTwilioService
+      .sendSMS({
+        phone: decoded.phone,
+        message: `Hi ${name} ${last_name}, welcome to Hopta :)`
+      })
+      .catch((err) => {
+        new Logs({ message: err, method: 'saveErrorLogs' })
+      })
+
+    res.json({
+      success: true,
+      message: 'Profile completed successfully',
+      user: userWithoutAuth,
+      token: accessToken
+    })
   })
-
-  await pedingUserModel.deleteOne({ _id: pendingUser._id })
-
-  const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
-  const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
-
-  refreshTokenCookies.setRefreshCookie({
-    res,
-    token: refreshToken
-  })
-
-  await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
-
-  const { auth: _, ...userWithoutAuth } = user.toObject()
-
-  const smsTwilioService = new TwilioSendSMS()
-  await smsTwilioService.sendSMS({
-    phone: decoded.phone,
-    message: `Hi ${name} ${last_name}, welcome to Hopta :)`
-  }).catch(err => {
-    new Logs({ message: err, method: 'saveErrorLogs' })
-  })
-
-  res.json({
-    success: true,
-    message: 'Profile completed successfully',
-    user: userWithoutAuth,
-    token: accessToken
-  })
-}))
+)
 
 export default userRouter

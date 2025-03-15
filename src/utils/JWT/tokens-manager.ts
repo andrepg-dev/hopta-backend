@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken'
 export class TokenManager {
   static accessToken({ payload }: { payload: any }) {
     return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, {
-      expiresIn: COOKIES.expiresIn.hourString,
+      expiresIn: COOKIES.expiresIn.hourString
     })
   }
 
@@ -34,10 +34,10 @@ export class TokenManager {
     return token
   }
 
-  static async findRefreshTokenInDB({ payload, token }: { payload: any; token: string }) {
+  static async findRefreshTokenInDB({ payload, token }: { payload: { userId: string }; token: string }) {
     if (!token) throw new AppError('Token not provided', 404)
 
-    const storedToken = await refreshTokenModel.findOne({ payload })
+    const storedToken = await refreshTokenModel.findOne(payload)
     if (!storedToken) throw new AppError('Token not found', 404)
 
     const isTokenValid = await bcrypt.compare(token, storedToken.token)
@@ -49,7 +49,7 @@ export class TokenManager {
   }
 
   static verifyRefreshToken(token: string) {
-    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY) as { payload: any }
+    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY) as { userId: string; iat: number; exp: number }
   }
 
   static async revokeToken({ payload }: { payload: any }) {
@@ -70,5 +70,4 @@ export class TokenManager {
   static verifyTempToken(token: string) {
     return jwt.verify(token, COOKIES.general.SECRET_KEY)
   }
-
 }

@@ -1,4 +1,4 @@
-import { CookieOptions, Request, Response } from "express";
+import { CookieOptions, Request, Response } from 'express'
 
 export class Cookies {
   private req: Request
@@ -10,12 +10,18 @@ export class Cookies {
   }
 
   saveCookie(name: string, value: string, options?: CookieOptions) {
-    this.res.cookie(name, value, options ? options : {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as 'strict' | 'lax' | 'none',
-      maxAge: 1800000,
-    })
+    this.res.cookie(
+      name,
+      value,
+      options
+        ? options
+        : {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict' as 'strict' | 'lax' | 'none',
+            maxAge: 1800000
+          }
+    )
   }
 
   getCookie(name: string) {
@@ -27,7 +33,7 @@ export class Cookies {
   }
 
   deleteAllCookies() {
-    Object.keys(this.req.cookies).forEach(key => {
+    Object.keys(this.req.cookies).forEach((key) => {
       this.res.clearCookie(key)
     })
   }

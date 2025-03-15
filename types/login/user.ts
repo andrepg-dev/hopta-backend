@@ -66,6 +66,7 @@ export interface UserI {
   social_media?: SocialMedia
   personal_information?: PersonalInformation
   about?: About
+  suscription?: mongoose.Types.ObjectId
 }
 
 export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | 'auth'> {

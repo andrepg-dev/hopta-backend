@@ -93,4 +93,3 @@ export interface RealStateI {
 export interface RealStateIWithOwner extends RealStateI {
   owner: Types.ObjectId
 }
-

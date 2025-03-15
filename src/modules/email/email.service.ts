@@ -6,21 +6,44 @@ import Logs from '../logs/save-logs.service'
 
 interface SendMailOptions extends nodemailer.SendMailOptions { }
 
+const templates = {
+  verification_code: 'd-4c5c66eae47f47919e5d58f1b302539d'
+}
+
 class EmailServiceSendGrid {
-  constructor() { }
-
-  async sendEmail(to: { email: string, name?: string }, subject: string, html: string) {
+  constructor() {
     sendgrid.setApiKey(process.env.SENDGRID_API_KEY as string)
+  }
 
-    const message: MailDataRequired = {
-      from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
-      to: { email: to.email, name: to.name ?? undefined },
-      subject: subject,
-      content: [{
-        type: 'text/html',
-        value: html
-      }]
-    };
+  async sendEmail(
+    to: { email: string; name?: string },
+    subject: string,
+    html: string,
+    dynamicTemplateData: Record<string, string>,
+    template: keyof typeof templates
+  ) {
+    let message: MailDataRequired
+
+    if (!template) {
+      message = {
+        from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+        to: { email: to.email, name: to.name ?? undefined },
+        subject: subject,
+        content: [
+          {
+            type: 'text/html',
+            value: html
+          }
+        ]
+      }
+    } else {
+      message = {
+        from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+        to: { email: to.email, name: to.name ?? undefined },
+        templateId: templates[template],
+        dynamicTemplateData
+      }
+    }
 
     const response = await sendgrid.send(message)
     return response
@@ -61,15 +84,17 @@ class EmailServiceNodeMailer {
 }
 
 interface EmailServiceOptions {
-  to: { email: string, name?: string }
-  subject: string
-  html: string
+  to: { email: string; name?: string }
+  subject?: string
+  html?: string
+  dynamicTemplateData?: Record<string, string>
+  template?: keyof typeof templates
   provider?: 'sendgrid' | 'nodemailer'
 }
 
 export class EmailService {
-  private sendGridService: EmailServiceSendGrid;
-  private nodeMailerService: EmailServiceNodeMailer;
+  private sendGridService: EmailServiceSendGrid
+  private nodeMailerService: EmailServiceNodeMailer
 
   constructor() {
     this.sendGridService = new EmailServiceSendGrid()
@@ -77,9 +102,14 @@ export class EmailService {
   }
 
   async sendEmail(options: EmailServiceOptions) {
-
     if (options.provider == 'sendgrid') {
-      return this.sendGridService.sendEmail(options.to, options.subject, options.html)
+      return this.sendGridService.sendEmail(
+        options.to,
+        options.subject ?? '',
+        options.html ?? '',
+        options.dynamicTemplateData ?? {},
+        options.template ?? 'verification_code'
+      )
     }
 
     return this.nodeMailerService.sendEmail({

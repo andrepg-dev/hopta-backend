@@ -2,8 +2,17 @@ import { COOKIES } from '@/constants/cookies.constants'
 import { CookieOptions, Response } from 'express'
 
 export abstract class refreshTokenCookies {
-  static setRefreshCookie({ res, cookieName = COOKIES.jwt_refresh_token.name, token, options = {} }:
-    { res: Response, cookieName?: string, token: string, options?: CookieOptions }) {
+  static setRefreshCookie({
+    res,
+    cookieName = COOKIES.jwt_refresh_token.name,
+    token,
+    options = {}
+  }: {
+    res: Response
+    cookieName?: string
+    token: string
+    options?: CookieOptions
+  }) {
     const defaultOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

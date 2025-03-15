@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true
     },
+    suscription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'subscription'
+    },
     auth: {
       local: {
         password: {
@@ -40,7 +44,7 @@ const userSchema = new mongoose.Schema(
       is_phone_number_verified: {
         type: Boolean,
         default: false
-      },
+      }
     },
     reviews: {
       type: [
@@ -129,13 +133,13 @@ const userSchema = new mongoose.Schema(
     },
     personal_information: {
       identity_document: {
-        type: String,
+        type: String
       },
       email_verified: {
-        type: Boolean,
+        type: Boolean
       },
       phone_number_verified: {
-        type: Boolean,
+        type: Boolean
       }
     },
     about: {
@@ -160,7 +164,7 @@ const userSchema = new mongoose.Schema(
       where_im_living: {
         type: String
       }
-    },
+    }
   },
   { versionKey: false }
 )
@@ -173,6 +177,6 @@ userSchema.pre('save', function (next) {
 
 userSchema.plugin(mongoosePaginate)
 
-interface UserDocument extends mongoose.Document, UserI { }
+interface UserDocument extends mongoose.Document, UserI {}
 
 export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

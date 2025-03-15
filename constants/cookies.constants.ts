@@ -8,7 +8,7 @@ export const COOKIES = {
     expiresIn: {
       hourString: '1h',
       hourInt: 1 * 60 * 60 * 1000
-    },
+    }
   },
   expiresIn: {
     hourString: '60m',

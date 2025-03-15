@@ -40,7 +40,7 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 #### Tareas "Más dificiles" (Son un desafío para mi)
 
-- Configurar mi correo electronico para enviar emails sin problemas ❎
+- Configurar mi correo electronico para enviar emails sin problemas ✅
 - Configurar los logs para enviarlos a DataDog ❎
 
 #### Accesibilidad
@@ -65,7 +65,7 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Verificar las imágenes que sean de real state con aws Recognition ✖️
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
 - Verificar número de telefóno con código OTP ✅
-- Enviar emails de bienvenida a los usuarios con SendGrid ✖️ <- TODO: Este es el siguiente paso con Twilio
+- Enviar emails de bienvenida a los usuarios con SendGrid ✅
 
 ### Búsqueda
 

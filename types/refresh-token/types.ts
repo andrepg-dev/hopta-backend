@@ -6,4 +6,3 @@ export interface refreshTokenI {
   updated_at: Date
   is_active: boolean
 }
-

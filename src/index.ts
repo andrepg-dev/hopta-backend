@@ -12,13 +12,14 @@ import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
 import { EmailService } from './modules/email/email.service'
-import './routes/auth/google/google-auth.config'; // n
+import './routes/auth/google/google-auth.config' // n
 import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
+import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
 
 // Database connection
 connectToDatabase()
@@ -32,16 +33,19 @@ app.use(cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
-app.use(session({ // This is necessary for the Google Strategy but it's not used for the JWT
-  secret: process.env.GOOGLE_SECRET_KEY!,
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  }
-}))
+app.use(
+  session({
+    // This is necessary for the Google Strategy but it's not used for the JWT
+    secret: process.env.GOOGLE_SECRET_KEY!,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production'
+    }
+  })
+)
 
 // Initialize Passport
 app.use(passport.initialize())
@@ -58,8 +62,9 @@ app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
 app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
+app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 
-app.get("/email", async (req, res) => {
+app.get('/email', async (req, res) => {
   const email = new EmailService()
   const response = await email.sendEmail({
     to: {

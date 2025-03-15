@@ -1,7 +1,7 @@
-import { AppError } from "@/src/handlers/error-handler";
-import { verificationSMSCodeModel } from "@/src/schemas/verify-sms-code.schemas";
-import RandomIntUtils from "@/src/utils/random-int.utils";
-import twilio, { Twilio } from "twilio";
+import { AppError } from '@/src/handlers/error-handler'
+import { verificationSMSCodeModel } from '@/src/schemas/verify-sms-code.schemas'
+import RandomIntUtils from '@/src/utils/random-int.utils'
+import twilio, { Twilio } from 'twilio'
 
 class TwilioSendSMSCodeService {
   protected client: Twilio
@@ -34,7 +34,7 @@ class TwilioSendSMSCodeService {
     })
   }
 
-  async verifySMSCode({ phone, code }: { phone: string, code: string }) {
+  async verifySMSCode({ phone, code }: { phone: string; code: string }) {
     const formattedPhone = this.formatPhone(phone)
 
     const verification = await verificationSMSCodeModel.findOne({ phone: formattedPhone, code })
@@ -59,7 +59,7 @@ export class TwilioSendSMS extends TwilioSendSMSCodeService {
     super()
   }
 
-  async sendSMS({ phone, message }: { phone: string, message: string }) {
+  async sendSMS({ phone, message }: { phone: string; message: string }) {
     const formattedPhone = this.formatPhone(phone)
 
     await this.client.messages.create({

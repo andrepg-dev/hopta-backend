@@ -27,4 +27,4 @@ const verificationCodeSchema = new mongoose.Schema({
 // Índice TTL para eliminar documentos expirados
 verificationCodeSchema.index({ expires: 1 }, { expireAfterSeconds: 0 })
 
-export const verificationCodeModel = mongoose.model('VerificationCode', verificationCodeSchema) 
+export const verificationCodeModel = mongoose.model('VerificationCode', verificationCodeSchema)

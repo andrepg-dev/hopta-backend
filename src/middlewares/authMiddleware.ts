@@ -5,7 +5,7 @@ import { TokenManager } from '../utils/JWT/tokens-manager'
 
 declare global {
   namespace Express {
-    interface User extends UserI { }
+    interface User extends UserI {}
   }
 }
 
@@ -18,7 +18,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   try {
     const decoded = TokenManager.verifyToken(token)
-    req.user = decoded as Express.User
+    req.user = decoded as { userId: string; iat: number; exp: number }
     next()
   } catch (error) {
     throw new AppError('Invalid token', 401)
