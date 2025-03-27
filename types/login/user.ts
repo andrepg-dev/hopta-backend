@@ -38,6 +38,7 @@ interface PersonalInformation {
   identity_document: string
   email_verified: boolean
   phone_number_verified: boolean
+  birth_date?: string
 }
 
 interface About {

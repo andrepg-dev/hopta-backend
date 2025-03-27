@@ -7,7 +7,8 @@ import Logs from '../logs/save-logs.service'
 interface SendMailOptions extends nodemailer.SendMailOptions { }
 
 const templates = {
-  verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd'
+  verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd',
+  birthday: 'TODO: Add birthday template'
 }
 
 class EmailServiceSendGrid {
@@ -103,7 +104,6 @@ export class EmailService {
 
   async sendEmail(options: EmailServiceOptions) {
     if (options.provider == 'sendgrid') {
-
       if (options.template) {
         return this.sendGridService.sendEmail(
           options.to,
