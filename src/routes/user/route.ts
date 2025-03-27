@@ -398,13 +398,7 @@ userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res
   // Hash the new password 
   const hashedPassword = await hashGen(password)
 
-  await userModel.updateOne({ _id: userData._id }, {
-    auth: {
-      local: {
-        password: hashedPassword
-      }
-    }
-  })
+  await userModel.updateOne({ _id: userData._id }, { $set: { 'auth.local.password': hashedPassword } })
 
   // Send email to the user 
   const emailService = new EmailService()
