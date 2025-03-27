@@ -15,6 +15,7 @@ import { EmailService } from './modules/email/email.service'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
 import s3Router from './routes/aws/s3/s3-services'
+import realStateReportRouter from './routes/real-state-report/route'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
 import tokenRouter from './routes/token/route'
@@ -63,6 +64,8 @@ app.use('/auth/google', googleRouter)
 app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)
+app.use('/real-state-reports', realStateReportRouter)
+
 
 app.get('/email', async (req, res) => {
   const email = new EmailService()

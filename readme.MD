@@ -49,6 +49,7 @@ Estos serán los pasos que voy a estar siguiendo en el app
 - Filtros ✅
 - Ordenamiento ✅
 
+
 # Pendientes ⚠️
 
 Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre.
@@ -78,3 +79,9 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 - Aprender sobre SEO en NextJS ✖️
 - Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
+
+## Pendientes (Backend)
+
+- Hacer un sistema de referidos 
+- Hacer un sistema de reportes de alquileres
+
