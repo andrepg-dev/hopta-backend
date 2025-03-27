@@ -3,6 +3,7 @@ import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import { hashCompare, hashGen } from '@/src/modules/bcrypt/hash'
 import { Cookies } from '@/src/modules/cookies/cookies.service'
 import { EmailService } from '@/src/modules/email/email.service'
 import Logs from '@/src/modules/logs/save-logs.service'
@@ -15,9 +16,8 @@ import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
-import { createUserSchema, UserLoginSchema } from '@/src/zod/user.zod'
+import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
-import bcrypt from 'bcrypt'
 import { NextFunction, Request, Response, Router } from 'express'
 
 const userRouter = Router()
@@ -66,7 +66,7 @@ userRouter.post(
     const verificationCode = RandomIntUtils.randomInt()
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await hashGen(password)
 
     // Store verification data
     const userData = {
@@ -183,7 +183,7 @@ userRouter.post(
     const userPassword = user.auth?.local?.password
     if (!userPassword) throw new AppError('User not registered with local authentication', 404)
 
-    const isPasswordValid = await bcrypt.compare(password, userPassword)
+    const isPasswordValid = await hashCompare(password, userPassword)
     if (!isPasswordValid) throw new AppError('Password or email incorrect', 404)
 
     // Transfer only the necessary data
@@ -330,6 +330,84 @@ userRouter.post(
     })
   })
 )
+
+userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body
+
+  if (!email) {
+    throw new AppError('Email is required', 400)
+  }
+
+  const user = await userModel.findOne({ email })
+
+  if (!user) {
+    throw new AppError('Unregistered email', 404)
+  }
+
+  const verificationCode = RandomIntUtils.randomInt()
+
+  const userData = {
+    email: email.toLowerCase(),
+    code: verificationCode,
+    userData: user.toObject()
+  }
+
+  await verificationCodeModel.create(userData)
+
+  const emailService = new EmailService()
+  await emailService.sendEmail({
+    to: {
+      email: email.toLowerCase(),
+      name: user.name
+    },
+    subject: 'Forgot password',
+    html: `Your verification code is ${verificationCode}`,
+    provider: 'sendgrid'
+  })
+
+  res.json({
+    success: true,
+    message: 'Verification code sent successfully'
+  })
+}))
+
+// Verify the forgot password code
+userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res: Response) => {
+  const { email, code, password } = req.body
+
+  if (!email || !code || !password) {
+    throw new AppError('Email, code and password are required', 400)
+  }
+
+  const verificationCode = await verificationCodeModel.findOne({ email, code })
+
+  if (!verificationCode) {
+    throw new AppError('Invalid or expired verification code', 400)
+  }
+
+  const userData = verificationCode.userData
+  await verificationCodeModel.deleteOne({ _id: verificationCode._id })
+
+  if (!userData) {
+    throw new AppError('User not found', 404)
+  }
+
+  // Hash the new password 
+  const hashedPassword = await hashGen(password)
+
+  await userModel.updateOne({ _id: userData._id }, {
+    auth: {
+      local: {
+        password: hashedPassword
+      }
+    }
+  })
+
+  res.json({
+    success: true,
+    message: 'Password updated successfully'
+  })
+}))
 
 userRouter.post(
   '/complete-profile',

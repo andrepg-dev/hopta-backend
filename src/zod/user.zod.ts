@@ -60,7 +60,9 @@ export const createUserSchema = z.object({
     .optional()
 })
 
-export const isValidEmail = z.string().email('Invalid email address.')
+export const isValidEmail = z.object({
+  email: z.string().email('Invalid email address.')
+})
 
 export const UserLoginSchema = z.object({
   email: z.string().email('Invalid email address.'),

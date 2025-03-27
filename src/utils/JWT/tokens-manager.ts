@@ -1,7 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
+import { hashGen, hashCompare } from '@/src/modules/bcrypt/hash'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
-import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
 export class TokenManager {
@@ -23,7 +23,7 @@ export class TokenManager {
     const token = this.refreshToken({ payload })
 
     // Encriptar el refresh token en la base de datos
-    const hashed = bcrypt.hashSync(token, 10)
+    const hashed = await hashGen(token)
 
     await refreshTokenModel.create({
       userId: payload.userId,
@@ -40,7 +40,7 @@ export class TokenManager {
     const storedToken = await refreshTokenModel.findOne(payload)
     if (!storedToken) throw new AppError('Token not found', 404)
 
-    const isTokenValid = await bcrypt.compare(token, storedToken.token)
+    const isTokenValid = await hashCompare(token, storedToken.token)
     return isTokenValid
   }
 

@@ -84,5 +84,5 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 - Hacer un sistema de referidos ❎
 - Hacer un sistema de reportes de alquileres ✅
-- Enviar emails felicitando a los usuarios que cumplen años ❎
+- Enviar emails felicitando a los usuarios que cumplen años ✅
 - Sistema de olvidar contraseña ❎
