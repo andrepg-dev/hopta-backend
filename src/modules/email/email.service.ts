@@ -19,8 +19,8 @@ class EmailServiceSendGrid {
     to: { email: string; name?: string },
     subject: string,
     html: string,
-    dynamicTemplateData: Record<string, string>,
-    template: keyof typeof templates
+    dynamicTemplateData?: Record<string, string>,
+    template?: keyof typeof templates
   ) {
     let message: MailDataRequired
 
@@ -103,13 +103,22 @@ export class EmailService {
 
   async sendEmail(options: EmailServiceOptions) {
     if (options.provider == 'sendgrid') {
-      return this.sendGridService.sendEmail(
-        options.to,
-        options.subject ?? '',
-        options.html ?? '',
-        options.dynamicTemplateData ?? {},
-        options.template ?? 'verification_code'
-      )
+
+      if (options.template) {
+        return this.sendGridService.sendEmail(
+          options.to,
+          options.subject ?? '',
+          options.html ?? '',
+          options.dynamicTemplateData ?? {},
+          options.template
+        )
+      } else {
+        return this.sendGridService.sendEmail(
+          options.to,
+          options.subject ?? '',
+          options.html ?? '',
+        )
+      }
     }
 
     return this.nodeMailerService.sendEmail({

@@ -1,16 +1,16 @@
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import Logs from '@/src/modules/logs/save-logs.service'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { getPagination } from '@/src/utils/get-pagination.utils'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
+import { algoliasearch } from 'algoliasearch'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
-import { algoliasearch } from 'algoliasearch'
-import Logs from '@/src/modules/logs/save-logs.service'
-import { authMiddleware } from '@/src/middlewares/authMiddleware'
 
 const RealStateRouter = Router()
 const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string)

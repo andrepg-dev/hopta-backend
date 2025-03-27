@@ -54,22 +54,22 @@ export const realStateSchema = z.object({
       sold_date: z.union([z.string().datetime(), z.date()]).optional()
     })
     .optional(),
-  visitors: z
-    .array(
-      z.object({
-        user: z.string(),
-        visit_date: z.date().optional(),
-        comments: z.string().optional()
-      })
-    )
-    .optional(),
-  saved_by: z.array(z.string()).optional(),
-  stats: z
-    .object({
-      total_visits: z.number().default(0),
-      total_saves: z.number().default(0)
-    })
-    .optional(),
+  // visitors: z  // NOTE: Estos procesos son automáticos, no se deben enviar desde el frontend
+  //   .array( 
+  //     z.object({
+  //       user: z.string(),
+  //       visit_date: z.date().optional(),
+  //       comments: z.string().optional()
+  //     })
+  //   )
+  //   .optional(),
+  // saved_by: z.array(z.string()).optional(),
+  // stats: z // NOTE: Estos procesos son automáticos, no se deben enviar desde el frontend
+  //   .object({
+  //     total_visits: z.number().default(0),
+  //     total_saves: z.number().default(0)
+  //   })
+  //   .optional(),
   ratings: z
     .array(
       z.object({
@@ -80,12 +80,12 @@ export const realStateSchema = z.object({
       })
     )
     .optional(),
-  rating_summary: z
-    .object({
-      average_rating: z.number().default(0),
-      total_ratings: z.number().default(0)
-    })
-    .optional()
+  // rating_summary: z // NOTE: Estos procesos son automáticos, no se deben enviar desde el frontend
+  //   .object({
+  //     average_rating: z.number().max(5).default(0),
+  //     total_ratings: z.number().default(0)
+  //   })
+  //   .optional()
 })
 
 export const realStateUpdateSchema = z

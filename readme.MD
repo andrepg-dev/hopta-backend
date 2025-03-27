@@ -82,6 +82,7 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 ## Pendientes (Backend)
 
-- Hacer un sistema de referidos 
-- Hacer un sistema de reportes de alquileres
+- Hacer un sistema de referidos ❎
+- Hacer un sistema de reportes de alquileres ✅
+- Enviar emails felicitando a los usuarios que cumplen años ❎
 

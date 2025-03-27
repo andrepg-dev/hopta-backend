@@ -18,6 +18,7 @@ import s3Router from './routes/aws/s3/s3-services'
 import realStateReportRouter from './routes/real-state-report/route'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
+import supportRouter from './routes/support/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
@@ -65,7 +66,7 @@ app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 app.use('/reports', realStateReportRouter)
-
+app.use('/support', supportRouter)
 
 app.get('/email', async (req, res) => {
   const email = new EmailService()
