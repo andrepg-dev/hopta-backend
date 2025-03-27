@@ -229,7 +229,20 @@ userRouter.put(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    await userModel.updateOne({ _id: req.user?.userId }, req.body).then((user) => res.send(user))
+    // Agregar validación de campos automáticos
+    const blockedFields = [
+      'auth.sms.verified',
+      'contact.is_phone_number_verified',
+      'personal_information.email_verified',
+      'personal_information.phone_number_verified'
+    ]
+
+    if (blockedFields.some(field => req.body[field])) {
+      throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
+    }
+
+    await userModel.updateOne({ _id: req.user?.userId }, req.body)
+      .then((user) => res.send(user))
   })
 )
 
