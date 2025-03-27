@@ -64,7 +64,7 @@ app.use('/auth/google', googleRouter)
 app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)
-app.use('/real-state-reports', realStateReportRouter)
+app.use('/reports', realStateReportRouter)
 
 
 app.get('/email', async (req, res) => {
