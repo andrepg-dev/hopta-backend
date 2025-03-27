@@ -371,7 +371,7 @@ userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(
   })
 }))
 
-// Verify the forgot password code
+// Verify forgotten password code
 userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res: Response) => {
   const { email, code, password } = req.body
 
@@ -422,6 +422,47 @@ userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res
   res.json({
     success: true,
     message: 'Password updated successfully'
+  })
+}))
+
+// Resend verification code
+userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body
+
+  if (!email) {
+    throw new AppError('Email is required', 400)
+  }
+
+  const user = await userModel.findOne({ email })
+
+  if (!user) {
+    throw new AppError('Unregistered email', 404)
+  }
+
+  const verificationCode = RandomIntUtils.randomInt()
+
+  const userData = {
+    email: email.toLowerCase(),
+    code: verificationCode,
+    userData: user.toObject()
+  }
+
+  await verificationCodeModel.create(userData)
+
+  const emailService = new EmailService()
+  await emailService.sendEmail({
+    to: {
+      email: userData.email,
+      name: userData.userData.name
+    },
+    subject: 'Verification code',
+    html: `Your verification code is ${verificationCode}`,
+    provider: 'sendgrid'
+  })
+
+  res.json({
+    success: true,
+    message: 'Verification code sent successfully'
   })
 }))
 
