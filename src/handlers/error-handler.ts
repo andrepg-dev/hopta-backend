@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import Logs from '../modules/logs/save-logs.service'
+import Logs from '../services/logs/save-logs.service'
 
 export class AppError extends Error {
   statusCode: number

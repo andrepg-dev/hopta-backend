@@ -1,8 +1,8 @@
 import { BUCKET_NAME } from '@/constants/aws/s3/bucket.constants'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
-import { deleteObject } from '@/src/modules/aws/s3/deleteObject'
-import { getObject } from '@/src/modules/aws/s3/getObject'
-import { putObject } from '@/src/modules/aws/s3/putObject'
+import { deleteObject } from '@/src/services/aws/s3/deleteObject'
+import { getObject } from '@/src/services/aws/s3/getObject'
+import { putObject } from '@/src/services/aws/s3/putObject'
 import { Request, Response, Router } from 'express'
 
 const s3Router = Router()

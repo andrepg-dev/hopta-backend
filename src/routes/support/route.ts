@@ -1,7 +1,7 @@
 import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
-import { EmailService } from '@/src/modules/email/email.service'
-import Logs from '@/src/modules/logs/save-logs.service'
+import { EmailService } from '@/src/services/email/email.service'
+import Logs from '@/src/services/logs/save-logs.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Request, Response, Router } from 'express'
 

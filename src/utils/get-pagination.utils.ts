@@ -1,4 +1,4 @@
-import Logs from '../modules/logs/save-logs.service'
+import Logs from '../services/logs/save-logs.service'
 
 interface Pagination {
   page: number

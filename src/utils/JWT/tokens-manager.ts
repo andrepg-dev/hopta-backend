@@ -1,7 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import { hashGen, hashCompare } from '@/src/modules/bcrypt/hash'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
+import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import jwt from 'jsonwebtoken'
 
 export class TokenManager {

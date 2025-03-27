@@ -1,6 +1,6 @@
-import { CronService } from '@/src/modules/cron-jobs/cron.service'
-import { BirthdayService } from '@/src/modules/birthday/birthday.service'
-import Logs from '@/src/modules/logs/save-logs.service'
+import { CronService } from '@/src/services/cron-jobs/cron.service'
+import { BirthdayService } from '@/src/services/birthday/birthday.service'
+import Logs from '@/src/services/logs/save-logs.service'
 
 export const startBirthdayCron = () => {
   const birthdayService = new BirthdayService()
