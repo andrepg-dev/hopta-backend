@@ -379,7 +379,10 @@ userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res
     throw new AppError('Email, code and password are required', 400)
   }
 
-  const verificationCode = await verificationCodeModel.findOne({ email, code })
+  const verificationCode = await verificationCodeModel.findOne({
+    email: email?.toString().toLowerCase(),
+    code: code?.toString()
+  })
 
   if (!verificationCode) {
     throw new AppError('Invalid or expired verification code', 400)
@@ -401,6 +404,19 @@ userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res
         password: hashedPassword
       }
     }
+  })
+
+  // Send email to the user 
+  const emailService = new EmailService()
+
+  await emailService.sendEmail({
+    to: {
+      email: userData.email,
+      name: userData.name
+    },
+    subject: 'Password updated successfully',
+    html: `Your password has been updated successfully. You can now login with your new password.`,
+    provider: 'sendgrid'
   })
 
   res.json({
