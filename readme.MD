@@ -49,7 +49,6 @@ Estos serán los pasos que voy a estar siguiendo en el app
 - Filtros ✅
 - Ordenamiento ✅
 
-
 # Pendientes ⚠️
 
 Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre.

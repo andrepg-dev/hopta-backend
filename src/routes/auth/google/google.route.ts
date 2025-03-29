@@ -8,21 +8,26 @@ const googleRouter = Router()
 
 googleRouter.get('/', passport.authenticate('google', { scope: ['profile', 'email'] }))
 
-googleRouter.get('/callback', passport.authenticate('google', { failureRedirect: 'https://www.hopta.hn/error-signin' }), async (req: any, res: Response) => {
-  const { user } = req
+googleRouter.get('/callback',
+  passport.authenticate('google',
+    {
+      failureRedirect: 'https://www.hopta.hn/error-signin',
+    }),
+  async (req: any, res: Response) => {
+    const { user } = req
 
-  const token = TokenManager.accessToken({ payload: { userId: user._id as string } })
-  const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
-  refreshTokenCookies.setRefreshCookie({
-    res,
-    token: refreshToken
+    if (!req.user || !req.user._id) {
+      throw new AppError('Authentication failed', 401)
+    }
+
+    const token = TokenManager.accessToken({ payload: { userId: user._id as string } })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
+    refreshTokenCookies.setRefreshCookie({
+      res,
+      token: refreshToken
+    })
+
+    res.json({ user: req.user, token })
   })
-
-  if (!req.user || !req.user.userId) {
-    throw new AppError('Authentication failed', 401)
-  }
-
-  res.json({ user: req.user, token })
-})
 
 export default googleRouter

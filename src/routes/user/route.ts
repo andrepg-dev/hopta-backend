@@ -255,6 +255,8 @@ userRouter.post(
       throw new AppError('Phone number is required', 400)
     }
 
+    console.log(isPhoneNumber(phone), phone)
+
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
@@ -268,7 +270,13 @@ userRouter.post(
 
     // Send the SMS
     const smsTwilioService = new TwilioSendSMS()
-    await smsTwilioService.sendSMSCode({ phone })
+    await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
+      new Logs({
+        method: 'saveErrorLogs',
+        message: err
+      })
+      throw new AppError(`Error sending SMS`, 400)
+    })
 
     res.json({ success: true, message: 'SMS sent successfully' })
   })
