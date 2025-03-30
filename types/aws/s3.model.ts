@@ -6,7 +6,7 @@ export interface IS3Base {
 }
 
 export interface PutObjectParams extends Omit<PutObjectCommandInput, 'Bucket' | 'Key'>, IS3Base {
-  filePath: string
+  filePath?: string
 }
 export interface IGetObjectParams extends IS3Base, Omit<GetObjectCommandInput, 'Bucket' | 'Key'> {}
 export interface IDeleteObjectParams extends IS3Base, Omit<GetObjectCommandInput, 'Bucket' | 'Key'> {}

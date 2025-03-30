@@ -8,9 +8,9 @@ export const putObject = async ({ bucketName, key, filePath, ...params }: PutObj
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
-    Body: await readFile(filePath),
+    Body: params.Body ?? await readFile(filePath as string),
     ...params,
-    ContentType: params.ContentType || mime.lookup(filePath) || 'application/octet-stream'
+    ContentType: params.ContentType || mime.lookup(filePath as string) || 'application/octet-stream'
   })
 
   try {
