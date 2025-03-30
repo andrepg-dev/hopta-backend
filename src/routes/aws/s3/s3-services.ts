@@ -15,7 +15,7 @@ const upload = multer({
   dest: 'uploads/',
   limits: {
     fileSize: 1024 * 1024 * 5, // 5MB,
-    files: 1,
+    files: 20,
     fields: 1
   },
   fileFilter: (_req, file, cb) => {
@@ -27,7 +27,7 @@ const upload = multer({
       cb(new Error('Invalid file type'));
     }
   }
-}).single('file')
+}).array('file', 20)
 
 s3Router.get(
   '/',
@@ -43,7 +43,7 @@ s3Router.get(
 
 s3Router.post('/', async (req: Request, res: Response) => {
   upload(req, res, async (err) => {
-    let tempFilePath: string | null = null;
+    const tempFilePaths: string[] = []
 
     try {
       if (err instanceof multer.MulterError) {
@@ -54,47 +54,56 @@ s3Router.post('/', async (req: Request, res: Response) => {
       } else if (err) {
         return res.status(500).json({
           success: false,
-          error: 'Error processing file'
+          error: 'Error processing files'
         });
       }
 
-      if (!req.file) {
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'No file uploaded'
+          error: 'No files uploaded'
         });
       }
 
-      tempFilePath = req.file.path;
-      const { mimetype } = req.file;
-      const { folder = 'default' } = req.body;
+      const { folder = 'default' } = req.body
+      const uploadedFiles = []
 
-      // Generate random name for file
-      const randomName = crypto.randomBytes(16).toString('hex');
-      const extension = path.extname(req.file.originalname).toLowerCase();
-      const key = `${folder}/${randomName}${extension}`;
+      for (const file of req.files) {
+        tempFilePaths.push(file.path)
+        const randomName = crypto.randomBytes(16).toString('hex');
+        const extension = path.extname(file.originalname).toLowerCase();
+        const key = `${folder}/${randomName}${extension}`;
+        const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
 
-      const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+        await putObject({
+          bucketName: BUCKET_NAME,
+          key,
+          filePath: file.path,
+          ContentType: file.mimetype
+        });
 
-      await putObject({ // Upload file to S3
-        bucketName: BUCKET_NAME,
-        key,
-        filePath: tempFilePath,
-        ContentType: mimetype
+        uploadedFiles.push(fileUrl);
+      }
+
+      res.send({
+        success: true,
+        files: uploadedFiles
       });
 
-      res.send({ success: true, file: fileUrl });
     } catch (error) {
       res.status(500).json({
         success: false,
-        error: 'Error processing file'
+        error: 'Error processing files'
       });
     } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) { // Delete temp file
-        fs.unlinkSync(tempFilePath);
+      // Limpiar todos los archivos temporales
+      for (const tempPath of tempFilePaths) {
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
       }
     }
-  });
+  })
 })
 
 s3Router.delete(
