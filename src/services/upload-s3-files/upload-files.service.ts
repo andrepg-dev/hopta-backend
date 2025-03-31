@@ -28,23 +28,37 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
     const key = `${folder}/${randomName}${extension}`
     const fileUrl = `https://${bucketName}.s3.amazonaws.com/${key}`
 
-    const fileBuffer = await readFile(file.path)
 
-    const optimizedBuffer = await sharp(fileBuffer)
-      .resize({ width: 1280 })
-      .toFormat('jpeg', { quality: 80 })
-      .toBuffer()
+    if (file.mimetype.includes('image')) {
+      const fileBuffer = await readFile(file.path)
 
-    const fileResult = await putObject({
-      bucketName: bucketName,
-      key,
-      ContentType: file.mimetype,
-      Body: optimizedBuffer
-    })
+      const optimizedBuffer = await sharp(fileBuffer)
+        .resize({ width: 1280 })
+        .toFormat('jpeg', { quality: 80 })
+        .toBuffer()
+
+      const fileResult = await putObject({
+        bucketName: bucketName,
+        key,
+        ContentType: file.mimetype,
+        Body: optimizedBuffer
+      })
+
+      filesResult.push({ fileResult })
+      fileUrls.push(fileUrl)
+    } else {
+      const fileResult = await putObject({
+        bucketName: bucketName,
+        key,
+        ContentType: file.mimetype,
+        filePath: file.path
+      })
+
+      filesResult.push({ fileResult })
+      fileUrls.push(fileUrl)
+    }
 
     await unlink(file.path) // eliminar después de subir
-    fileUrls.push(fileUrl)
-    filesResult.push({ fileResult })
   }
 
   return { success: true, filesUrls: fileUrls, files: filesResult }
