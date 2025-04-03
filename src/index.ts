@@ -82,9 +82,24 @@ app.get('/email', async (req, res) => {
 
 app.use(errorHandler)
 
-app.listen(port, () => {
-  new Logs({
-    method: 'saveLogs',
-    message: `Hopta server is running! http://localhost:${port}`
+function startServer(port: number) {
+  const server = app.listen(port)
+
+  server.on('error', (error) => {
+    if (error.message.includes('EADDRINUSE')) {
+      console.warn(`Port ${port} is already in use, trying with another port...`)
+      const newPort = port + 1
+      server.close()
+      startServer(newPort)
+    }
   })
-})
+
+  server.on('listening', () => {
+    new Logs({
+      method: 'saveLogs',
+      message: `Hopta server is running! http://localhost:${port}`
+    })
+  })
+}
+
+startServer(Number(port))
