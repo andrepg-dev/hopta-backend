@@ -2,9 +2,9 @@ import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import Logs from '@/src/services/logs/save-logs.service'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
+import Logs from '@/src/services/logs/save-logs.service'
 import { getPagination } from '@/src/utils/get-pagination.utils'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
@@ -45,58 +45,30 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const query = req.query.q as string
 
-    try {
-      const results = (await client.search({
-        requests: [
-          {
-            indexName: 'real_state',
-            query
-          }
-        ],
-        strategy: 'none'
-      })) as any
+    const results = (await client.search({
+      requests: [
+        {
+          indexName: 'real_state',
+          query
+        }
+      ],
+      strategy: 'none'
+    })) as any
 
-      res.json(results.results[0].hits)
-    } catch (error) {
-      throw new AppError('Error searching properties', 500)
-    }
+    const hits = results.results[0].hits
+    if (!hits) throw new AppError('No properties found', 404)
+    if (hits.length === 0) res.json({ success: true, message: 'No properties found', data: [] })
+
+    res.json({
+      success: true,
+      data: hits
+    })
   })
 )
 
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const processRecords = async () => {
-      const datasetRequest = await RealStateModel.find().lean()
-
-      const objects = datasetRequest.map((doc) => ({
-        objectID: doc._id.toString(),
-        ...doc
-      }))
-
-      new Logs({
-        method: 'saveLogs',
-        message: objects
-      })
-
-      return await client.saveObjects({ indexName: 'real_state', objects })
-    }
-
-    processRecords()
-      .then((response) => {
-        new Logs({
-          method: 'saveLogs',
-          message: 'Records processed successfully'
-        })
-      })
-      .catch((error) => {
-        new Logs({
-          method: 'saveErrorLogs',
-          message: error
-        })
-      })
-
-    // Get all properties from the user with pagination
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
     const sortBy = (req.query.sortBy as string) || 'created_at'
@@ -112,7 +84,6 @@ RealStateRouter.get(
 
     if (!paginatedData) throw new AppError('Properties not found', 404)
     res.json(paginatedData)
-    return
   })
 )
 
@@ -257,6 +228,28 @@ RealStateRouter.put(
       message: 'Property updated successfully',
       data: updatedProperty
     })
+  })
+)
+
+RealStateRouter.post(
+  '/sync-algolia',
+  authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const datasetRequest = await RealStateModel.find().lean()
+
+    const objects = datasetRequest.map((doc) => ({
+      objectID: doc._id.toString(),
+      ...doc
+    }))
+
+    await client.saveObjects({ indexName: 'real_state', objects })
+
+    new Logs({
+      method: 'saveLogs',
+      message: 'Records synced with Algolia successfully'
+    })
+
+    res.json({ success: true, message: 'Sync completed successfully' })
   })
 )
 
