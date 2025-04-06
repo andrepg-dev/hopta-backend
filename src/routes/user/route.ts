@@ -19,13 +19,19 @@ import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const userRouter = Router()
 
 userRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    await userModel.find().then((user) => res.json(user))
+    const users = await userModel.find()
+    responseHandler({
+      res,
+      code: 200,
+      data: users
+    })
   })
 )
 
@@ -110,8 +116,9 @@ userRouter.post(
       }
     })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Verification code sent, please check your email.'
     })
   })
@@ -156,11 +163,14 @@ userRouter.get(
     })
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Email verified successfully',
-      user: userWithoutAuth,
-      token: accessToken
+      data: {
+        user: userWithoutAuth,
+        token: accessToken
+      }
     })
   })
 )
@@ -543,11 +553,14 @@ userRouter.post(
         new Logs({ message: err, method: 'saveErrorLogs' })
       })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Profile completed successfully',
-      user: userWithoutAuth,
-      token: accessToken
+      data: {
+        user: userWithoutAuth,
+        token: accessToken
+      }
     })
   })
 )

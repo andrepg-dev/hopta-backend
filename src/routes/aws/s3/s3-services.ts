@@ -5,6 +5,8 @@ import { getObject } from '@/src/services/aws/s3/getObject'
 import { uploadS3Files } from '@/src/services/upload-s3-files/upload-files.service'
 import { runMulter } from '@/src/utils/run-multer.utils'
 import { Request, Response, Router } from 'express'
+import { responseHandler } from '@/src/handlers/responseHandler'
+import { AppError } from '@/src/handlers/error-handler'
 
 const s3Router = Router()
 
@@ -15,7 +17,11 @@ s3Router.get(
       bucketName: BUCKET_NAME,
       key: 'extra-file.html'
     })
-    res.send(objectResponse)
+    responseHandler({
+      res,
+      code: 200,
+      data: objectResponse
+    })
   })
 )
 
@@ -25,13 +31,14 @@ s3Router.post(
     try {
       const files = await runMulter(req, res)
       const { filesUrls } = await uploadS3Files({ files, folder: 'uploads', bucketName: BUCKET_NAME })
-      res.send({ success: true, filesUrls })
+      responseHandler({
+        res,
+        code: 200,
+        data: { filesUrls }
+      })
     } catch (error) {
       console.error(error)
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Error processing files'
-      })
+      throw new AppError(error instanceof Error ? error.message : 'Error processing files', 500)
     }
   })
 )
@@ -44,7 +51,11 @@ s3Router.delete(
       key: 'chema-alonso.jpg'
     })
 
-    res.send({ success: true, response })
+    responseHandler({
+      res,
+      code: 200,
+      data: { response }
+    })
   })
 )
 

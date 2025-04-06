@@ -2,6 +2,8 @@ import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import RealStateReport from '@/src/schemas/real-state-reports.schemas'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { Request, RequestHandler, Response, Router } from 'express'
+import { responseHandler } from '@/src/handlers/responseHandler'
+import { AppError } from '@/src/handlers/error-handler'
 
 const reportsRouter = Router()
 
@@ -11,24 +13,28 @@ reportsRouter.post('/real-state', authMiddleware, (async (req: Request, res: Res
   const realState = await RealStateModel.findById(realStateId)
 
   if (!realState) {
-    return res.status(404).json({ message: 'Real state not found' })
+    throw new AppError('Real state not found', 404)
   }
 
   if (!realStateId || !message) {
-    return res.status(400).json({ message: 'Missing required fields' })
+    throw new AppError('Missing required fields', 400)
   }
 
   const userId = req.user?.userId
 
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' })
+    throw new AppError('Unauthorized', 401)
   }
 
   try {
     await RealStateReport.create({ realStateId, userId: userId, message })
-    res.status(201).json({ success: true, message: 'Real state report created successfully' })
+    responseHandler({
+      res,
+      code: 201,
+      message: 'Real state report created successfully'
+    })
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error creating real state report' })
+    throw new AppError('Error creating real state report', 500)
   }
 }) as RequestHandler)
 
@@ -36,7 +42,11 @@ reportsRouter.post('/real-state', authMiddleware, (async (req: Request, res: Res
 
 reportsRouter.get('/real-state', (async (req: Request, res: Response) => {
   const realStateReports = await RealStateReport.find()
-  res.status(200).json(realStateReports)
+  responseHandler({
+    res,
+    code: 200,
+    data: realStateReports
+  })
 }) as RequestHandler)
 
 export default reportsRouter

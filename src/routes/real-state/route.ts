@@ -1,4 +1,5 @@
 import { AppError } from '@/src/handlers/error-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
@@ -57,10 +58,18 @@ RealStateRouter.get(
 
     const hits = results.results[0].hits
     if (!hits) throw new AppError('No properties found', 404)
-    if (hits.length === 0) res.json({ success: true, message: 'No properties found', data: [] })
+    if (hits.length === 0) {
+      return responseHandler({
+        res,
+        code: 200,
+        message: 'No properties found',
+        data: []
+      })
+    }
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       data: hits
     })
   })
@@ -83,7 +92,11 @@ RealStateRouter.get(
     })
 
     if (!paginatedData) throw new AppError('Properties not found', 404)
-    res.json(paginatedData)
+    responseHandler({
+      res,
+      code: 200,
+      data: paginatedData
+    })
   })
 )
 
@@ -95,7 +108,11 @@ RealStateRouter.get(
 
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone')
     if (!property) throw new AppError('Property not found', 404)
-    res.json(property)
+    responseHandler({
+      res,
+      code: 200,
+      data: property
+    })
   })
 )
 
@@ -105,7 +122,7 @@ RealStateRouter.post(
   validateRequest(realStateSchema),
   asyncHandler(async (req: Request<{}, {}, RealStateI>, res: Response) => {
     const { body } = req
-    const { title, description, price, images, house_features, house_status, location, square_meters, currency, population, stats, rating_summary } = body
+    const { title, description, price, images, house_features, house_status, location, square_meters, currency, population } = body
 
     const { user } = req as any
     const { userId: owner } = user
@@ -126,8 +143,8 @@ RealStateRouter.post(
         images,
         title,
         owner,
-        stats: stats || { total_visits: 0, total_saves: 0 },
-        rating_summary: rating_summary || { average_rating: 0, total_ratings: 0 },
+        stats: { total_visits: 0, total_saves: 0 },
+        rating_summary: { average_rating: 0, total_ratings: 0 },
         visitors: [],
         saved_by: [],
         ratings: []
@@ -138,7 +155,11 @@ RealStateRouter.post(
       // Sync with Algolia
       await syncWithAlgolia('save', property)
 
-      res.status(201).send(property)
+      responseHandler({
+        res,
+        code: 201,
+        data: property
+      })
     } catch (error: any) {
       throw new AppError(error.message || 'Server error creating property', 500)
     }
@@ -177,7 +198,11 @@ RealStateRouter.delete(
 
     await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
 
-    res.json({ success: true, message: 'Property deleted successfully' })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Property deleted successfully'
+    })
   })
 )
 
@@ -223,11 +248,13 @@ RealStateRouter.put(
     // Sync with Algolia
     await syncWithAlgolia('update', updatedProperty)
 
-    res.json({
-      success: true,
-      message: 'Property updated successfully',
-      data: updatedProperty
+    responseHandler({
+      res,
+      data: updatedProperty,
+      code: 200,
+      message: 'Property updated successfully'
     })
+
   })
 )
 

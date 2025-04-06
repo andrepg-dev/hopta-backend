@@ -3,6 +3,7 @@ import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Response, Router } from 'express'
 import passport from 'passport'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const googleRouter = Router()
 
@@ -27,7 +28,11 @@ googleRouter.get('/callback',
       token: refreshToken
     })
 
-    res.json({ user: req.user, token })
+    responseHandler({
+      res,
+      code: 200,
+      data: { user: req.user, token }
+    })
   })
 
 export default googleRouter

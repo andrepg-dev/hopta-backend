@@ -11,7 +11,7 @@ interface UploadS3FilesProps {
 }
 
 /**
- * 
+ *  
  * Note: You need to use Multer to upload files
  * 
  * @param {UploadS3FilesProps} { files, folder, bucketName }

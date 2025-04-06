@@ -4,6 +4,7 @@ import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Request, Response, Router } from 'express'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const supportRouter = Router()
 
@@ -43,7 +44,11 @@ supportRouter.post('/', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Error sending email', 500)
   }
 
-  res.status(200).json({ success: true, message: 'Email sent successfully to support' })
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Email sent successfully to support'
+  })
 }))
 
 export default supportRouter

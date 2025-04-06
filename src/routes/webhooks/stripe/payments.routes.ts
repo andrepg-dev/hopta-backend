@@ -6,6 +6,7 @@ import Logs from '@/src/services/logs/save-logs.service'
 import { userModel } from '@/src/schemas/user.schemas'
 import { Request, Response, Router } from 'express'
 import Stripe from 'stripe'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const stripeWebhookRouter = Router()
 
@@ -61,6 +62,7 @@ stripeWebhookRouter.post(
             message: `Error al enviar el email: ${error}`,
             method: 'saveErrorLogs'
           })
+          throw new AppError('Error sending email', 500)
         }
 
         new Logs({
@@ -88,6 +90,7 @@ stripeWebhookRouter.post(
             message: `Error al enviar el email: ${error}`,
             method: 'saveErrorLogs'
           })
+          throw new AppError('Error sending email', 500)
         }
         break
 
@@ -95,7 +98,11 @@ stripeWebhookRouter.post(
         console.log('❌ Evento no manejado:', event.type)
         break
     }
-    res.json({ received: true })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Webhook received'
+    })
   })
 )
 

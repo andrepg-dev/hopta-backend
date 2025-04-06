@@ -2,7 +2,18 @@ import { NextFunction, Request, Response } from 'express'
 import Logs from '../services/logs/save-logs.service'
 
 export class AppError extends Error {
-  statusCode: number
+  /**
+   * @description The status code of the error
+   * @default 500
+   * 
+   * Explanation of status codes:
+   * 500: Internal server error
+   * 400: Bad request
+   * 401: Unauthorized
+   * 403: Forbidden
+   * 404: Not found
+   */
+  statusCode: number 
 
   constructor(message: any, statusCode: number) {
     super(message)

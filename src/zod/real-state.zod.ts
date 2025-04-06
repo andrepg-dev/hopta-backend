@@ -9,7 +9,7 @@ export const realStateSchema = z.object({
     lng: z.number().min(-180, 'Longitude must be between -180 and 180.').max(180, 'Longitude must be between -180 and 180.')
   }),
   square_meters: z.number().positive('Square meters must be a positive number').max(100000, 'Square meters must be at most 100,000.').optional(),
-  price: z.number().positive('Price must be a positive number').max(90000000, 'Price must be at most $90,000,000').multipleOf(0.01),
+  price: z.number().int('Price must be an integer').positive('Price must be a positive number').max(90000000, 'Price must be at most $90,000,000'),
   currency: z.enum(['HNL', 'USD', 'EUR']),
   population: z.number().max(40000, 'Population must be at most 40,000.').optional(),
   house_features: z.object({
@@ -70,16 +70,16 @@ export const realStateSchema = z.object({
   //     total_saves: z.number().default(0)
   //   })
   //   .optional(),
-  ratings: z
-    .array(
-      z.object({
-        user: z.string(),
-        rating: z.number().min(1).max(5),
-        comment: z.string().optional(),
-        created_at: z.date().optional()
-      })
-    )
-    .optional(),
+  // ratings: z
+  //   .array(
+  //     z.object({
+  //       user: z.string(),
+  //       rating: z.number().min(1).max(5),
+  //       comment: z.string().optional(),
+  //       created_at: z.date().optional()
+  //     })
+  //   )
+  //   .optional(),
   // rating_summary: z // NOTE: Estos procesos son automáticos, no se deben enviar desde el frontend
   //   .object({
   //     average_rating: z.number().max(5).default(0),

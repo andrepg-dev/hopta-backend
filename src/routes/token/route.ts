@@ -5,6 +5,7 @@ import Logs from '@/src/services/logs/save-logs.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { refreshTokenI } from '@/types/refresh-token/types'
 import { Request, Response, Router } from 'express'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const tokenRouter = Router()
 
@@ -47,7 +48,11 @@ tokenRouter.get(
         message: `Access token: ${accessToken}`
       })
 
-      res.json({ accessToken })
+      responseHandler({
+        res,
+        code: 200,
+        data: { accessToken }
+      })
     } catch (error) {
       throw new AppError('Invalid token ' + error, 401)
     }
