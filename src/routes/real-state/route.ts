@@ -12,6 +12,7 @@ import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-s
 import { algoliasearch } from 'algoliasearch'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
+import { z } from 'zod'
 
 const RealStateRouter = Router()
 const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string)
@@ -277,6 +278,37 @@ RealStateRouter.post(
     })
 
     res.json({ success: true, message: 'Sync completed successfully' })
+  })
+)
+
+// Show real state by array of object ids
+const recommendedPropertySchema = z.object({
+  property_ids: z.array(z.string().min(1).max(100))
+})
+
+RealStateRouter.post(
+  '/show-by-ids',
+  authMiddleware,
+  validateRequest(recommendedPropertySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { property_ids } = req.body
+    if (!property_ids) throw new AppError('Property IDs are required', 400)
+
+    const propertyIds = property_ids.map((id: string) => new mongoose.Types.ObjectId(id))
+    const properties = await RealStateModel.find({
+      _id: { $in: propertyIds }
+    }).select('-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary')
+
+    const propertiesMap = new Map(properties.map((p: any) => [p._id.toString(), p]))
+    const sortedProperties = property_ids.map((id: string) => propertiesMap.get(id)).filter(Boolean)
+
+    if (!sortedProperties) throw new AppError('Properties not found', 404)
+
+    responseHandler({
+      res,
+      data: sortedProperties,
+      code: 200
+    })
   })
 )
 

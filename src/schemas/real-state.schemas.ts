@@ -193,12 +193,12 @@ realStateSchema.pre('save', function (next) {
 realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
   const emailService = new EmailService()
 
-  await emailService.sendEmail({
-    to: { email: 'andreponce417@gmail.com' },
-    subject: `New property created`,
-    html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`,
-    provider: 'nodemailer'
-  })
+  // await emailService.sendEmail({
+  //   to: { email: 'andreponce417@gmail.com' },
+  //   subject: `New property created`,
+  //   html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`,
+  //   provider: 'nodemailer'
+  // })
 
   new Logs({
     method: 'saveLogs',
