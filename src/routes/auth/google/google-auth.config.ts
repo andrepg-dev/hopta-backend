@@ -16,7 +16,7 @@ passport.use(
       try {
         const foundUser = await userModel.findOne({ email: profile.emails[0].value })
         if (foundUser) {
-          return done(null, foundUser)
+          return done(null, foundUser as unknown as any)
         }
 
         const newUser = await userModel
@@ -35,7 +35,7 @@ passport.use(
             throw new AppError(err, 404)
           })
 
-        return done(null, newUser)
+        return done(null, newUser as unknown as any)
       } catch (error) {
         return done(error as Error)
       }

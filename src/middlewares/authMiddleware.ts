@@ -1,11 +1,16 @@
-import { UserI } from '@/types/login/user'
 import { NextFunction, Request, Response } from 'express'
 import { AppError } from '../handlers/error-handler'
 import { TokenManager } from '../utils/JWT/tokens-manager'
 
+interface UserJWT {
+  userId: string
+  iat: number
+  exp: number
+}
+
 declare global {
   namespace Express {
-    interface User extends UserI {}
+    interface User extends UserJWT { }
   }
 }
 
@@ -18,7 +23,8 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   try {
     const decoded = TokenManager.verifyToken(token)
-    req.user = decoded as { userId: string; iat: number; exp: number }
+    console.log({ decoded })
+    req.user = decoded as UserJWT
     next()
   } catch (error) {
     throw new AppError('Invalid token', 401)

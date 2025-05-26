@@ -24,7 +24,8 @@ export const realStateSchema = z.object({
         furnished: z.boolean().optional(),
         air_conditioning: z.boolean().optional(),
         '24_7_security': z.boolean().optional(),
-        garage: z.boolean().optional()
+        garage: z.boolean().optional(),
+        allowPets: z.boolean().optional()
       })
       .optional(),
     exterior_extras: z
@@ -116,7 +117,8 @@ export const realStateUpdateSchema = z
             furnished: z.boolean().optional(),
             air_conditioning: z.boolean().optional(),
             '24_7_security': z.boolean().optional(),
-            garage: z.boolean().optional()
+            garage: z.boolean().optional(),
+            allowPets: z.boolean().optional()
           })
           .optional(),
         exterior_extras: z

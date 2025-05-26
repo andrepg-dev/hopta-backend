@@ -8,6 +8,7 @@ export interface InteriorExtras {
   air_conditioning?: boolean
   '24_7_security'?: boolean
   garage?: boolean
+  allowPets?: boolean
 }
 
 export interface ExteriorExtras {

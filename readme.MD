@@ -64,7 +64,7 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 #### Verificaciones
 
 - Verificar tarjeta de identidad ❎
-- Verificar las imágenes que sean de real state con aws Recognition ✖️
+- Verificar las imágenes que sean de real state con AWS Recognition ✖️
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
 - Verificar número de telefóno con código OTP ✅
 - Enviar emails de bienvenida a los usuarios con SendGrid ✅
@@ -76,8 +76,8 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 ## Pendientes (Frontend)
 
-- Aprender sobre SEO en NextJS ✖️
-- Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
+- Aprender sobre SEO en NextJS
+- Agregar la caracteristica de si se permiten mascostas en el alquiler
 
 ## Pendientes (Backend)
 

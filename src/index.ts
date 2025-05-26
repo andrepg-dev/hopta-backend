@@ -5,7 +5,7 @@ import Logs from '@/src/services/logs/save-logs.service'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import express from 'express'
+import express, { Response } from 'express'
 import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
@@ -68,7 +68,7 @@ app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 app.use('/reports', realStateReportRouter)
 app.use('/support', supportRouter)
 
-app.get('/email', async (req, res) => {
+app.get('/email', async (_, res: Response) => {
   const email = new EmailService()
   const response = await email.sendEmail({
     to: {
@@ -85,7 +85,7 @@ app.use(errorHandler)
 function startServer(port: number) {
   const server = app.listen(port)
 
-  server.on('error', (error) => {
+  server.on('error', (error: Error) => {
     if (error.message.includes('EADDRINUSE')) {
       console.warn(`Port ${port} is already in use, trying with another port...`)
       const newPort = port + 1

@@ -61,7 +61,8 @@ const realStateSchema = new mongoose.Schema(
         furnished: Boolean,
         air_conditioning: Boolean,
         '24_7_security': Boolean,
-        garage: Boolean
+        garage: Boolean,
+        allowPets: Boolean
       },
       exterior_extras: {
         balcony: Boolean,
@@ -208,6 +209,6 @@ realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI {}
+interface RealStateDocument extends mongoose.Document, RealStateI { }
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)
