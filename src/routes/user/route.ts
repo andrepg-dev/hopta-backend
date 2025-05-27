@@ -1,5 +1,6 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
@@ -19,7 +20,6 @@ import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
-import { responseHandler } from '@/src/handlers/responseHandler'
 
 const userRouter = Router()
 
@@ -51,7 +51,8 @@ userRouter.post(
       location,
       profile_picture,
       properties,
-      about
+      about,
+      // TODO: Add birth date
     } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
@@ -65,7 +66,7 @@ userRouter.post(
     // Check if user already exists
     const existingUser = await userModel.findOne({ email: email.toLowerCase() })
     if (existingUser) {
-      throw new AppError('User already exists', 400)
+      throw new AppError('User already exists', 409)
     }
 
     // Generate verification code
@@ -124,10 +125,10 @@ userRouter.post(
   })
 )
 
-userRouter.get(
+userRouter.post(
   '/verify-email',
-  asyncHandler(async (req: Request<{}, {}, {}, { email: string; code: string }>, res: Response) => {
-    const { email, code } = req.query
+  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response) => {
+    const { email, code } = req.body
 
     if (!email || !code) {
       throw new AppError('Email and code are required', 400)
