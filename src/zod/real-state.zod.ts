@@ -3,7 +3,7 @@ import z from 'zod'
 export const realStateSchema = z.object({
   title: z.string().min(4, 'Title must be at least 4 characters long.').max(300, 'Title must be at most 300 characters long.'),
   description: z.string().max(300, 'Description must be at most 300 characters long.'),
-  images: z.array(z.string().url('Each image must be a valid URL.')).max(15, 'You can upload a maximum of 15 images.'),
+  images: z.array(z.string().url('Each image must be a valid URL.')).min(3, 'You must upload at least 3 images.').max(40, 'You can upload a maximum of 40 images.'),
   location: z.object({
     lat: z.number().min(-90, 'Latitude must be between -90 and 90.').max(90, 'Latitude must be between -90 and 90.'),
     lng: z.number().min(-180, 'Longitude must be between -180 and 180.').max(180, 'Longitude must be between -180 and 180.')

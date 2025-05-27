@@ -121,12 +121,11 @@ RealStateRouter.post(
   '/',
   authMiddleware,
   validateRequest(realStateSchema),
-  asyncHandler(async (req: Request<{}, {}, RealStateI>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, RealStateI, {}>, res: Response) => {
     const { body } = req
-    const { title, description, price, images, house_features, house_status, location, square_meters, currency, population } = body
+    const { title, description, price, house_features, images, house_status, location, square_meters, currency, population } = body
 
-    const { user } = req as any
-    const { userId: owner } = user
+    const owner = req.user?.userId
 
     const foundUser = await userModel.findById(owner)
     if (!foundUser) throw new AppError('User not found', 404)

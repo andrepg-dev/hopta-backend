@@ -1,18 +1,17 @@
 import { BUCKET_NAME } from '@/constants/aws/s3/bucket.constants'
+import { multerConfig } from '@/src/config/multer.config'
+import { AppError } from '@/src/handlers/error-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
 import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { deleteObject } from '@/src/services/aws/s3/deleteObject'
 import { getObject } from '@/src/services/aws/s3/getObject'
 import { uploadS3Files } from '@/src/services/upload-s3-files/upload-files.service'
-import { runMulter } from '@/src/utils/run-multer.utils'
 import { Request, Response, Router } from 'express'
-import { responseHandler } from '@/src/handlers/responseHandler'
-import { AppError } from '@/src/handlers/error-handler'
+const s3UploadImageRouter = Router()
 
-const s3Router = Router()
-
-s3Router.get(
+s3UploadImageRouter.get(
   '/',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (_: Request, res: Response) => {
     const objectResponse = await getObject({
       bucketName: BUCKET_NAME,
       key: 'extra-file.html'
@@ -25,12 +24,19 @@ s3Router.get(
   })
 )
 
-s3Router.post(
+s3UploadImageRouter.post(
   '/',
+  multerConfig({ propName: 'images', maxFiles: 35 }),
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      const files = await runMulter(req, res)
-      const { filesUrls } = await uploadS3Files({ files, folder: 'uploads', bucketName: BUCKET_NAME })
+      // get files from request
+      const files = req.files as Express.Multer.File[]
+      if (!files) throw new AppError('No files uploaded', 400)
+
+      // upload files to s3
+      const { filesUrls } = await uploadS3Files({ files: files, folder: 'uploads', bucketName: BUCKET_NAME })
+      if (!filesUrls) throw new AppError('Error uploading files', 500)
+
       responseHandler({
         res,
         code: 200,
@@ -43,9 +49,9 @@ s3Router.post(
   })
 )
 
-s3Router.delete(
+s3UploadImageRouter.delete(
   '/',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (_: Request, res: Response) => {
     const response = await deleteObject({
       bucketName: BUCKET_NAME,
       key: 'chema-alonso.jpg'
@@ -59,4 +65,4 @@ s3Router.delete(
   })
 )
 
-export default s3Router
+export default s3UploadImageRouter

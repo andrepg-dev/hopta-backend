@@ -384,8 +384,9 @@ userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(
     provider: 'sendgrid'
   })
 
-  res.json({
-    success: true,
+  responseHandler({
+    res,
+    code: 200,
     message: 'Verification code sent successfully'
   })
 }))
@@ -432,8 +433,9 @@ userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res
     provider: 'sendgrid'
   })
 
-  res.json({
-    success: true,
+  responseHandler({
+    res,
+    code: 200,
     message: 'Password updated successfully'
   })
 }))
@@ -473,10 +475,12 @@ userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyn
     provider: 'sendgrid'
   })
 
-  res.json({
-    success: true,
+  responseHandler({
+    res,
+    code: 200,
     message: 'Verification code sent successfully'
   })
+
 }))
 
 userRouter.post(
