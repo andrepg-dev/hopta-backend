@@ -1,32 +1,29 @@
-FROM node:16-alpine
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./ 
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# production
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiamos solo package.json y lock para instalar primero
-COPY package*.json ./
+# Copiar el package lock para instalar dependencias
+COPY package*.json /app/
+RUN npm install --production
 
-# Instala dependencias, esto compilará 'bcrypt' nativo para Alpine
-RUN npm install
+# Copiamos el dist del run anterior
+COPY --from=builder /app/dist ./dist
 
-# Ahora copia tu código
-COPY . .
+# Copiar el archivo .env de la build a producción
+COPY .env .
 
-EXPOSE 3001
+EXPOSE 3005
 
-# Usa tu comando. Por ejemplo:
-CMD ["npx", "ts-node", "-r", "tsconfig-paths/register", "src/index.ts"]
-
-
-# FROM node:16-alpine
-
-# WORKDIR /app
-
-# COPY package*.json ./
-
-# RUN npm install 
-
-# COPY . .
-
-# EXPOSE 3001
-
-# CMD ["npx", "ts-node", "-r", "tsconfig-paths/register", "src/index.ts"]
+CMD ["node", "dist/src/index.js"]
