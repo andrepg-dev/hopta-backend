@@ -21,7 +21,7 @@ RUN npm install --production
 # Copiamos el dist del run anterior
 COPY --from=builder /app/dist ./dist
 
-# Copiar el archivo .env de la build a producción
+# Copiar el archivo .env de la build a producción, esto solo en modo desarrollo
 # COPY .env .
 
 EXPOSE 3005

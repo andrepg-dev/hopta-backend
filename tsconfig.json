@@ -11,6 +11,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noEmit": true,
     "skipLibCheck": true
   },
   "include": ["**/*.ts", "jest.config.js"] // Incluye todos los archivos .ts

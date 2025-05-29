@@ -1,10 +1,10 @@
 export const COOKIES = {
   cookies_token_name: 'access_token',
-  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY as string,
+  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY ?? (() => { throw new Error('JWT_SECRET_KEY_MISSING')})(),
 
   general: {
     name: 'general_cookies',
-    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY as string,
+    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY ?? (() => { throw new Error('GENERAL_COOKIES_SECRET_KEY IS MISSING')})(),
     expiresIn: {
       hourString: '1h',
       hourInt: 1 * 60 * 60 * 1000
@@ -17,7 +17,7 @@ export const COOKIES = {
 
   jwt_refresh_token: {
     name: 'refresh_token',
-    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY as string,
+    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY ?? (() => { throw new Error('JWT_REFRESH_SECRET_KEY IS MISSING')})(),
     dayString: '14d',
     expires: 14 * 24 * 60 * 60 * 1000 // 14 días
   }
