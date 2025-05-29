@@ -1,20 +1,48 @@
-import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
+
+
+export const COOKIES = {
+  cookies_token_name: 'access_token',
+  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY ?? (() => { throw new Error('JWT_SECRET_KEY_MISSING') })(),
+
+  general: {
+    name: 'general_cookies',
+    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY ?? (() => { throw new Error('GENERAL_COOKIES_SECRET_KEY IS MISSING') })(),
+    expiresIn: {
+      hourString: '1h',
+      hourInt: 1 * 60 * 60 * 1000
+    }
+  },
+  expiresIn: {
+    hourString: '60m',
+    hourInt: 60 * 60 * 1000
+  },
+
+  jwt_refresh_token: {
+    name: 'refresh_token',
+    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY ?? (() => { throw new Error('JWT_REFRESH_SECRET_KEY IS MISSING') })(),
+    dayString: '14d',
+    expires: 14 * 24 * 60 * 60 * 1000 // 14 días
+  }
+}
+
 
 export class TokenManager {
   static accessToken({ payload }: { payload: any }) {
-    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, {
+    const options: SignOptions = {
       expiresIn: COOKIES.expiresIn.hourString
-    })
+    }
+    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, options)
   }
 
   static refreshToken({ payload }: { payload: any }) {
-    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY, {
+    const options: SignOptions = {
       expiresIn: COOKIES.jwt_refresh_token.dayString
-    })
+    }
+    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY, options)
 
     return refreshToken
   }
@@ -62,9 +90,10 @@ export class TokenManager {
   }
 
   static tempToken({ payload }: { payload: any }) {
-    return jwt.sign(payload, COOKIES.general.SECRET_KEY, {
+    const options: SignOptions = {
       expiresIn: COOKIES.general.expiresIn.hourString
-    })
+    }
+    return jwt.sign(payload, COOKIES.general.SECRET_KEY, options)
   }
 
   static verifyTempToken(token: string) {
