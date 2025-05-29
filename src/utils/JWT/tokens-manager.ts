@@ -5,25 +5,25 @@ import jwt, { SignOptions } from 'jsonwebtoken'
 
 export const COOKIES = {
   cookies_token_name: 'access_token',
-  JWT_SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY,
+  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
 
   general: {
     name: 'general_cookies',
-    SECRET_KEY: process.env.JWT_SECRET_KEY,
+    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY,
     expiresIn: {
-      hourString: '1h',
+      seconds: 3600, // 1 hour in seconds
       hourInt: 1 * 60 * 60 * 1000
     }
   },
   expiresIn: {
-    hourString: '1h', // Changed from '60m' to '1h' for consistency
+    seconds: 3600, // 1 hour in seconds
     hourInt: 60 * 60 * 1000
   },
 
   jwt_refresh_token: {
     name: 'refresh_token',
     SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY,
-    dayString: '14d',
+    seconds: 1209600, // 14 days in seconds (14 * 24 * 60 * 60)
     expires: 14 * 24 * 60 * 60 * 1000 // 14 días
   }
 }
@@ -31,14 +31,14 @@ export const COOKIES = {
 export class TokenManager {
   static accessToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.expiresIn.hourString
+      expiresIn: COOKIES.expiresIn.seconds
     }
     return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, options)
   }
 
   static refreshToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.jwt_refresh_token.dayString
+      expiresIn: COOKIES.jwt_refresh_token.seconds
     }
     const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY, options)
 
@@ -89,7 +89,7 @@ export class TokenManager {
 
   static tempToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.general.expiresIn.hourString
+      expiresIn: COOKIES.general.expiresIn.seconds
     }
     return jwt.sign(payload, COOKIES.general.SECRET_KEY, options)
   }
