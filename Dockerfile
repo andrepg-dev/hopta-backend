@@ -24,6 +24,6 @@ COPY --from=builder /app/dist ./dist
 # Copiar el archivo .env de la build a producción, esto solo en modo desarrollo
 # COPY .env .
 
-EXPOSE 3005
+EXPOSE 3001
 
 CMD ["node", "dist/src/index.js"]
