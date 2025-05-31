@@ -20,14 +20,13 @@ interface UploadS3FilesProps {
 
 export async function uploadS3Files({ files, folder, bucketName }: UploadS3FilesProps) {
   const fileUrls: string[] = []
-  const filesResult = []
+  const filesResult: { fileResult: any }[] = []
 
   for (const file of files) {
     const randomName = crypto.randomBytes(16).toString('hex')
     const extension = path.extname(file.originalname).toLowerCase()
     const key = `${folder}/${randomName}${extension}`
     const fileUrl = `https://${bucketName}.s3.amazonaws.com/${key}`
-
 
     if (file.mimetype.includes('image')) {
       const fileBuffer = await readFile(file.path)
@@ -44,7 +43,9 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
         Body: optimizedBuffer
       })
 
-      filesResult.push({ fileResult })
+      if (fileResult) {
+        filesResult.push({ fileResult })
+      }
       fileUrls.push(fileUrl)
     } else {
       const fileResult = await putObject({
@@ -54,7 +55,9 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
         filePath: file.path
       })
 
-      filesResult.push({ fileResult })
+      if (fileResult) {
+        filesResult.push({ fileResult })
+      }
       fileUrls.push(fileUrl)
     }
 
