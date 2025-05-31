@@ -28,19 +28,20 @@ export const COOKIES = {
   }
 }
 
+
 export class TokenManager {
   static accessToken({ payload }: { payload: any }) {
     const options: SignOptions = {
       expiresIn: COOKIES.expiresIn.seconds
     }
-    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY, options)
+    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY ?? '', options)
   }
 
   static refreshToken({ payload }: { payload: any }) {
     const options: SignOptions = {
       expiresIn: COOKIES.jwt_refresh_token.seconds
     }
-    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY, options)
+    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', options)
 
     return refreshToken
   }
@@ -48,7 +49,6 @@ export class TokenManager {
   static async saveRefreshTokenInDB({ payload }: { payload: any }) {
     const token = this.refreshToken({ payload })
 
-    // Encriptar el refresh token en la base de datos
     const hashed = await hashGen(token)
 
     await refreshTokenModel.create({
@@ -71,18 +71,17 @@ export class TokenManager {
   }
 
   static verifyToken(token: string) {
-    return jwt.verify(token, COOKIES.JWT_SECRET_KEY)
+    return jwt.verify(token, COOKIES.JWT_SECRET_KEY ?? '')
   }
 
   static verifyRefreshToken(token: string) {
-    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY) as { userId: string; iat: number; exp: number }
+    return jwt.verify(token, COOKIES.jwt_refresh_token.SECRET_KEY ?? '') as { userId: string; iat: number; exp: number }
   }
 
   static async revokeToken({ payload }: { payload: any }) {
     await refreshTokenModel.findOneAndDelete({ payload })
   }
 
-  // Create a cron job to clean the expired tokens
   static async cleanExpiredTokens() {
     await refreshTokenModel.deleteMany({ expires: { $lt: new Date() } })
   }
@@ -91,10 +90,10 @@ export class TokenManager {
     const options: SignOptions = {
       expiresIn: COOKIES.general.expiresIn.seconds
     }
-    return jwt.sign(payload, COOKIES.general.SECRET_KEY, options)
+    return jwt.sign(payload, COOKIES.general.SECRET_KEY ?? '', options)
   }
 
   static verifyTempToken(token: string) {
-    return jwt.verify(token, COOKIES.general.SECRET_KEY)
+    return jwt.verify(token, COOKIES.general.SECRET_KEY ?? '')
   }
 }
