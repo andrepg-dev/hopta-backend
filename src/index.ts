@@ -21,6 +21,7 @@ import supportRouter from './routes/support/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
+import { Response, Request } from 'express'
 
 // Database connection
 connectToDatabase()
@@ -56,6 +57,7 @@ app.set('trust proxy', 1)
 
 const port = CONNECTIONS.PORT
 
+app.get('/', (_: Request, res: Response) => { res.status(200).send('Welcome to Hopta') })
 app.use('/health', healthRouter)
 app.use('/upload-image', authMiddleware, s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
