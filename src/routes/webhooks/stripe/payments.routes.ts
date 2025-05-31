@@ -1,6 +1,6 @@
 import { stripe } from '@/constants/stripe/config.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
 import { userModel } from '@/src/schemas/user.schemas'

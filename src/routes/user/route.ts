@@ -1,7 +1,8 @@
 import { COOKIES } from '@/constants/cookies.constants'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { VerificationCode } from '@/src/actions/user/send-verification-code.action'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { pedingUserModel } from '@/src/schemas/pending-sms-user.schemas'
@@ -78,7 +79,7 @@ userRouter.post(
     // Store verification data
     const userData = {
       name,
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
       auth: {
         local: {
           password: hashedPassword
@@ -96,7 +97,7 @@ userRouter.post(
     }
 
     await verificationCodeModel.create({
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
       code: verificationCode,
       userData
     })
@@ -105,7 +106,7 @@ userRouter.post(
     const emailService = new EmailService()
     await emailService.sendEmail({
       to: {
-        email: email.toLowerCase(),
+        email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
       provider: 'sendgrid',
@@ -113,7 +114,7 @@ userRouter.post(
       dynamicTemplateData: {
         name: `${name} ${last_name}`,
         code: verificationCode,
-        email: email.toLowerCase()
+        email: email.trim().toLowerCase()
       }
     })
 
@@ -182,7 +183,7 @@ userRouter.post(
   asyncHandler(async (req: Request<{}, {}, { email: string; password: string }>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
 
-    email = email.toLowerCase()
+    email = email.trim().toLowerCase()
 
     // verify is the user is on the database
     const user = await userModel.findOne({ email }).catch((err) => {
@@ -350,6 +351,26 @@ userRouter.post(
   })
 )
 
+userRouter.post('/email-exists',
+  validateRequest(isValidEmail),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body
+
+    const user = await userModel.findOne({ email: email.trim().toLowerCase() })
+
+    if (!user) {
+      throw new AppError('Unregistered email', 404)
+    }
+
+    await VerificationCode.SendGmailVerificationCode(email, user, 'Hi')
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Email already exists'
+    })
+  }))
+
 userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body
 
@@ -363,26 +384,7 @@ userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(
     throw new AppError('Unregistered email', 404)
   }
 
-  const verificationCode = RandomIntUtils.randomInt()
-
-  const userData = {
-    email: email.toLowerCase(),
-    code: verificationCode,
-    userData: user.toObject()
-  }
-
-  await verificationCodeModel.create(userData)
-
-  const emailService = new EmailService()
-  await emailService.sendEmail({
-    to: {
-      email: email.toLowerCase(),
-      name: user.name
-    },
-    subject: 'Forgot password',
-    html: `Your verification code is ${verificationCode}`,
-    provider: 'sendgrid'
-  })
+  await VerificationCode.SendGmailVerificationCode(email, user)
 
   responseHandler({
     res,

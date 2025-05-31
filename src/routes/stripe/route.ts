@@ -1,7 +1,7 @@
 import { stripe } from '@/constants/stripe/config.constants'
 import { line_items } from '@/constants/stripe/session.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { userModel } from '@/src/schemas/user.schemas'
 import RandomIntUtils from '@/src/utils/random-int.utils'

@@ -22,6 +22,11 @@ interface DataHandlerProps {
   code: number
   /**
    * @description The message to send
+   * @example
+   * {
+   *  "success": true,
+   *  "message": ""
+   * }
    */
   message?: string
 }
@@ -29,6 +34,3 @@ interface DataHandlerProps {
 export const responseHandler = ({ res, data, code, message }: DataHandlerProps) => {
   res.status(code).json({ success: true, data, message })
 }
-
-
-

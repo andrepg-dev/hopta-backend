@@ -1,7 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import Logs from '@/src/services/logs/save-logs.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Request, Response, Router } from 'express'

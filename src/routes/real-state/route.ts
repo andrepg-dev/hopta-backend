@@ -1,6 +1,6 @@
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
