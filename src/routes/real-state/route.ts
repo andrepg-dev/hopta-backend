@@ -123,7 +123,7 @@ RealStateRouter.post(
   validateRequest(realStateSchema),
   asyncHandler(async (req: Request<{}, {}, RealStateI, {}>, res: Response) => {
     const { body } = req
-    const { title, description, price, house_features, images, house_status, location, square_meters, currency, population } = body
+    const { title, description, price, house_features, images, house_status, location, square_meters, currency, population, additional_cost } = body
 
     const owner = req.user?.userId
 
@@ -147,7 +147,8 @@ RealStateRouter.post(
         rating_summary: { average_rating: 0, total_ratings: 0 },
         visitors: [],
         saved_by: [],
-        ratings: []
+        ratings: [],
+        additional_cost
       })
 
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })

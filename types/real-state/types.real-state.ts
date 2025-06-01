@@ -1,40 +1,33 @@
 import { Types } from 'mongoose'
 
+export type InteriorExtrasType = 'water_tank' | 'water_cistern' | 'closets' | 'furnished' | 'air_conditioning' | '24_7_security' | 'garage' | 'allowPets'
+export type ExteriorExtrasType = 'balcony' | 'patio' | 'terrace' | 'garden' | 'swimming_pool'
+export type CommunityExtrasType = 'gym' | 'parks' | 'schools' | 'shopping_malls' | 'supermarkets' | 'elevator'
+export type SecurityType = 'gated_community'
+
 export interface InteriorExtras {
-  water_tank?: boolean
-  water_cistern?: boolean
-  closets?: boolean
-  furnished?: boolean
-  air_conditioning?: boolean
-  '24_7_security'?: boolean
-  garage?: boolean
-  allowPets?: boolean
+  [key: string]: InteriorExtrasType[]
 }
 
 export interface ExteriorExtras {
-  balcony?: boolean
-  patio?: boolean
-  terrace?: boolean
-  garden?: boolean
-  swimming_pool?: boolean
+  [key: string]: ExteriorExtrasType[]
 }
 
 export interface CommunityExtras {
-  gym?: boolean
-  parks?: boolean
-  schools?: boolean
-  shopping_malls?: boolean
-  supermarkets?: boolean
-  elevator?: boolean
+  [key: string]: CommunityExtrasType[]
+}
+
+export interface Security {
+  [key: string]: SecurityType[]
 }
 
 export interface HouseFeatures {
   rooms: number
   bathrooms: number
-  kitchens?: number
   interior_extras?: InteriorExtras
   exterior_extras?: ExteriorExtras
   community_extras?: CommunityExtras
+  security?: Security
 }
 
 export interface Location {
@@ -71,6 +64,10 @@ export interface RatingSummary {
   total_ratings: number
 }
 
+export interface AdditionalCost {
+  utilities_included: 'water' | 'electricity' | 'internet'
+}
+
 export interface RealStateI {
   title: string
   description: string
@@ -87,6 +84,7 @@ export interface RealStateI {
   stats?: Stats
   ratings?: Rating[]
   rating_summary?: RatingSummary
+  additional_cost?: AdditionalCost
   created_at?: Date
   updated_at?: Date
 }

@@ -51,33 +51,27 @@ const realStateSchema = new mongoose.Schema(
         type: Number,
         required: true
       },
-      kitchens: {
-        type: Number
-      },
       interior_extras: {
-        water_tank: Boolean,
-        water_cistern: Boolean,
-        closets: Boolean,
-        furnished: Boolean,
-        air_conditioning: Boolean,
-        '24_7_security': Boolean,
-        garage: Boolean,
-        allowPets: Boolean
+        type: [String],
+        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets']
       },
       exterior_extras: {
-        balcony: Boolean,
-        patio: Boolean,
-        terrace: Boolean,
-        garden: Boolean,
-        swimming_pool: Boolean
+        type: [String],
+        enum: ['balcony', 'patio', 'terrace', 'garden', 'swimming_pool']
       },
       community_extras: {
-        gym: Boolean,
-        parks: Boolean,
-        schools: Boolean,
-        shopping_malls: Boolean,
-        supermarkets: Boolean,
-        elevator: Boolean
+        type: [String],
+        enum: ['gym', 'parks', 'schools', 'shopping_malls', 'supermarkets', 'elevator']
+      },
+      security: {
+        type: [String],
+        enum: ['gated_community']
+      }
+    },
+    additional_cost: {
+      utilities_included: {
+        type: [String],
+        enum: ['water', 'electricity', 'internet']
       }
     },
     owner: {
@@ -192,15 +186,6 @@ realStateSchema.pre('save', function (next) {
 })
 
 realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
-  const emailService = new EmailService()
-
-  // await emailService.sendEmail({
-  //   to: { email: 'andreponce417@gmail.com' },
-  //   subject: `New property created`,
-  //   html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`,
-  //   provider: 'nodemailer'
-  // })
-
   new Logs({
     method: 'saveLogs',
     message: `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
