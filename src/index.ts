@@ -53,7 +53,8 @@ app.use(passport.initialize())
 
 // Security middleware
 app.use(helmet())
-app.set('trust proxy', 1)
+
+app.set('trust proxy', true)
 
 const port = CONNECTIONS.PORT
 

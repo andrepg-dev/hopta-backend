@@ -20,6 +20,7 @@ import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
+import { getIpInfo } from '@/src/actions/user/ip-info'
 
 const userRouter = Router()
 
@@ -120,7 +121,10 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Verification code sent, please check your email.'
+      message: 'Verification code sent, please check your email.',
+      data: {
+        ip: await getIpInfo(req.ip)
+      }
     })
   })
 )
@@ -181,7 +185,8 @@ userRouter.post(
         message: 'User logged in successfully',
         data: {
           user: rest,
-          token: accessToken
+          token: accessToken,
+          ip: await getIpInfo(req.ip)
         }
       })
 
@@ -225,7 +230,8 @@ userRouter.post(
       message: 'Email verified successfully',
       data: {
         user: rest,
-        token: accessToken
+        token: accessToken,
+        ip: await getIpInfo(req.ip)
       }
     })
   })
@@ -276,8 +282,16 @@ userRouter.post(
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
-    // Response
-    res.json({ success: true, user: userWithoutAuth, token })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'User logged in successfully',
+      data: {
+        user: userWithoutAuth,
+        token,
+        ip: await getIpInfo(req.ip)
+      }
+    })
   })
 )
 
@@ -361,7 +375,14 @@ userRouter.post(
       throw new AppError(`Error sending SMS`, 400)
     })
 
-    res.json({ success: true, message: 'SMS sent successfully' })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'SMS sent successfully',
+      data: {
+        ip: await getIpInfo(req.ip)
+      }
+    })
   })
 )
 
