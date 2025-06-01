@@ -144,15 +144,48 @@ userRouter.post(
       throw new AppError('Invalid or expired verification code', 400)
     }
 
+    // verificar si el usuario está logueado
+    const userExists = await userModel.findOne({ email: email?.toString().toLowerCase() })
+
+    if (userExists) {
+      // Access token
+      const accessToken = TokenManager.accessToken({ payload: { userId: userExists._id as string } })
+
+      // Refresh token
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: userExists._id as string } })
+      refreshTokenCookies.setRefreshCookie({
+        res,
+        token: refreshToken
+      })
+
+      TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
+
+      // Delete verification data from database
+      await verificationCodeModel.deleteOne({ _id: verificationData._id })
+
+      // user without credentials
+      const { auth: _, ...rest } = userExists.toObject()
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'User logged in successfully',
+        data: {
+          user: rest,
+          token: accessToken
+        }
+      })
+    }
+
     // Create user
     const user = await userModel.create(verificationData.userData)
 
-    // Delete verification data
-    await verificationCodeModel.deleteOne({ _id: verificationData._id })
-
     // Transfer only the necessary data
     const userData = user.toObject()
-    const { auth: _, ...userWithoutAuth } = userData
+    const { auth: _, ...rest } = userData
+
+    // Delete verification data from database
+    await verificationCodeModel.deleteOne({ _id: verificationData._id })
 
     // Access token
     const accessToken = TokenManager.accessToken({ payload: { userId: userData._id as string } })
@@ -163,6 +196,7 @@ userRouter.post(
       res,
       token: refreshToken
     })
+
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
     responseHandler({
@@ -170,7 +204,7 @@ userRouter.post(
       code: 200,
       message: 'Email verified successfully',
       data: {
-        user: userWithoutAuth,
+        user: rest,
         token: accessToken
       }
     })
