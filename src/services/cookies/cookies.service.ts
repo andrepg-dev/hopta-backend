@@ -16,11 +16,11 @@ export class Cookies {
       options
         ? options
         : {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict' as 'strict' | 'lax' | 'none',
-            maxAge: 1800000
-          }
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict' as 'strict' | 'lax' | 'none',
+          maxAge: 1800000
+        }
     )
   }
 

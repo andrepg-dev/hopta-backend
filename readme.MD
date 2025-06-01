@@ -86,3 +86,5 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 - Enviar emails felicitando a los usuarios que cumplen años ✅
 - Sistema de olvidar contraseña ❎
 - Subir archivos a S3 ✅
+
+<!-- Guardar el token en las cookies, no entregarle nada al cliente -->

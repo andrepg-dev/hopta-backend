@@ -1,9 +1,10 @@
+import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
+import { responseHandler } from '@/src/handlers/responseHandler'
+import { Cookies } from '@/src/services/cookies/cookies.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Response, Router } from 'express'
 import passport from 'passport'
-import { responseHandler } from '@/src/handlers/responseHandler'
 
 const googleRouter = Router()
 
@@ -23,10 +24,10 @@ googleRouter.get('/callback',
 
     const token = TokenManager.accessToken({ payload: { userId: user._id as string } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+
+    const cookies = new Cookies(req, res)
+
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
     responseHandler({
       res,

@@ -14,7 +14,6 @@ import { Cookies } from '@/src/services/cookies/cookies.service'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
 import { TwilioSendSMS } from '@/src/services/twilio/twilio-sms.service'
-import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
@@ -153,10 +152,12 @@ userRouter.post(
 
       // Refresh token
       const refreshToken = TokenManager.refreshToken({ payload: { userId: userExists._id as string } })
-      refreshTokenCookies.setRefreshCookie({
-        res,
-        token: refreshToken
-      })
+
+
+      // Save the refresh token in the cookies with the class name of Cookies
+
+      const cookies = new Cookies(req, res)
+      cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
       TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
 
@@ -175,6 +176,9 @@ userRouter.post(
           token: accessToken
         }
       })
+
+      // Stop the execution
+      return
     }
 
     // Create user
@@ -192,10 +196,10 @@ userRouter.post(
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+
+
+    const cookies = new Cookies(req, res)
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
@@ -241,10 +245,10 @@ userRouter.post(
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+
+    const cookies = new Cookies(req, res)
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
     // Response
@@ -257,7 +261,9 @@ userRouter.get(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await refreshTokenModel.findOneAndDelete({ userId: req.user?.userId })
-    refreshTokenCookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
+
+    const cookies = new Cookies(req, res)
+    cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
     res.json({ success: true, message: 'Logged out successfully' })
   })
 )
@@ -575,10 +581,8 @@ userRouter.post(
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
 
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+    // variable cookie already exists in the top
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
     await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
 

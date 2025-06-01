@@ -12,6 +12,7 @@ tokenRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const token = req.cookies[COOKIES.jwt_refresh_token.name]
+
     if (!token) throw new AppError('Unauthorized', 401)
 
     new Logs({

@@ -3,7 +3,7 @@ import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import jwt, { SignOptions } from 'jsonwebtoken'
 
-export const COOKIES = {
+const COOKIES = {
   cookies_token_name: 'access_token',
   JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
 
