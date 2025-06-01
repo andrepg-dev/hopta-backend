@@ -1,3 +1,4 @@
+import { COOKIES } from '@/constants/cookies.constants'
 import { NextFunction, Request, Response } from 'express'
 import { AppError } from '../handlers/error-handler'
 import { TokenManager } from '../utils/JWT/tokens-manager'
@@ -15,14 +16,11 @@ declare global {
 }
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization
-  if (!authHeader) throw new AppError('Unauthorized', 401)
-
-  const [bearer, token] = authHeader.split(' ')
-  if (bearer !== 'Bearer' || !token) throw new AppError('Invalid token format', 401)
+  const accessToken = req.cookies[COOKIES.jwt_access_token.name]
+  if (!accessToken) throw new AppError('Unauthorized', 401)
 
   try {
-    const decoded = TokenManager.verifyToken(token)
+    const decoded = TokenManager.verifyToken(accessToken)
     console.log({ decoded })
     req.user = decoded as UserJWT
     next()

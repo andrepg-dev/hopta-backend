@@ -155,9 +155,17 @@ userRouter.post(
 
 
       // Save the refresh token in the cookies with the class name of Cookies
-
       const cookies = new Cookies(req, res)
       cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+      // Save the acces token in cookies
+      cookies.saveCookie(
+        COOKIES.jwt_access_token.name,
+        accessToken,
+        {
+          expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
+        }
+      )
 
       TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
 
@@ -197,9 +205,17 @@ userRouter.post(
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
 
-
+    // Save refresh token in cookies
     const cookies = new Cookies(req, res)
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(
+      COOKIES.jwt_access_token.name,
+      accessToken,
+      {
+        expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
+      })
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
@@ -246,8 +262,17 @@ userRouter.post(
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
 
+    // Save refresh token in cookies
     const cookies = new Cookies(req, res)
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(
+      COOKIES.jwt_access_token.name,
+      token,
+      {
+        expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
+      })
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
@@ -264,7 +289,13 @@ userRouter.get(
 
     const cookies = new Cookies(req, res)
     cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
-    res.json({ success: true, message: 'Logged out successfully' })
+    cookies.deleteCookie(COOKIES.jwt_access_token.name)
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Logged out successfully'
+    })
   })
 )
 
@@ -583,6 +614,9 @@ userRouter.post(
 
     // variable cookie already exists in the top
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
     await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
 
