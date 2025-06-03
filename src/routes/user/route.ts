@@ -1,5 +1,6 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { getIpInfo } from '@/src/actions/user/ip-info'
 import { VerificationCode } from '@/src/actions/user/send-verification-code.action'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
@@ -20,18 +21,28 @@ import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
-import { getIpInfo } from '@/src/actions/user/ip-info'
 
 const userRouter = Router()
 
 userRouter.get(
   '/',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const users = await userModel.find()
+    const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
+      throw new AppError('User not found', 400)
+    })
+    if (!user) return
+
+    const userData = user.toObject()
+    const { auth: _, ...rest } = userData
+
     responseHandler({
       res,
       code: 200,
-      data: users
+      data: {
+        user: rest,
+        ip: await getIpInfo(req.ip)
+      }
     })
   })
 )
@@ -131,7 +142,7 @@ userRouter.post(
 
 userRouter.post(
   '/verify-email',
-  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response, next: NextFunction) => {
     const { email, code } = req.body
 
     if (!email || !code) {
@@ -139,7 +150,7 @@ userRouter.post(
     }
 
     const verificationData = await verificationCodeModel.findOne({
-      email: email?.toString().toLowerCase(),
+      email: email?.trim().toLowerCase(),
       code: code?.toString()
     })
 
@@ -148,7 +159,7 @@ userRouter.post(
     }
 
     // verificar si el usuario está logueado
-    const userExists = await userModel.findOne({ email: email?.toString().toLowerCase() })
+    const userExists = await userModel.findOne({ email: email?.trim().toLowerCase() })
 
     if (userExists) {
       // Access token
@@ -156,7 +167,6 @@ userRouter.post(
 
       // Refresh token
       const refreshToken = TokenManager.refreshToken({ payload: { userId: userExists._id as string } })
-
 
       // Save the refresh token in the cookies with the class name of Cookies
       const cookies = new Cookies(req, res)
@@ -185,7 +195,6 @@ userRouter.post(
         message: 'User logged in successfully',
         data: {
           user: rest,
-          token: accessToken,
           ip: await getIpInfo(req.ip)
         }
       })

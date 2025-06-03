@@ -13,7 +13,7 @@ export class AppError extends Error {
    * 403: Forbidden
    * 404: Not found
    */
-  statusCode: number 
+  statusCode: number
 
   constructor(message: any, statusCode: number) {
     super(message)
@@ -32,7 +32,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
   })
 
   if (statusCode == 500) {
-    throw res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
+    res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
   }
 
   res.status(statusCode).json({ success: false, error: message })

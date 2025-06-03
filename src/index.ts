@@ -5,10 +5,11 @@ import Logs from '@/src/services/logs/save-logs.service'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
+import { errorHandler } from './handlers/error-handler'
 import { authMiddleware } from './middlewares/authMiddleware'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
@@ -21,7 +22,6 @@ import supportRouter from './routes/support/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
-import { Response, Request } from 'express'
 
 // Database connection
 connectToDatabase()
@@ -54,7 +54,7 @@ app.use(passport.initialize())
 // Security middleware
 app.use(helmet())
 
-app.set('trust proxy', true)
+// app.set('trust proxy', true)
 
 const port = CONNECTIONS.PORT
 
@@ -69,6 +69,8 @@ app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 app.use('/reports', realStateReportRouter)
 app.use('/support', supportRouter)
+
+app.use(errorHandler)
 
 function main(port: number) {
   const server = app.listen(port)
