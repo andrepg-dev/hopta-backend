@@ -22,17 +22,18 @@ googleRouter.get('/callback',
       throw new AppError('Authentication failed', 401)
     }
 
-    const token = TokenManager.accessToken({ payload: { userId: user._id as string } })
+    const accessToken = TokenManager.accessToken({ payload: { userId: user._id as string } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
 
     const cookies = new Cookies(req, res)
 
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
     responseHandler({
       res,
       code: 200,
-      data: { user: req.user, token }
+      data: { user: req.user }
     })
   })
 

@@ -173,13 +173,7 @@ userRouter.post(
       cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
       // Save the acces token in cookies
-      cookies.saveCookie(
-        COOKIES.jwt_access_token.name,
-        accessToken,
-        {
-          expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
-        }
-      )
+      cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
       TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
 
@@ -224,12 +218,7 @@ userRouter.post(
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
     // Save access token in cookies
-    cookies.saveCookie(
-      COOKIES.jwt_access_token.name,
-      accessToken,
-      {
-        expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
-      })
+    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
@@ -282,12 +271,7 @@ userRouter.post(
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
 
     // Save access token in cookies
-    cookies.saveCookie(
-      COOKIES.jwt_access_token.name,
-      token,
-      {
-        expires: new Date(Date.now() + COOKIES.jwt_access_token.expiresIn.hourInt)
-      })
+    cookies.saveCookie(COOKIES.jwt_access_token.name, token)
 
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
