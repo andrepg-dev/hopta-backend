@@ -2,6 +2,8 @@ import { UserI } from '@/types/login/user'
 import mongoose from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
+// TODO: add if the user is married or not as optional
+
 const userSchema = new mongoose.Schema(
   {
     name: {
