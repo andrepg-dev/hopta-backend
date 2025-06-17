@@ -16,16 +16,25 @@ suscribeRouter.post('/', asyncHandler(async (req: Request, res: Response) => {
     })
   }
 
-  const suscribe = await suscribeModel.create({ email, phone })
+  if (email) {
+    const existing = await suscribeModel.findOne({ email })
+    if (existing) {
+      responseHandler({
+        res,
+        code: 200,
+        message: 'Suscribed successfully'
+      })
+      return
+    }
+  }
+
+  await suscribeModel.create({ email, phone })
 
   responseHandler({
     res,
     code: 200,
-    message: 'Suscribed successfully',
-    data: suscribe
+    message: 'Suscribed successfully'
   })
 }))
-
-
 
 export default suscribeRouter

@@ -2,7 +2,8 @@ import mongoose from 'mongoose'
 
 const suscribeSchema = new mongoose.Schema({
   email: {
-    type: String
+    type: String,
+    unique: true
   },
   phone: {
     type: String
