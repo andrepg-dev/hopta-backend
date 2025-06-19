@@ -23,6 +23,7 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
+import facebookRouter from './routes/facebook/facebook.route'
 
 // Database connection
 connectToDatabase()
@@ -65,6 +66,7 @@ app.use('/upload-image', authMiddleware, s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
+app.use('/auth/facebook', facebookRouter)
 app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)

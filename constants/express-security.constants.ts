@@ -11,7 +11,7 @@ export const RATE_LIMIT = rateLimit({
 
 // TODO: Cambiar el origen a la URL de producción
 export const CORS_OPTIONS = {
-  origin: 'http://localhost:3000', // Permitir solo este origen
+  origin: ["http://localhost:3000"], // Permitir solo este origen
   methods: '*',
   allowedHeaders: ['Content-Type', 'Authorization'], // Permitir solo estos encabezados
   credentials: true, // Permitir cookies y credenciales
