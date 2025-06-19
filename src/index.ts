@@ -14,6 +14,7 @@ import { authMiddleware } from './middlewares/authMiddleware'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
 import s3UploadImageRouter from './routes/aws/s3/s3.route'
+import facebookRouter from './routes/facebook/facebook.route'
 import healthRouter from './routes/healt/route'
 import realStateReportRouter from './routes/real-state-report/route'
 import RealStateRouter from './routes/real-state/route'
@@ -23,7 +24,6 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
-import facebookRouter from './routes/facebook/facebook.route'
 
 // Database connection
 connectToDatabase()

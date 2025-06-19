@@ -1,7 +1,6 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { getIpInfo } from '@/src/actions/user/ip-info'
-import { VerificationCode } from '@/src/actions/user/send-verification-code.action'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
@@ -19,7 +18,7 @@ import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
-import { CreateUserI } from '@/types/login/user'
+import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
 
 const userRouter = Router()
@@ -88,7 +87,7 @@ userRouter.post(
     const hashedPassword = await hashGen(password)
 
     // Store verification data
-    const userData = {
+    const userData: UserI = {
       name,
       email: email.trim().toLowerCase(),
       auth: {
@@ -104,7 +103,9 @@ userRouter.post(
       location,
       profile_picture,
       properties,
-      about
+      about,
+      created_at: new Date(),
+      updated_at: new Date()
     }
 
     await verificationCodeModel.create({
@@ -121,9 +122,9 @@ userRouter.post(
         name: `${name} ${last_name}`
       },
       provider: 'sendgrid',
-      template: 'verification_code',
+      template: 'verification_code_not_link',
       dynamicTemplateData: {
-        name: `${name} ${last_name}`,
+        name: `${name}`,
         code: verificationCode,
         email: email.trim().toLowerCase()
       }
@@ -447,7 +448,31 @@ userRouter.post('/email-exists',
       throw new AppError('Unregistered email', 404)
     }
 
-    await VerificationCode.SendGmailVerificationCode(email, user, 'Hi')
+    const verificationCode = RandomIntUtils.randomInt()
+
+    const userData = {
+      email: email.trim().toLowerCase(),
+      code: verificationCode,
+      userData: user.toObject()
+    }
+
+    await verificationCodeModel.create(userData)
+
+    // Send verification email
+    const emailService = new EmailService()
+    await emailService.sendEmail({
+      to: {
+        email: email.trim().toLowerCase(),
+        name: `${user.name} ${user.last_name}`
+      },
+      provider: 'sendgrid',
+      template: 'verification_code_not_link',
+      dynamicTemplateData: {
+        name: `${user.name}`,
+        code: verificationCode,
+        email: email.trim().toLowerCase()
+      }
+    })
 
     responseHandler({
       res,
@@ -469,7 +494,29 @@ userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(
     throw new AppError('Unregistered email', 404)
   }
 
-  await VerificationCode.SendGmailVerificationCode(email, user)
+  const userData = {
+    email: email.toLowerCase(),
+    code: RandomIntUtils.randomInt(),
+    userData: user.toObject()
+  }
+
+  await verificationCodeModel.create(userData) // add to database
+
+  // Send verification email
+  const emailService = new EmailService()
+  await emailService.sendEmail({
+    to: {
+      email: email.trim().toLowerCase(),
+      name: `${user.name} ${user.last_name}`
+    },
+    provider: 'sendgrid',
+    template: 'forgot_password',
+    dynamicTemplateData: {
+      name: `${user.name}`,
+      code: userData.code,
+      email: email.trim().toLowerCase()
+    }
+  })
 
   responseHandler({
     res,
@@ -557,9 +604,13 @@ userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyn
       email: userData.email,
       name: userData.userData.name
     },
-    subject: 'Verification code',
-    html: `Your verification code is ${verificationCode}`,
-    provider: 'sendgrid'
+    provider: 'sendgrid',
+    template: 'verification_code_not_link',
+    dynamicTemplateData: {
+      name: `${user.name}`,
+      code: verificationCode,
+      email: email.trim().toLowerCase()
+    }
   })
 
   responseHandler({

@@ -29,4 +29,6 @@ export class VerificationCode {
       provider: 'sendgrid'
     })
   }
+
+  // use template
 }

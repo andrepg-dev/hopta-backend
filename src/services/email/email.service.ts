@@ -1,4 +1,5 @@
 import { envs } from '@/constants/env.constants'
+import { AppError } from '@/src/handlers/error-handler'
 import sendgrid, { MailDataRequired } from '@sendgrid/mail'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
@@ -8,9 +9,14 @@ interface SendMailOptions extends nodemailer.SendMailOptions { }
 
 const templates = {
   verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd',
-  birthday: 'TODO: Add birthday template'
+  birthday: 'TODO: Add birthday template',
+  verification_code_not_link: 'd-4c5c66eae47f47919e5d58f1b302539d',
+  forgot_password: 'd-4a0965ccf5e5485ba6c218202906af7b'
 }
 
+/**
+ * Sendgrid service
+ */
 class EmailServiceSendGrid {
   constructor() {
     sendgrid.setApiKey(process.env.SENDGRID_API_KEY as string)
@@ -23,34 +29,47 @@ class EmailServiceSendGrid {
     dynamicTemplateData?: Record<string, string>,
     template?: keyof typeof templates
   ) {
-    let message: MailDataRequired
+    try {
+      let message: MailDataRequired
 
-    if (!template) {
-      message = {
-        from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
-        to: { email: to.email, name: to.name ?? undefined },
-        subject: subject,
-        content: [
-          {
-            type: 'text/html',
-            value: html
-          }
-        ]
+      if (!template) {
+        message = {
+          from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+          to: { email: to.email, name: to.name ?? undefined },
+          subject: subject,
+          content: [
+            {
+              type: 'text/html',
+              value: html
+            }
+          ]
+        }
+      } else {
+        message = {
+          from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+          to: { email: to.email, name: to.name ?? undefined },
+          templateId: templates[template],
+          dynamicTemplateData
+        }
       }
-    } else {
-      message = {
-        from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
-        to: { email: to.email, name: to.name ?? undefined },
-        templateId: templates[template],
-        dynamicTemplateData
-      }
+
+      const response = await sendgrid.send(message)
+      return response
+    } catch (error: any) {
+
+      new Logs({
+        method: 'saveErrorLogs',
+        message: error
+      })
+
+      throw new AppError(error.message, 500)
     }
-
-    const response = await sendgrid.send(message)
-    return response
   }
 }
 
+/**
+ * Node mailer service
+ */
 class EmailServiceNodeMailer {
   private transporter = nodemailer.createTransport({
     service: envs.MAILER_SERVICE,
@@ -84,7 +103,10 @@ class EmailServiceNodeMailer {
   }
 }
 
-interface EmailServiceOptions {
+/**
+ * Email service options
+ */
+export interface EmailServiceOptions {
   to: { email: string; name?: string }
   subject?: string
   html?: string
@@ -93,6 +115,9 @@ interface EmailServiceOptions {
   provider?: 'sendgrid' | 'nodemailer'
 }
 
+/**
+ * Email service
+ */
 export class EmailService {
   private sendGridService: EmailServiceSendGrid
   private nodeMailerService: EmailServiceNodeMailer
