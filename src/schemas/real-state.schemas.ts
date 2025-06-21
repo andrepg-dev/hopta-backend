@@ -18,14 +18,20 @@ const realStateSchema = new mongoose.Schema(
       required: true
     },
     location: {
-      lat: {
-        type: Number,
+      title: {
+        type: String,
         required: true
       },
-      lng: {
-        type: Number,
-        required: true
-      }
+      coordinates: {
+        lat: {
+          type: Number,
+          required: true
+        },
+        lng: {
+          type: Number,
+          required: true
+        }
+      },
     },
     square_meters: {
       type: Number
@@ -187,7 +193,7 @@ realStateSchema.pre('save', function (next) {
 realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
   new Logs({
     method: 'saveLogs',
-    message: `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
+    message: `New property created: ${doc.title} at (${doc.location.coordinates.lat}, ${doc.location.coordinates.lng})`
   })
 })
 
