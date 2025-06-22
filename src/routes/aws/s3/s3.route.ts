@@ -1,8 +1,8 @@
 import { BUCKET_NAME } from '@/constants/aws/s3/bucket.constants'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { multerConfig } from '@/src/config/multer.config'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { deleteObject } from '@/src/services/aws/s3/deleteObject'
 import { getObject } from '@/src/services/aws/s3/getObject'
 import { uploadS3Files } from '@/src/services/upload-s3-files/upload-files.service'
@@ -34,7 +34,7 @@ s3UploadImageRouter.post(
       if (!files) throw new AppError('No files uploaded', 400)
 
       // upload files to s3
-      const { filesUrls } = await uploadS3Files({ files: files, folder: 'uploads', bucketName: BUCKET_NAME })
+      const { filesUrls } = await uploadS3Files({ files: files, folder: 'images', bucketName: BUCKET_NAME })
       if (!filesUrls) throw new AppError('Error uploading files', 500)
 
       responseHandler({

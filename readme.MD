@@ -106,12 +106,9 @@ Features adicionales para las propiedades
 
 - Lunes a viernes, 10am - 5pm
 
-
 Pendientes:
 
-- almacenar correos electrónicos en la base de datos para saber qué usuarios quieren enterarse de nuevas funcionalidades 
+- almacenar correos electrónicos en la base de datos para saber qué usuarios quieren enterarse de nuevas funcionalidades
 
 Fecha:
 Hoy 15 de junio de 2025
-
-

@@ -33,6 +33,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
 
   if (statusCode == 500) {
     res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
+    return
   }
 
   res.status(statusCode).json({ success: false, error: message })
