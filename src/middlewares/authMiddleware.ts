@@ -23,7 +23,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   try {
     const decoded = TokenManager.verifyToken(accessToken) as UserJWT
 
-    // if token gived is expired, throw error
+    // // if token gived is expired, throw error
     if (decoded.exp < Date.now() / 1000) {
       throw new AppError('Refresh token expired', 401)
     }
