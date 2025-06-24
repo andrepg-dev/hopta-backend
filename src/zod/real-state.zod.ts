@@ -2,7 +2,7 @@ import z from 'zod'
 
 export const realStateSchema = z.object({
   title: z.string().min(4, 'Title must be at least 4 characters long.').max(300, 'Title must be at most 300 characters long.'),
-  description: z.string().max(300, 'Description must be at most 300 characters long.'),
+  description: z.string().max(4500, 'Description must be at most 4500 characters long.'),
   images: z.array(z.string().url('Each image must be a valid URL.')).min(3, 'You must upload at least 3 images.').max(40, 'You can upload a maximum of 40 images.'),
   location: z.object({
     title: z.string().min(4, 'Title must be at least 4 characters long.').max(300, 'Title must be at most 300 characters long.'),
@@ -36,7 +36,7 @@ export const realStateSchema = z.object({
 export const realStateUpdateSchema = z
   .object({
     title: z.string().min(4, 'Title must be at least 4 characters long.').max(300, 'Title must be at most 300 characters long.').optional(),
-    description: z.string().max(300, 'Description must be at most 300 characters long.').optional(),
+    description: z.string().max(4500, 'Description must be at most 4500 characters long.').optional(),
     images: z.array(z.string().url('Each image must be a valid URL.')).max(15, 'You can upload a maximum of 15 images.').optional(),
     location: z.object({
       title: z.string().min(4, 'Title must be at least 4 characters long.').max(300, 'Title must be at most 300 characters long.'),
