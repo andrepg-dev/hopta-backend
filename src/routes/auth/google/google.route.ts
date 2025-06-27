@@ -1,6 +1,5 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import { responseHandler } from '@/src/handlers/responseHandler'
 import { Cookies } from '@/src/services/cookies/cookies.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { Response, Router } from 'express'
@@ -13,7 +12,7 @@ googleRouter.get('/', passport.authenticate('google', { scope: ['profile', 'emai
 googleRouter.get('/callback',
   passport.authenticate('google',
     {
-      failureRedirect: 'https://www.hopta.hn/error-signin',
+      failureRedirect: 'https://www.hopta.hn/error-signin'
     }),
   async (req: any, res: Response) => {
     const { user } = req
@@ -30,11 +29,7 @@ googleRouter.get('/callback',
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
     cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
-    responseHandler({
-      res,
-      code: 200,
-      data: { user: req.user }
-    })
+    return res.redirect(`${process.env.FRONTEND_URL}`)
   })
 
 export default googleRouter
