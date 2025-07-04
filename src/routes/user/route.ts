@@ -5,7 +5,7 @@ import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import { pedingUserModel } from '@/src/schemas/pending-sms-user.schemas'
+import { pendingUserModel } from '@/src/schemas/pending-sms-user.schemas'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
@@ -380,10 +380,29 @@ userRouter.post(
   })
 )
 
+
+/**
+ * @description you need to complete the profile to create the user, this just verify the phone number of the user
+ * 
+ * @param phone
+ * @param code
+ */
 userRouter.post(
   '/verify-sms',
   asyncHandler(async (req: Request, res: Response) => {
     let { phone, code } = req.body
+
+    // verify if the user already exists on the "user collection"
+    const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
+    if (user) {
+      throw new AppError('User already registered', 400)
+    }
+
+    // verify is user exists on the "pending user collection"
+    const pendingUser = await pendingUserModel.findOne({ phone })
+    if (pendingUser) {
+      throw new AppError('User is pending to complete the profile.', 400)
+    }
 
     phone = phone?.toString()
     code = code?.toString()
@@ -406,9 +425,9 @@ userRouter.post(
 
     // Check if the code is valid
     const smsTwilioService = new TwilioSendSMS()
-    const verification = await smsTwilioService.verifySMSCode({ phone, code })
+    const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
-    if (!verification) {
+    if (!isUserPhoneNumber) {
       throw new AppError('Invalid or expired verification code', 400)
     }
 
@@ -419,7 +438,7 @@ userRouter.post(
     cookies.saveCookie('tempToken', tempToken)
 
     // Save user in pending user to complete the profile
-    await pedingUserModel.create({ phone })
+    await pendingUserModel.create({ phone })
 
     await smsTwilioService
       .sendSMS({
@@ -430,13 +449,19 @@ userRouter.post(
         new Logs({ message: err, method: 'saveErrorLogs' })
       })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Phone number verified successfully. Complete the profile with the next step to complete.'
     })
+
   })
 )
 
+
+/** 
+ * If user exists, we will send a verification code to the email
+*/
 userRouter.post('/email-exists',
   validateRequest(isValidEmail),
   asyncHandler(async (req: Request, res: Response) => {
@@ -649,7 +674,7 @@ userRouter.post(
       throw new AppError('Invalid token', 401)
     }
 
-    const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+    const pendingUser = await pendingUserModel.findOne({ phone: decoded.phone })
 
     new Logs({ message: pendingUser })
 
@@ -672,7 +697,7 @@ userRouter.post(
       }
     })
 
-    await pedingUserModel.deleteOne({ _id: pendingUser._id })
+    await pendingUserModel.deleteOne({ _id: pendingUser._id })
 
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })

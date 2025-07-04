@@ -34,6 +34,14 @@ class TwilioSendSMSCodeService {
     })
   }
 
+  /**
+   * 
+   * @description Verify if the code is valid using the database, after verification, we delete the code on the collection database and return a boolean
+   * 
+   * @param phone
+   * @param code
+   * @returns boolean
+   */
   async verifySMSCode({ phone, code }: { phone: string; code: string }) {
     const formattedPhone = this.formatPhone(phone)
 
