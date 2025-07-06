@@ -353,12 +353,6 @@ userRouter.post(
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
     }
 
-    const alreadyExists = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
-
-    if (alreadyExists) {
-      throw new AppError('An account with this phone number already exists, please login', 400)
-    }
-
     // Send the SMS
     const smsTwilioService = new TwilioSendSMS()
     await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
@@ -366,16 +360,13 @@ userRouter.post(
         method: 'saveErrorLogs',
         message: err
       })
-      throw new AppError(`Error sending SMS`, 400)
+      throw new AppError(`Error sending SMS`, 500)
     })
 
     responseHandler({
       res,
       code: 200,
-      message: 'SMS sent successfully',
-      data: {
-        ip: await getIpInfo(req.ip)
-      }
+      message: 'SMS sent successfully'
     })
   })
 )
@@ -391,18 +382,6 @@ userRouter.post(
   '/verify-sms',
   asyncHandler(async (req: Request, res: Response) => {
     let { phone, code } = req.body
-
-    // verify if the user already exists on the "user collection"
-    const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
-    if (user) {
-      throw new AppError('User already registered', 400)
-    }
-
-    // verify is user exists on the "pending user collection"
-    const pendingUser = await pendingUserModel.findOne({ phone })
-    if (pendingUser) {
-      throw new AppError('User is pending to complete the profile.', 400)
-    }
 
     phone = phone?.toString()
     code = code?.toString()
@@ -423,14 +402,44 @@ userRouter.post(
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
     }
 
-    // Check if the code is valid
+    // Check if the code is valid in the twilio collection database
     const smsTwilioService = new TwilioSendSMS()
     const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
     if (!isUserPhoneNumber) {
-      throw new AppError('Invalid or expired verification code', 400)
+      throw new AppError('Invalid or expired verification code', 409)
     }
 
+    /**
+     * La lógica viene aquí, tenemos que verificar si el usuario ya existe en la collecion
+     * de usuarios, o si está registrandose, si está registrandose no tiene sentido
+     * que vayas al endpoint de complete profile
+     */
+    const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
+
+    if (user) {
+      // Generate access token and refresh token
+      const accessToken = TokenManager.accessToken({ payload: { userId: user._id as string } })
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
+
+      // Save refresh token in cookies
+      const cookies = new Cookies(req, res)
+      cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+      // Save access token in cookies
+      cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
+
+      // Save refresh token in database
+      await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id as string } })
+
+      return responseHandler({
+        res,
+        code: 200,
+        message: 'Login successfully',
+      })
+    }
+
+    // If user doesn't exist, create a temp token to complete the profile
     const tempToken = TokenManager.tempToken({ payload: { phone } })
 
     // Save in cookies
@@ -454,7 +463,6 @@ userRouter.post(
       code: 200,
       message: 'Phone number verified successfully. Complete the profile with the next step to complete.'
     })
-
   })
 )
 
@@ -643,9 +651,11 @@ userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyn
     code: 200,
     message: 'Verification code sent successfully'
   })
-
 }))
 
+/**
+ * @description This function create the account via SMS
+ */
 userRouter.post(
   '/complete-profile',
   asyncHandler(async (req: Request, res: Response) => {

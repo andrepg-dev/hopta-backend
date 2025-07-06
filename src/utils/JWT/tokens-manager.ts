@@ -30,6 +30,13 @@ const COOKIES = {
 
 
 export class TokenManager {
+  /**
+   * 
+   * @description Generate a access token
+   * 
+   * @param payload
+   * @returns string
+   */
   static accessToken({ payload }: { payload: any }) {
     const options: SignOptions = {
       expiresIn: COOKIES.expiresIn.seconds
@@ -37,6 +44,13 @@ export class TokenManager {
     return jwt.sign(payload, COOKIES.JWT_SECRET_KEY ?? '', options)
   }
 
+  /**
+ * 
+ * @description Generate a refresh token
+ * 
+ * @param payload
+ * @returns string
+ */
   static refreshToken({ payload }: { payload: any }) {
     const options: SignOptions = {
       expiresIn: COOKIES.jwt_refresh_token.seconds
@@ -46,6 +60,13 @@ export class TokenManager {
     return refreshToken
   }
 
+  /**
+   * 
+   * @description Save a refresh token in the database
+   * 
+   * @param payload
+   * @returns string
+   */
   static async saveRefreshTokenInDB({ payload }: { payload: any }) {
     const token = this.refreshToken({ payload })
 
