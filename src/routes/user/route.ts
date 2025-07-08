@@ -432,10 +432,15 @@ userRouter.post(
       // Save refresh token in database
       await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id as string } })
 
+      const { auth: _, ...rest } = user.toObject()
+
       return responseHandler({
         res,
         code: 200,
         message: 'Login successfully',
+        data: {
+          user: rest
+        }
       })
     }
 
@@ -448,15 +453,6 @@ userRouter.post(
 
     // Save user in pending user to complete the profile
     await pendingUserModel.create({ phone })
-
-    await smsTwilioService
-      .sendSMS({
-        phone,
-        message: `Phone number verified successfully. Complete the profile with the next step to complete.`
-      })
-      .catch((err) => {
-        new Logs({ message: err, method: 'saveErrorLogs' })
-      })
 
     responseHandler({
       res,
@@ -705,9 +701,14 @@ userRouter.post(
         phone_number: decoded.phone,
         is_phone_number_verified: true
       }
+    }).catch(() => {
+      throw new AppError('Error creating user', 500)
     })
 
-    await pendingUserModel.deleteOne({ _id: pendingUser._id })
+    await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(
+      () => {
+        console.error('Error deleting pending user line -> 713 file user/route.ts')
+      })
 
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
@@ -726,7 +727,7 @@ userRouter.post(
     await smsTwilioService
       .sendSMS({
         phone: decoded.phone,
-        message: `Hi ${name} ${last_name}, welcome to Hopta :)`
+        message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
       })
       .catch((err) => {
         new Logs({ message: err, method: 'saveErrorLogs' })
@@ -737,8 +738,7 @@ userRouter.post(
       code: 200,
       message: 'Profile completed successfully',
       data: {
-        user: userWithoutAuth,
-        token: accessToken
+        user: userWithoutAuth
       }
     })
   })
