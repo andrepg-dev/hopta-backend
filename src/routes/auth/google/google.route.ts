@@ -29,7 +29,7 @@ googleRouter.get('/callback',
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
     cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
-    return res.redirect(`${process.env.FRONTEND_URL}/dashboard`)
+    return res.redirect(`${process.env.FRONTEND_URL}/user/dashboard`)
   })
 
 export default googleRouter

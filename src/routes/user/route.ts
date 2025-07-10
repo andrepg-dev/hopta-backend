@@ -289,7 +289,7 @@ userRouter.post(
   })
 )
 
-userRouter.get(
+userRouter.post(
   '/logout',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
@@ -312,6 +312,11 @@ userRouter.delete(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await userModel.findOneAndDelete({ _id: req.user?.userId })
+
+    const cookies = new Cookies(req, res)
+    cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
+    cookies.deleteCookie(COOKIES.jwt_access_token.name)
+
     res.json({ success: true, message: 'Account deleted successfully' })
   })
 )
