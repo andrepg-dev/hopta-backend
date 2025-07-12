@@ -62,7 +62,7 @@ const port = CONNECTIONS.PORT
 
 app.get('/', (_: Request, res: Response) => { res.status(200).send('Welcome to Hopta') })
 app.use('/health', healthRouter)
-app.use('/upload-image', authMiddleware, s3UploadImageRouter)
+app.use('/upload-image', s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
