@@ -7,15 +7,33 @@ import passport from 'passport'
 
 const googleRouter = Router()
 
-googleRouter.get('/', passport.authenticate('google', { scope: ['profile', 'email'] }))
+googleRouter.get('/', (req, res, next) => {
+  const { callbackUrl } = req.query
+
+  const authenticator = passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    state: callbackUrl as string,
+
+  })
+
+  authenticator(req, res, next)
+})
 
 googleRouter.get('/callback',
   passport.authenticate('google',
     {
-      failureRedirect: 'https://www.hopta.hn/error-signin'
+      failureRedirect: 'https://www.hopta.hn/'
     }),
   async (req: any, res: Response) => {
-    const { user } = req
+    const user = req.user
+    const callbackUrl = req.query.state as string
+
+    const URL_TO_REDIRECT = ["/user/dashboard", "/publicar-propiedad"]
+    const finalCallbackUrl = callbackUrl || "/user/dashboard" // default url
+
+    if (!URL_TO_REDIRECT.includes(finalCallbackUrl)) {
+      throw new AppError('Invalid URL', 400)
+    }
 
     if (!req.user || !req.user._id) {
       throw new AppError('Authentication failed', 401)
@@ -29,7 +47,7 @@ googleRouter.get('/callback',
     cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
     cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
-    return res.redirect(`${process.env.FRONTEND_URL}/user/dashboard`)
+    return res.redirect(`${process.env.FRONTEND_URL}${finalCallbackUrl}`)
   })
 
 export default googleRouter

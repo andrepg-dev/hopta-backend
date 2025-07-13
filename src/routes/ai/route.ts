@@ -1,4 +1,7 @@
+
+// FUTURO:
 // TODO: subir imágenes a la API de Anthropic
+// TODO: mostrar los datos de la ubicación a la API para que tenga los datos de la ubicación recolectada
 
 import { responseHandler } from '@/src/handlers/responseHandler';
 import Anthropic from '@anthropic-ai/sdk';
@@ -14,47 +17,103 @@ aiRouter.post('/generate-description', async (req, res) => {
 
   console.log({ form })
 
-  const msg = await anthropic.messages.create({
-    model: "claude-3-5-haiku-latest",
-    messages: [
-      {
-        role: 'assistant',
-        content: `You are a real estate marketing assistant.
+  try {
+    // Configurar headers para Server-Sent Events (SSE)
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
 
-        Your task is:
-          1. Generate a property description in Spanish.
-          2. Return the description strictly in a JSON format.
+    // Función helper para enviar datos SSE
+    const sendSSE = (eventType: string, data: any) => {
+      res.write(`event: ${eventType}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
 
-        Instructions for crafting the description:
-          1. Highlight the property's proximity to transit, dining, shopping, and other local attractions.
-          2. Mention any upgrades, appealing amenities, and standout features.
-          3. Emphasize the property's unique selling points based on its characteristics.
-          4. Use several sentences to describe upgrades and features that would appeal to potential buyers or renters.
+    // Enviar evento de inicio
+    sendSSE('start', { message: 'Generando descripción...' });
 
-        Property data (input):
-          ${JSON.stringify(form)}
+    // Crear stream con Anthropic
+    const stream = await anthropic.messages.create({
+      model: "claude-3-5-haiku-latest",
+      messages: [
+        {
+          role: 'assistant',
+          content: `You are a professional real estate description generator assistant.
 
-        Expected output format:
-          {
-            "description": "<Property description in Spanish>"
+          Your task is:
+            1. Generate a property description in Spanish.
+            2. Return the description strictly in a text format.
+
+          Instructions for crafting the description:
+            1. Highlight the property's proximity to transit, dining, shopping, and other local attractions.
+            2. Mention any upgrades, appealing amenities, and standout features.
+            3. Emphasize the property's unique selling points based on its characteristics.
+            4. Write several sentences describing the upgrades and desirable features that will attract renters to your property.
+            5. Use **bold** to highlight the most important words.
+            6. Use less than 950 and more than 600 characters.
+            7. Use spaces between sentences to make it more readable.
+
+          Important:
+          Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
+          `.trim()
+        },
+        {
+          role: 'user',
+          content: `
+          Property data (input):
+            ${JSON.stringify(form)}
+          `.trim()
+        }
+      ],
+      max_tokens: 900,
+      temperature: 0.5,
+      stream: true // Habilitar streaming
+    });
+
+    let fullContent = '';
+
+    // Procesar el stream
+    for await (const messageStreamEvent of stream) {
+      if (messageStreamEvent.type === 'content_block_delta') {
+        // Verificar si el delta tiene texto
+        if ('text' in messageStreamEvent.delta) {
+          const deltaText = messageStreamEvent.delta.text;
+          if (deltaText) {
+            fullContent += deltaText;
+
+            // Enviar cada chunk al frontend
+            sendSSE('chunk', {
+              content: deltaText,
+              fullContent: fullContent
+            });
           }
-        Important:
-        Return only the JSON object with properly formatted content. Do not include any explanation, comments, or additional text.
-        `
+        }
       }
-    ],
-    max_tokens: 900,
-    temperature: 0.5,
-  })
+    }
 
-  console.log({ msg })
+    // Enviar evento de finalización
+    sendSSE('complete', {
+      message: 'Descripción generada exitosamente',
+      finalContent: fullContent
+    });
 
-  responseHandler({
-    res,
-    code: 200,
-    message: 'Description generated successfully',
-    data: msg.content
-  })
+    // Cerrar la conexión
+    res.write('event: close\n');
+    res.end();
+
+  } catch (error) {
+    console.error('Error en streaming:', error);
+
+    // Enviar error via SSE
+    res.write('event: error\n');
+    res.write(`data: ${JSON.stringify({
+      error: 'Error al generar la descripción',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    })}\n\n`);
+    res.end();
+  }
 })
 
 export default aiRouter
