@@ -52,6 +52,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^1.0.51",
+    "@anthropic-ai/sdk": "^0.56.0",
     "@types/algoliasearch": "^3.34.11",
     "@types/axios": "^0.9.36",
     "@types/bcrypt": "^5.0.2",

@@ -10,7 +10,7 @@ import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
-import { authMiddleware } from './middlewares/authMiddleware'
+import aiRouter from './routes/ai/route'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
 import s3UploadImageRouter from './routes/aws/s3/s3.route'
@@ -73,6 +73,7 @@ app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 app.use('/reports', realStateReportRouter)
 app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
+app.use('/ai', aiRouter)
 
 app.use(errorHandler)
 
