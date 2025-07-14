@@ -674,7 +674,7 @@ userRouter.post(
     }
 
     if (!tempToken) {
-      throw new AppError('Authorization token required', 401)
+      throw new AppError('Temporary authorization token required', 401)
     }
 
     const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }

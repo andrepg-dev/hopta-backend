@@ -3,7 +3,6 @@
 // TODO: subir imágenes a la API de Anthropic
 // TODO: mostrar los datos de la ubicación a la API para que tenga los datos de la ubicación recolectada
 
-import { responseHandler } from '@/src/handlers/responseHandler';
 import Anthropic from '@anthropic-ai/sdk';
 import { Router } from 'express';
 const aiRouter = Router()
@@ -54,6 +53,10 @@ aiRouter.post('/generate-description', async (req, res) => {
             5. Use **bold** to highlight the most important words.
             6. Use less than 950 and more than 600 characters.
             7. Use spaces between sentences to make it more readable.
+            8. Make it professional and not too informal.
+
+          You should know:
+            1. The price of the light and water expenses is one month of the rent approximately.
 
           Important:
           Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
