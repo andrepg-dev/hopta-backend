@@ -39,13 +39,13 @@ aiRouter.post('/generate-description', async (req, res) => {
       messages: [
         {
           role: 'assistant',
-          content: `You are a professional real estate description generator assistant.
+          content: `You are a professional assistant for generating real estate descriptions.
 
           Your task is:
-            1. Generate a property description in Spanish.
-            2. Return the description strictly in a text format.
+            1. Write a property description in Spanish.
+            2. Output only the description, formatted as plain text.
 
-          Instructions for crafting the description:
+          Guidelines for the description:
             1. Highlight the property's proximity to transit, dining, shopping, and other local attractions.
             2. Mention any upgrades, appealing amenities, and standout features.
             3. Emphasize the property's unique selling points based on its characteristics.
@@ -54,6 +54,8 @@ aiRouter.post('/generate-description', async (req, res) => {
             6. Use less than 950 and more than 600 characters.
             7. Use spaces between sentences to make it more readable.
             8. Make it professional and not too informal.
+            9. Use a professional and neutral tone (not too informal, not overly promotional).
+            10.Avoid exaggerations or filler language.
 
           You should know:
             1. The price of the light and water expenses is one month of the rent approximately.
