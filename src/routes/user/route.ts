@@ -321,7 +321,7 @@ userRouter.delete(
   })
 )
 
-userRouter.put(
+userRouter.patch(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {

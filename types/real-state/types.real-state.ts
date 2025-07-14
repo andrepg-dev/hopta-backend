@@ -76,6 +76,7 @@ export interface RealStateI {
   description: string
   images: string[]
   location: Location
+  previous_payment_required?: boolean
   square_meters?: number
   price: number
   currency: 'HNL' | 'USD' | 'EUR'

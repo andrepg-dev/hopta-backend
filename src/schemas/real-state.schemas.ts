@@ -33,6 +33,10 @@ const realStateSchema = new mongoose.Schema(
         }
       },
     },
+    previous_payment_required: {
+      type: Boolean,
+      default: false
+    },
     square_meters: {
       type: Number
     },
