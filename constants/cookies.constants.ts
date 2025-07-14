@@ -22,9 +22,7 @@ export const COOKIES = {
   jwt_access_token: {
     name: 'access_token',
     SECRET_KEY: process.env.JWT_ACCESS_SECRET_KEY ?? (() => { throw new Error('JWT_ACCESS_SECRET_KEY IS MISSING') })(),
-    expiresIn: {
-      hourString: '1h',
-      hourInt: 1 * 60 * 60 * 1000
-    }
+    dayString: '7d',
+    expires: 7 * 24 * 60 * 60 * 1000 // 7 días
   }
 }

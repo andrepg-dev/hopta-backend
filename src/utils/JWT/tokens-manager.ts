@@ -16,10 +16,9 @@ const COOKIES = {
     }
   },
   expiresIn: {
-    seconds: 3600, // 1 hour in seconds
-    hourInt: 60 * 60 * 1000
+    seconds: 604800, // 7 days in seconds (7 * 24 * 60 * 60)
+    dayInt: 7 * 24 * 60 * 60 * 1000
   },
-
   jwt_refresh_token: {
     name: 'refresh_token',
     SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY,
