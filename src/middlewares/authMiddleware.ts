@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { AppError } from '../handlers/error-handler'
 import { TokenManager } from '../utils/JWT/tokens-manager'
 
-interface UserJWT {
+export interface UserJWT {
   userId: string
   iat: number
   exp: number

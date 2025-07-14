@@ -9,10 +9,19 @@ const realStateReportSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: false
   },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  reason: {
+    type: String,
+    required: true
+  },
+  reservationsUrl: {
+    type: String,
+    required: true
   },
   message: {
     type: String,
