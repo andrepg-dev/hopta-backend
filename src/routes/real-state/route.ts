@@ -76,6 +76,9 @@ RealStateRouter.get(
   })
 )
 
+/**
+ * @description get all real state properties available
+ */
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
@@ -93,6 +96,28 @@ RealStateRouter.get(
     })
 
     if (!paginatedData) throw new AppError('Properties not found', 404)
+    responseHandler({
+      res,
+      code: 200,
+      data: paginatedData
+    })
+  })
+)
+
+RealStateRouter.get('/my-properties',
+  authMiddleware,
+  asyncHandler(async (req: Request<{}, {}, {}, { page: string, limit: string, sortBy: string, order: 'asc' | 'desc' }>, res: Response) => {
+    const user = req.user
+
+    if (!user) throw new AppError('User not found', 404)
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const sortBy = (req.query.sortBy as string) || 'created_at'
+    const order = (req.query.order as 'asc' | 'desc') || 'desc'
+
+    const paginatedData = await RealStateModel.paginate({ owner: user.userId }, { page, limit, sortBy, order })
+
     responseHandler({
       res,
       code: 200,
