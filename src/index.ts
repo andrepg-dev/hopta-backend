@@ -1,22 +1,26 @@
 import { connectToDatabase } from '@/connection/connect'
 import { CONNECTIONS } from '@/constants/connection.constants'
 import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security.constants'
-import Logs from '@/src/modules/logs/save-logs.service'
+import Logs from '@/src/services/logs/save-logs.service'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
 import { errorHandler } from './handlers/error-handler'
-import { authMiddleware } from './middlewares/authMiddleware'
-import { EmailService } from './modules/email/email.service'
+import aiRouter from './routes/ai/route'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
-import s3Router from './routes/aws/s3/s3-services'
+import s3UploadImageRouter from './routes/aws/s3/s3.route'
+import facebookRouter from './routes/facebook/facebook.route'
+import healthRouter from './routes/healt/route'
+import realStateReportRouter from './routes/real-state-report/route'
 import RealStateRouter from './routes/real-state/route'
 import stripeRouter from './routes/stripe/route'
+import supportRouter from './routes/support/route'
+import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
@@ -35,7 +39,6 @@ app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(
   session({
-    // This is necessary for the Google Strategy but it's not used for the JWT
     secret: process.env.GOOGLE_SECRET_KEY!,
     resave: false,
     saveUninitialized: true,
@@ -52,35 +55,45 @@ app.use(passport.initialize())
 
 // Security middleware
 app.use(helmet())
-app.set('trust proxy', 1)
+
+// app.set('trust proxy', true)
 
 const port = CONNECTIONS.PORT
 
-app.use('/s3', authMiddleware, s3Router)
+app.get('/', (_: Request, res: Response) => { res.status(200).send('Welcome to Hopta') })
+app.use('/health', healthRouter)
+app.use('/upload-image', s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
 app.use('/user', userRouter)
 app.use('/auth/google', googleRouter)
+app.use('/auth/facebook', facebookRouter)
 app.use('/payments', stripeRouter)
 app.use('/refresh-token', tokenRouter)
 app.use('/webhooks/stripe/payments', stripeWebhookRouter)
-
-app.get('/email', async (req, res) => {
-  const email = new EmailService()
-  const response = await email.sendEmail({
-    to: {
-      email: 'asponceg@gmail.com'
-    },
-    subject: 'Test email',
-    html: 'Test email'
-  })
-  res.send(response)
-})
+app.use('/reports', realStateReportRouter)
+app.use('/support', supportRouter)
+app.use('/suscribe', suscribeRouter)
+app.use('/ai', aiRouter)
 
 app.use(errorHandler)
 
-app.listen(port, () => {
-  new Logs({
-    method: 'saveLogs',
-    message: `Hopta server is running! http://localhost:${port}`
+function main(port: number) {
+  const server = app.listen(port)
+  server.on('error', (error: Error) => {
+    if (error.message.includes('EADDRINUSE')) {
+      console.warn(`Port ${port} is already in use, trying with another port...`)
+      const newPort = port + 1
+      server.close()
+      main(newPort)
+    }
   })
-})
+
+  server.on('listening', () => {
+    new Logs({
+      method: 'saveLogs',
+      message: `Hopta server is running! http://localhost:${port}`
+    })
+  })
+}
+
+main(Number(port))

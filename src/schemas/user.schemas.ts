@@ -2,6 +2,8 @@ import { UserI } from '@/types/login/user'
 import mongoose from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
+// TODO: add if the user is married or not as optional
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -177,6 +179,6 @@ userSchema.pre('save', function (next) {
 
 userSchema.plugin(mongoosePaginate)
 
-interface UserDocument extends mongoose.Document, UserI {}
+interface UserDocument extends mongoose.Document, UserI { }
 
 export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

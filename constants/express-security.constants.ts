@@ -2,7 +2,7 @@ import rateLimit from 'express-rate-limit'
 
 export const RATE_LIMIT = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  limit: 60,
+  limit: 150,
   message: 'Too many requests from this IP, please try again later!',
   standardHeaders: true,
   legacyHeaders: false,
@@ -11,9 +11,8 @@ export const RATE_LIMIT = rateLimit({
 
 // TODO: Cambiar el origen a la URL de producción
 export const CORS_OPTIONS = {
-  origin: '*', // Permitir solo este origen
-  methods: '*',
-  allowedHeaders: ['Content-Type', 'Authorization'], // Permitir solo estos encabezados
+  origin: ["http://localhost:3000", "https://hopta.com", "https://www.hopta.com"], // Permitir solo este origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true, // Permitir cookies y credenciales
   maxAge: 3600 // Almacenar en caché los resultados de CORS por 1 hora
 }

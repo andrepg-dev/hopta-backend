@@ -6,7 +6,7 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 1. [x] Crear los logs en local con winston con rotación diaria
 2. [x] Archivo de configuración para los logs
-3. [] Enviar los logs a DataDog
+3. [x] Enviar los logs a DataDog
 
 #### Configuración de emails
 
@@ -36,35 +36,35 @@ Estos serán los pasos que voy a estar siguiendo en el app
 
 1. [x] Agregar Rate limit
 2. [x] Configurar CORS
-3. Tasa de Reintentos en JWT: Implementa un sistema para limitar el número de intentos de verificación fallidos por usuario.
+3. [x] Tasa de Reintentos en JWT: Implementa un sistema para limitar el número de intentos de verificación fallidos por usuario.
 
 #### Tareas "Más dificiles" (Son un desafío para mi)
 
-- Configurar mi correo electronico para enviar emails sin problemas ✅
-- Configurar los logs para enviarlos a DataDog ❎
+- [x] Configurar mi correo electronico para enviar emails sin problemas ✅
+- [x] Configurar los logs para enviarlos a DataDog ❎
 
 #### Accesibilidad
 
-- Paginación ✅
-- Filtros ✅
-- Ordenamiento ✅
+- [x] Paginación ✅
+- [x] Filtros ✅
+- [x] Ordenamiento ✅
 
 # Pendientes ⚠️
 
 Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre.
 
-- Crear templates para enviar emails ✅
+- [x] Crear templates para enviar emails ✅
 
 #### Pagos
 
-- Realizar pagos con stripe ✅
-- Realizar pagos con paypal
-- Realizar pagos con tarjeta de crédito ✅
+- [x] Realizar pagos con stripe ✅
+- [] Realizar pagos con paypal
+- [] Realizar pagos con tarjeta de crédito ✅
 
 #### Verificaciones
 
 - Verificar tarjeta de identidad ❎
-- Verificar las imágenes que sean de real state con aws Recognition ✖️
+- Verificar las imágenes que sean de real state con AWS Recognition ✖️
 - Aplicar Oauth (LOGUEARSE CON GOOGLE) ✅
 - Verificar número de telefóno con código OTP ✅
 - Enviar emails de bienvenida a los usuarios con SendGrid ✅
@@ -76,5 +76,39 @@ Cosas pendientes por hacer en hopta para que esté completa, claro que si hombre
 
 ## Pendientes (Frontend)
 
-- Aprender sobre SEO en NextJS ✖️
-- Preguntar si se permiten mascostas en el alquiler (No es tan importante) ✖️
+- Aprender sobre SEO en NextJS
+
+## Pendientes (Backend)
+
+- Hacer un sistema de referidos ❎
+- Hacer un sistema de reportes de alquileres ✅
+- Enviar emails felicitando a los usuarios que cumplen años ✅
+- Sistema de olvidar contraseña ❎
+- Subir archivos a S3 ✅
+
+<!-- Guardar el token en las cookies, no entregarle nada al cliente -->
+
+Features adicionales para las propiedades
+
+###### Interior:
+
+- [x] allowPets: Permitir mascotas
+
+###### Costos adicionales:
+
+- [x] utilities_included: ["agua", "luz", "internet"]
+
+###### Seguridad:
+
+- [x] gated_community: boolean (residenciales)
+
+###### Disponibilidad de visitas:
+
+- Lunes a viernes, 10am - 5pm
+
+Pendientes:
+
+- almacenar correos electrónicos en la base de datos para saber qué usuarios quieren enterarse de nuevas funcionalidades
+
+Fecha:
+Hoy 15 de junio de 2025

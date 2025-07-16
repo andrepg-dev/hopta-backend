@@ -1,31 +1,48 @@
 import { COOKIES } from '@/constants/cookies.constants'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { getIpInfo } from '@/src/actions/user/ip-info'
 import { AppError } from '@/src/handlers/error-handler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
-import { Cookies } from '@/src/modules/cookies/cookies.service'
-import { EmailService } from '@/src/modules/email/email.service'
-import Logs from '@/src/modules/logs/save-logs.service'
-import { TwilioSendSMS } from '@/src/modules/twilio/twilio-sms.service'
-import { pedingUserModel } from '@/src/schemas/pending-sms-user.schemas'
+import { pendingUserModel } from '@/src/schemas/pending-sms-user.schemas'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
-import { refreshTokenCookies } from '@/src/utils/cookies/save-user-info'
+import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
+import { Cookies } from '@/src/services/cookies/cookies.service'
+import { EmailService } from '@/src/services/email/email.service'
+import Logs from '@/src/services/logs/save-logs.service'
+import { TwilioSendSMS } from '@/src/services/twilio/twilio-sms.service'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
-import { createUserSchema, UserLoginSchema } from '@/src/zod/user.zod'
-import { CreateUserI } from '@/types/login/user'
-import bcrypt from 'bcrypt'
+import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
+import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
 
 const userRouter = Router()
 
 userRouter.get(
   '/',
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    await userModel.find().then((user) => res.json(user))
+    const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
+      throw new AppError('User not found', 400)
+    })
+    if (!user) return
+
+    const userData = user.toObject()
+    const { auth: _, ...rest } = userData
+
+    responseHandler({
+      res,
+      code: 200,
+      data: {
+        user: rest,
+        ip: await getIpInfo(req.ip)
+      }
+    })
   })
 )
 
@@ -45,7 +62,8 @@ userRouter.post(
       location,
       profile_picture,
       properties,
-      about
+      about,
+      // TODO: Add birth date
     } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
@@ -59,19 +77,19 @@ userRouter.post(
     // Check if user already exists
     const existingUser = await userModel.findOne({ email: email.toLowerCase() })
     if (existingUser) {
-      throw new AppError('User already exists', 400)
+      throw new AppError('User already exists', 409)
     }
 
     // Generate verification code
     const verificationCode = RandomIntUtils.randomInt()
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await hashGen(password)
 
     // Store verification data
-    const userData = {
+    const userData: UserI = {
       name,
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
       auth: {
         local: {
           password: hashedPassword
@@ -85,11 +103,13 @@ userRouter.post(
       location,
       profile_picture,
       properties,
-      about
+      about,
+      created_at: new Date(),
+      updated_at: new Date()
     }
 
     await verificationCodeModel.create({
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
       code: verificationCode,
       userData
     })
@@ -98,36 +118,40 @@ userRouter.post(
     const emailService = new EmailService()
     await emailService.sendEmail({
       to: {
-        email: email.toLowerCase(),
+        email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
       provider: 'sendgrid',
-      template: 'verification_code',
+      template: 'verification_code_not_link',
       dynamicTemplateData: {
-        name: `${name} ${last_name}`,
+        name: `${name}`,
         code: verificationCode,
-        email: email.toLowerCase()
+        email: email.trim().toLowerCase()
       }
     })
 
-    res.json({
-      success: true,
-      message: 'Verification code sent, please check your email.'
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Verification code sent, please check your email.',
+      data: {
+        ip: await getIpInfo(req.ip)
+      }
     })
   })
 )
 
-userRouter.get(
+userRouter.post(
   '/verify-email',
-  asyncHandler(async (req: Request<{}, {}, {}, { email: string; code: string }>, res: Response) => {
-    const { email, code } = req.query
+  asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response, next: NextFunction) => {
+    const { email, code } = req.body
 
     if (!email || !code) {
       throw new AppError('Email and code are required', 400)
     }
 
     const verificationData = await verificationCodeModel.findOne({
-      email: email?.toString().toLowerCase(),
+      email: email?.trim().toLowerCase(),
       code: code?.toString()
     })
 
@@ -135,32 +159,79 @@ userRouter.get(
       throw new AppError('Invalid or expired verification code', 400)
     }
 
+    // verificar si el usuario está logueado
+    const userExists = await userModel.findOne({ email: email?.trim().toLowerCase() })
+
+    if (userExists) {
+      // Access token
+      const accessToken = TokenManager.accessToken({ payload: { userId: userExists._id as string } })
+
+      // Refresh token
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: userExists._id as string } })
+
+      // Save the refresh token in the cookies with the class name of Cookies
+      const cookies = new Cookies(req, res)
+      cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+      // Save the acces token in cookies
+      cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
+
+      TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
+
+      // Delete verification data from database
+      await verificationCodeModel.deleteOne({ _id: verificationData._id })
+
+      // user without credentials
+      const { auth: _, ...rest } = userExists.toObject()
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'User logged in successfully',
+        data: {
+          user: rest,
+          ip: await getIpInfo(req.ip)
+        }
+      })
+
+      // Stop the execution
+      return
+    }
+
     // Create user
     const user = await userModel.create(verificationData.userData)
 
-    // Delete verification data
-    await verificationCodeModel.deleteOne({ _id: verificationData._id })
-
     // Transfer only the necessary data
     const userData = user.toObject()
-    const { auth: _, ...userWithoutAuth } = userData
+    const { auth: _, ...rest } = userData
+
+    // Delete verification data from database
+    await verificationCodeModel.deleteOne({ _id: verificationData._id })
 
     // Access token
     const accessToken = TokenManager.accessToken({ payload: { userId: userData._id as string } })
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+
+    // Save refresh token in cookies
+    const cookies = new Cookies(req, res)
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
+
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Email verified successfully',
-      user: userWithoutAuth,
-      token: accessToken
+      data: {
+        user: rest,
+        token: accessToken,
+        ip: await getIpInfo(req.ip)
+      }
     })
   })
 )
@@ -171,7 +242,7 @@ userRouter.post(
   asyncHandler(async (req: Request<{}, {}, { email: string; password: string }>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
 
-    email = email.toLowerCase()
+    email = email.trim().toLowerCase()
 
     // verify is the user is on the database
     const user = await userModel.findOne({ email }).catch((err) => {
@@ -183,7 +254,7 @@ userRouter.post(
     const userPassword = user.auth?.local?.password
     if (!userPassword) throw new AppError('User not registered with local authentication', 404)
 
-    const isPasswordValid = await bcrypt.compare(password, userPassword)
+    const isPasswordValid = await hashCompare(password, userPassword)
     if (!isPasswordValid) throw new AppError('Password or email incorrect', 404)
 
     // Transfer only the necessary data
@@ -195,24 +266,44 @@ userRouter.post(
 
     // Refresh token
     const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+
+    // Save refresh token in cookies
+    const cookies = new Cookies(req, res)
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(COOKIES.jwt_access_token.name, token)
+
     TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
 
-    // Response
-    res.json({ success: true, user: userWithoutAuth, token })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'User logged in successfully',
+      data: {
+        user: userWithoutAuth,
+        token,
+        ip: await getIpInfo(req.ip)
+      }
+    })
   })
 )
 
-userRouter.get(
+userRouter.post(
   '/logout',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await refreshTokenModel.findOneAndDelete({ userId: req.user?.userId })
-    refreshTokenCookies.clearCookie(res, COOKIES.jwt_refresh_token.name)
-    res.json({ success: true, message: 'Logged out successfully' })
+
+    const cookies = new Cookies(req, res)
+    cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
+    cookies.deleteCookie(COOKIES.jwt_access_token.name)
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Logged out successfully'
+    })
   })
 )
 
@@ -221,15 +312,33 @@ userRouter.delete(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await userModel.findOneAndDelete({ _id: req.user?.userId })
+
+    const cookies = new Cookies(req, res)
+    cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
+    cookies.deleteCookie(COOKIES.jwt_access_token.name)
+
     res.json({ success: true, message: 'Account deleted successfully' })
   })
 )
 
-userRouter.put(
+userRouter.patch(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    await userModel.updateOne({ _id: req.user?.userId }, req.body).then((user) => res.send(user))
+    // Agregar validación de campos automáticos
+    const blockedFields = [
+      'auth.sms.verified',
+      'contact.is_phone_number_verified',
+      'personal_information.email_verified',
+      'personal_information.phone_number_verified'
+    ]
+
+    if (blockedFields.some(field => req.body[field])) {
+      throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
+    }
+
+    await userModel.updateOne({ _id: req.user?.userId }, req.body)
+      .then((user) => res.send(user))
   })
 )
 
@@ -242,25 +351,38 @@ userRouter.post(
       throw new AppError('Phone number is required', 400)
     }
 
+    console.log(isPhoneNumber(phone), phone)
+
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
     }
 
-    const alreadyExists = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
-
-    if (alreadyExists) {
-      throw new AppError('An account with this phone number already exists, please login', 400)
-    }
-
     // Send the SMS
     const smsTwilioService = new TwilioSendSMS()
-    await smsTwilioService.sendSMSCode({ phone })
+    await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
+      new Logs({
+        method: 'saveErrorLogs',
+        message: err
+      })
+      throw new AppError(`Error sending SMS`, 500)
+    })
 
-    res.json({ success: true, message: 'SMS sent successfully' })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'SMS sent successfully'
+    })
   })
 )
 
+
+/**
+ * @description you need to complete the profile to create the user, this just verify the phone number of the user
+ * 
+ * @param phone
+ * @param code
+ */
 userRouter.post(
   '/verify-sms',
   asyncHandler(async (req: Request, res: Response) => {
@@ -285,14 +407,49 @@ userRouter.post(
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
     }
 
-    // Check if the code is valid
+    // Check if the code is valid in the twilio collection database
     const smsTwilioService = new TwilioSendSMS()
-    const verification = await smsTwilioService.verifySMSCode({ phone, code })
+    const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
-    if (!verification) {
-      throw new AppError('Invalid or expired verification code', 400)
+    if (!isUserPhoneNumber) {
+      throw new AppError('Invalid or expired verification code', 409)
     }
 
+    /**
+     * La lógica viene aquí, tenemos que verificar si el usuario ya existe en la collecion
+     * de usuarios, o si está registrandose, si está registrandose no tiene sentido
+     * que vayas al endpoint de complete profile
+     */
+    const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
+
+    if (user) {
+      // Generate access token and refresh token
+      const accessToken = TokenManager.accessToken({ payload: { userId: user._id as string } })
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
+
+      // Save refresh token in cookies
+      const cookies = new Cookies(req, res)
+      cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+      // Save access token in cookies
+      cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
+
+      // Save refresh token in database
+      await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id as string } })
+
+      const { auth: _, ...rest } = user.toObject()
+
+      return responseHandler({
+        res,
+        code: 200,
+        message: 'Login successfully',
+        data: {
+          user: rest
+        }
+      })
+    }
+
+    // If user doesn't exist, create a temp token to complete the profile
     const tempToken = TokenManager.tempToken({ payload: { phone } })
 
     // Save in cookies
@@ -300,24 +457,206 @@ userRouter.post(
     cookies.saveCookie('tempToken', tempToken)
 
     // Save user in pending user to complete the profile
-    await pedingUserModel.create({ phone })
+    await pendingUserModel.create({ phone })
 
-    await smsTwilioService
-      .sendSMS({
-        phone,
-        message: `Phone number verified successfully. Complete the profile with the next step to complete.`
-      })
-      .catch((err) => {
-        new Logs({ message: err, method: 'saveErrorLogs' })
-      })
-
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Phone number verified successfully. Complete the profile with the next step to complete.'
     })
   })
 )
 
+
+/** 
+ * If user exists, we will send a verification code to the email
+*/
+userRouter.post('/email-exists',
+  validateRequest(isValidEmail),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body
+
+    const user = await userModel.findOne({ email: email.trim().toLowerCase() })
+
+    if (!user) {
+      throw new AppError('Unregistered email', 404)
+    }
+
+    const verificationCode = RandomIntUtils.randomInt()
+
+    const userData = {
+      email: email.trim().toLowerCase(),
+      code: verificationCode,
+      userData: user.toObject()
+    }
+
+    await verificationCodeModel.create(userData)
+
+    // Send verification email
+    const emailService = new EmailService()
+    await emailService.sendEmail({
+      to: {
+        email: email.trim().toLowerCase(),
+        name: `${user.name} ${user.last_name}`
+      },
+      provider: 'sendgrid',
+      template: 'verification_code_not_link',
+      dynamicTemplateData: {
+        name: `${user.name}`,
+        code: verificationCode,
+        email: email.trim().toLowerCase()
+      }
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Email already exists'
+    })
+  }))
+
+userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body
+
+  if (!email) {
+    throw new AppError('Email is required', 400)
+  }
+
+  const user = await userModel.findOne({ email })
+
+  if (!user) {
+    throw new AppError('Unregistered email', 404)
+  }
+
+  const userData = {
+    email: email.toLowerCase(),
+    code: RandomIntUtils.randomInt(),
+    userData: user.toObject()
+  }
+
+  await verificationCodeModel.create(userData) // add to database
+
+  // Send verification email
+  const emailService = new EmailService()
+  await emailService.sendEmail({
+    to: {
+      email: email.trim().toLowerCase(),
+      name: `${user.name} ${user.last_name}`
+    },
+    provider: 'sendgrid',
+    template: 'forgot_password',
+    dynamicTemplateData: {
+      name: `${user.name}`,
+      code: userData.code,
+      email: email.trim().toLowerCase()
+    }
+  })
+
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Verification code sent successfully'
+  })
+}))
+
+// Verify forgotten password code
+userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res: Response) => {
+  const { email, code, password } = req.body
+
+  if (!email || !code || !password) {
+    throw new AppError('Email, code and password are required', 400)
+  }
+
+  const verificationCode = await verificationCodeModel.findOne({
+    email: email?.toString().toLowerCase(),
+    code: code?.toString()
+  })
+
+  if (!verificationCode) {
+    throw new AppError('Invalid or expired verification code', 400)
+  }
+
+  const userData = verificationCode.userData
+  await verificationCodeModel.deleteOne({ _id: verificationCode._id })
+
+  if (!userData) {
+    throw new AppError('User not found', 404)
+  }
+
+  // Hash the new password 
+  const hashedPassword = await hashGen(password)
+
+  await userModel.updateOne({ _id: userData._id }, { $set: { 'auth.local.password': hashedPassword } })
+
+  // Send email to the user 
+  const emailService = new EmailService()
+
+  await emailService.sendEmail({
+    to: {
+      email: userData.email,
+      name: userData.name
+    },
+    subject: 'Password updated successfully',
+    html: `Your password has been updated successfully. You can now login with your new password.`,
+    provider: 'sendgrid'
+  })
+
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Password updated successfully'
+  })
+}))
+
+// Resend verification code
+userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body
+
+  if (!email) {
+    throw new AppError('Email is required', 400)
+  }
+
+  const user = await userModel.findOne({ email })
+
+  if (!user) {
+    throw new AppError('Unregistered email', 404)
+  }
+
+  const verificationCode = RandomIntUtils.randomInt()
+
+  const userData = {
+    email: email.toLowerCase(),
+    code: verificationCode,
+    userData: user.toObject()
+  }
+
+  await verificationCodeModel.create(userData)
+
+  const emailService = new EmailService()
+  await emailService.sendEmail({
+    to: {
+      email: userData.email,
+      name: userData.userData.name
+    },
+    provider: 'sendgrid',
+    template: 'verification_code_not_link',
+    dynamicTemplateData: {
+      name: `${user.name}`,
+      code: verificationCode,
+      email: email.trim().toLowerCase()
+    }
+  })
+
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Verification code sent successfully'
+  })
+}))
+
+/**
+ * @description This function create the account via SMS
+ */
 userRouter.post(
   '/complete-profile',
   asyncHandler(async (req: Request, res: Response) => {
@@ -335,7 +674,7 @@ userRouter.post(
     }
 
     if (!tempToken) {
-      throw new AppError('Authorization token required', 401)
+      throw new AppError('Temporary authorization token required', 401)
     }
 
     const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
@@ -346,7 +685,7 @@ userRouter.post(
       throw new AppError('Invalid token', 401)
     }
 
-    const pendingUser = await pedingUserModel.findOne({ phone: decoded.phone })
+    const pendingUser = await pendingUserModel.findOne({ phone: decoded.phone })
 
     new Logs({ message: pendingUser })
 
@@ -367,17 +706,23 @@ userRouter.post(
         phone_number: decoded.phone,
         is_phone_number_verified: true
       }
+    }).catch(() => {
+      throw new AppError('Error creating user', 500)
     })
 
-    await pedingUserModel.deleteOne({ _id: pendingUser._id })
+    await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(
+      () => {
+        console.error('Error deleting pending user line -> 713 file user/route.ts')
+      })
 
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
 
-    refreshTokenCookies.setRefreshCookie({
-      res,
-      token: refreshToken
-    })
+    // variable cookie already exists in the top
+    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
+
+    // Save access token in cookies
+    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
     await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id } })
 
@@ -387,17 +732,19 @@ userRouter.post(
     await smsTwilioService
       .sendSMS({
         phone: decoded.phone,
-        message: `Hi ${name} ${last_name}, welcome to Hopta :)`
+        message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
       })
       .catch((err) => {
         new Logs({ message: err, method: 'saveErrorLogs' })
       })
 
-    res.json({
-      success: true,
+    responseHandler({
+      res,
+      code: 200,
       message: 'Profile completed successfully',
-      user: userWithoutAuth,
-      token: accessToken
+      data: {
+        user: userWithoutAuth
+      }
     })
   })
 )

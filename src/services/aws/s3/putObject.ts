@@ -2,13 +2,15 @@ import { client } from '@/constants/aws/s3/credential.constants'
 import { PutObjectParams } from '@/types/aws/s3.model'
 import { PutObjectCommand, S3ServiceException } from '@aws-sdk/client-s3'
 import { readFile } from 'node:fs/promises'
+import mime from 'mime-types'
 
 export const putObject = async ({ bucketName, key, filePath, ...params }: PutObjectParams) => {
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
-    Body: await readFile(filePath),
-    ...params
+    Body: params.Body ?? await readFile(filePath as string),
+    ...params,
+    ContentType: params.ContentType || mime.lookup(filePath as string) || 'application/octet-stream'
   })
 
   try {

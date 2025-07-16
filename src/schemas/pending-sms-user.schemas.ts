@@ -17,4 +17,4 @@ const pendingSmsUserSchema = new mongoose.Schema({
   }
 })
 
-export const pedingUserModel = mongoose.model('pending-sms-user', pendingSmsUserSchema)
+export const pendingUserModel = mongoose.model('pending-sms-user', pendingSmsUserSchema)

@@ -1,12 +1,13 @@
 import { stripe } from '@/constants/stripe/config.constants'
 import { line_items } from '@/constants/stripe/session.constants'
 import { AppError } from '@/src/handlers/error-handler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { userModel } from '@/src/schemas/user.schemas'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { Request, Response, Router } from 'express'
 import Stripe from 'stripe'
+import { responseHandler } from '@/src/handlers/responseHandler'
 
 const paymentRouter = Router()
 
@@ -30,6 +31,9 @@ paymentRouter.post(
     console.log(line_item)
 
     const user = await userModel.findById(req.user?.userId)
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
 
     let createPaymentObject: Stripe.Checkout.SessionCreateParams = {
       line_items: new Array(line_item),
@@ -46,16 +50,28 @@ paymentRouter.post(
     }
 
     const session = await stripe.checkout.sessions.create(createPaymentObject)
-    res.status(201).json(session)
+    responseHandler({
+      res,
+      code: 201,
+      data: session
+    })
   })
 )
 
 paymentRouter.get('/success', (req, res) => {
-  res.send('Gracias por tu compra!')
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Gracias por tu compra!'
+  })
 })
 
 paymentRouter.get('/cancel', (req, res) => {
-  res.send('Que lo que pasó crack, por qué cancelaste el plan? NOOOOOOOOOOOOOOOOOOOOOOO')
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Que lo que pasó crack, por qué cancelaste el plan? NOOOOOOOOOOOOOOOOOOOOOOO'
+  })
 })
 
 export default paymentRouter

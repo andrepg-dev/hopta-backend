@@ -1,5 +1,4 @@
-import { EmailService } from '@/src/modules/email/email.service'
-import Logs from '@/src/modules/logs/save-logs.service'
+import Logs from '@/src/services/logs/save-logs.service'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import mongoose, { model } from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
@@ -19,14 +18,24 @@ const realStateSchema = new mongoose.Schema(
       required: true
     },
     location: {
-      lat: {
-        type: Number,
+      title: {
+        type: String,
         required: true
       },
-      lng: {
-        type: Number,
-        required: true
-      }
+      coordinates: {
+        lat: {
+          type: Number,
+          required: true
+        },
+        lng: {
+          type: Number,
+          required: true
+        }
+      },
+    },
+    previous_payment_required: {
+      type: Boolean,
+      default: false
     },
     square_meters: {
       type: Number
@@ -51,32 +60,27 @@ const realStateSchema = new mongoose.Schema(
         type: Number,
         required: true
       },
-      kitchens: {
-        type: Number
-      },
       interior_extras: {
-        water_tank: Boolean,
-        water_cistern: Boolean,
-        closets: Boolean,
-        furnished: Boolean,
-        air_conditioning: Boolean,
-        '24_7_security': Boolean,
-        garage: Boolean
+        type: [String],
+        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets']
       },
       exterior_extras: {
-        balcony: Boolean,
-        patio: Boolean,
-        terrace: Boolean,
-        garden: Boolean,
-        swimming_pool: Boolean
+        type: [String],
+        enum: ['balcony', 'patio', 'terrace', 'garden', 'swimming_pool']
       },
       community_extras: {
-        gym: Boolean,
-        parks: Boolean,
-        schools: Boolean,
-        shopping_malls: Boolean,
-        supermarkets: Boolean,
-        elevator: Boolean
+        type: [String],
+        enum: ['gym', 'parks', 'schools', 'shopping_malls', 'supermarkets', 'elevator']
+      },
+      security: {
+        type: [String],
+        enum: ['gated_community']
+      }
+    },
+    additional_cost: {
+      utilities_included: {
+        type: [String],
+        enum: ['water', 'electricity', 'internet']
       }
     },
     owner: {
@@ -191,23 +195,14 @@ realStateSchema.pre('save', function (next) {
 })
 
 realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
-  const emailService = new EmailService()
-
-  await emailService.sendEmail({
-    to: { email: 'andreponce417@gmail.com' },
-    subject: `New property created`,
-    html: `<h1>${doc.title} by ${doc.owner}</h1> <pre>${JSON.stringify(doc, null, 2)}</pre>`,
-    provider: 'nodemailer'
-  })
-
   new Logs({
     method: 'saveLogs',
-    message: `New property created: ${doc.title} at (${doc.location.lat}, ${doc.location.lng})`
+    message: `New property created: ${doc.title} at (${doc.location.coordinates.lat}, ${doc.location.coordinates.lng})`
   })
 })
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI {}
+interface RealStateDocument extends mongoose.Document, RealStateI { }
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)

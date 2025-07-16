@@ -1,3 +1,4 @@
+import { COOKIES } from '@/constants/cookies.constants'
 import { CookieOptions, Request, Response } from 'express'
 
 export class Cookies {
@@ -10,17 +11,30 @@ export class Cookies {
   }
 
   saveCookie(name: string, value: string, options?: CookieOptions) {
-    this.res.cookie(
+
+    let body = {
       name,
       value,
-      options
-        ? options
+      options: options ? options
         : {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict' as 'strict' | 'lax' | 'none',
-            maxAge: 1800000
-          }
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict' as 'strict' | 'lax' | 'none'
+        }
+    }
+
+    if (name === COOKIES.jwt_access_token.name) {
+      body.options.maxAge = 1000 * 60 * 60 * 24 * 1 // 1 día
+    }
+
+    if (name === COOKIES.jwt_refresh_token.name) {
+      body.options.maxAge = 1000 * 60 * 60 * 24 * 30 // 30 días
+    }
+
+    this.res.cookie(
+      body.name,
+      body.value,
+      body.options
     )
   }
 

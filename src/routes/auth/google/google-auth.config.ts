@@ -16,8 +16,7 @@ passport.use(
       try {
         const foundUser = await userModel.findOne({ email: profile.emails[0].value })
         if (foundUser) {
-          done(null, foundUser)
-          return foundUser
+          return done(null, foundUser as unknown as any)
         }
 
         const newUser = await userModel
@@ -36,10 +35,9 @@ passport.use(
             throw new AppError(err, 404)
           })
 
-        done(null, newUser)
-        return newUser
+        return done(null, newUser as unknown as any)
       } catch (error) {
-        done(null)
+        return done(error as Error)
       }
     }
   )
@@ -49,8 +47,11 @@ passport.serializeUser((user: any, done: any) => {
   done(null, user._id)
 })
 
-passport.deserializeUser((id: any, done: any) => {
-  userModel.findById(id, (err: any, user: any) => {
-    done(err, user)
-  })
+passport.deserializeUser(async (id: string, done: any) => {
+  try {
+    const user = await userModel.findById(id)
+    done(null, user)
+  } catch (err) {
+    done(err, null)
+  }
 })

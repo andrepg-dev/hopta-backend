@@ -5,7 +5,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "build": "tsc --noEmit false && tsc-alias",
+    "start": "node dist/src/index.js"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "keywords": [],
   "author": "",
@@ -28,14 +33,18 @@
     "express-session": "^1.18.1",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
+    "mime-type": "^5.0.3",
     "mongoose": "^8.8.4",
     "mongoose-paginate-v2": "^1.9.0",
+    "multer": "^1.4.5-lts.2",
     "nodemailer": "^6.9.16",
     "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "playwright": "^1.50.0",
     "response-time": "^2.3.3",
     "session": "^0.1.0",
+    "sharp": "^0.33.5",
     "stripe": "^17.7.0",
     "twilio": "^5.4.5",
     "winston": "^3.17.0",
@@ -43,6 +52,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^1.0.51",
+    "@anthropic-ai/sdk": "^0.56.0",
     "@types/algoliasearch": "^3.34.11",
     "@types/axios": "^0.9.36",
     "@types/bcrypt": "^5.0.2",
@@ -55,14 +66,18 @@
     "@types/helmet": "^0.0.48",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/mime-types": "^2.1.4",
     "@types/mongoose": "^5.11.96",
     "@types/mongoose-paginate-v2": "^1.6.4",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.10.1",
     "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",
+    "@types/passport-facebook": "^3.0.3",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/prettier": "^2.7.3",
     "@types/response-time": "^2.3.8",
+    "@types/sharp": "^0.31.1",
     "@types/stripe": "^8.0.416",
     "@types/supertest": "^6.0.2",
     "@types/typescript": "^0.4.29",
@@ -75,7 +90,8 @@
     "prettier": "^3.4.2",
     "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.8.3"
   }
 }

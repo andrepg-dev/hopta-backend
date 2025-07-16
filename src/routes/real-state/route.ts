@@ -1,102 +1,26 @@
+import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { AppError } from '@/src/handlers/error-handler'
-import asyncHandler from '@/src/helpers/try-catch-async-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
+import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
+import Logs from '@/src/services/logs/save-logs.service'
 import { getPagination } from '@/src/utils/get-pagination.utils'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
-import { algoliasearch } from 'algoliasearch'
-import Logs from '@/src/modules/logs/save-logs.service'
-import { authMiddleware } from '@/src/middlewares/authMiddleware'
+import { z } from 'zod'
 
 const RealStateRouter = Router()
-const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string)
 
-// Helper function to sync with Algolia
-const syncWithAlgolia = async (operation: 'save' | 'update' | 'delete', data: any) => {
-  try {
-    switch (operation) {
-      case 'save':
-      case 'update':
-        await client.saveObjects({ indexName: 'real_state', objects: [data] })
-        break
-      case 'delete':
-        await client.deleteObject(data._id.toString())
-        break
-    }
-    new Logs({
-      method: 'saveLogs',
-      message: `Algolia ${operation} operation successful`
-    })
-  } catch (error) {
-    new Logs({
-      method: 'saveErrorLogs',
-      message: `Error syncing with Algolia: ${error}`
-    })
-    throw new AppError(`Error syncing with Algolia: ${error}`, 500)
-  }
-}
-
-RealStateRouter.get(
-  '/search',
-  asyncHandler(async (req: Request, res: Response) => {
-    const query = req.query.q as string
-
-    try {
-      const results = (await client.search({
-        requests: [
-          {
-            indexName: 'real_state',
-            query
-          }
-        ],
-        strategy: 'none'
-      })) as any
-
-      res.json(results.results[0].hits)
-    } catch (error) {
-      throw new AppError('Error searching properties', 500)
-    }
-  })
-)
-
+/**
+ * @description get all real state properties available
+ */
 RealStateRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const processRecords = async () => {
-      const datasetRequest = await RealStateModel.find().lean()
-
-      const objects = datasetRequest.map((doc) => ({
-        objectID: doc._id.toString(),
-        ...doc
-      }))
-
-      new Logs({
-        method: 'saveLogs',
-        message: objects
-      })
-
-      return await client.saveObjects({ indexName: 'real_state', objects })
-    }
-
-    processRecords()
-      .then((response) => {
-        new Logs({
-          method: 'saveLogs',
-          message: 'Records processed successfully'
-        })
-      })
-      .catch((error) => {
-        new Logs({
-          method: 'saveErrorLogs',
-          message: error
-        })
-      })
-
-    // Get all properties from the user with pagination
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
     const sortBy = (req.query.sortBy as string) || 'created_at'
@@ -111,8 +35,33 @@ RealStateRouter.get(
     })
 
     if (!paginatedData) throw new AppError('Properties not found', 404)
-    res.json(paginatedData)
-    return
+    responseHandler({
+      res,
+      code: 200,
+      data: paginatedData
+    })
+  })
+)
+
+RealStateRouter.get('/my-properties',
+  authMiddleware,
+  asyncHandler(async (req: Request<{}, {}, {}, { page: string, limit: string, sortBy: string, order: 'asc' | 'desc' }>, res: Response) => {
+    const user = req.user
+
+    if (!user) throw new AppError('User not found', 404)
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const sortBy = (req.query.sortBy as string) || 'created_at'
+    const order = (req.query.order as 'asc' | 'desc') || 'desc'
+
+    const paginatedData = await RealStateModel.paginate({ owner: user.userId }, { page, limit, sortBy, order })
+
+    responseHandler({
+      res,
+      code: 200,
+      data: paginatedData
+    })
   })
 )
 
@@ -124,7 +73,11 @@ RealStateRouter.get(
 
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone')
     if (!property) throw new AppError('Property not found', 404)
-    res.json(property)
+    responseHandler({
+      res,
+      code: 200,
+      data: property
+    })
   })
 )
 
@@ -132,12 +85,11 @@ RealStateRouter.post(
   '/',
   authMiddleware,
   validateRequest(realStateSchema),
-  asyncHandler(async (req: Request<{}, {}, RealStateI>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, RealStateI, {}>, res: Response) => {
     const { body } = req
-    const { title, description, price, images, house_features, house_status, location, square_meters, currency, population, stats, rating_summary } = body
+    const { title, description, price, house_features, images, house_status, location, square_meters, currency, population, additional_cost, previous_payment_required } = body
 
-    const { user } = req as any
-    const { userId: owner } = user
+    const owner = req.user?.userId
 
     const foundUser = await userModel.findById(owner)
     if (!foundUser) throw new AppError('User not found', 404)
@@ -155,19 +107,22 @@ RealStateRouter.post(
         images,
         title,
         owner,
-        stats: stats || { total_visits: 0, total_saves: 0 },
-        rating_summary: rating_summary || { average_rating: 0, total_ratings: 0 },
+        stats: { total_visits: 0, total_saves: 0 },
+        rating_summary: { average_rating: 0, total_ratings: 0 },
         visitors: [],
         saved_by: [],
-        ratings: []
+        ratings: [],
+        additional_cost,
+        previous_payment_required
       })
 
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })
 
-      // Sync with Algolia
-      await syncWithAlgolia('save', property)
-
-      res.status(201).send(property)
+      responseHandler({
+        res,
+        code: 201,
+        data: property
+      })
     } catch (error: any) {
       throw new AppError(error.message || 'Server error creating property', 500)
     }
@@ -201,16 +156,17 @@ RealStateRouter.delete(
     const deletedProperty = await RealStateModel.findByIdAndDelete(id)
     if (!deletedProperty) throw new AppError('Property not found', 404)
 
-    // Update Algolia
-    await syncWithAlgolia('delete', deletedProperty)
-
     await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
 
-    res.json({ success: true, message: 'Property deleted successfully' })
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Property deleted successfully'
+    })
   })
 )
 
-RealStateRouter.put(
+RealStateRouter.patch(
   '/:id',
   validateRequest(realStateUpdateSchema),
   asyncHandler(async (req: Request, res: Response) => {
@@ -249,13 +205,43 @@ RealStateRouter.put(
       }
     )
 
-    // Sync with Algolia
-    await syncWithAlgolia('update', updatedProperty)
+    responseHandler({
+      res,
+      data: updatedProperty,
+      code: 200,
+      message: 'Property updated successfully'
+    })
 
-    res.json({
-      success: true,
-      message: 'Property updated successfully',
-      data: updatedProperty
+  })
+)
+
+// Show real state by array of object ids
+const recommendedPropertySchema = z.object({
+  property_ids: z.array(z.string().min(1).max(100))
+})
+
+RealStateRouter.post(
+  '/show-by-ids',
+  authMiddleware,
+  validateRequest(recommendedPropertySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { property_ids } = req.body
+    if (!property_ids) throw new AppError('Property IDs are required', 400)
+
+    const propertyIds = property_ids.map((id: string) => new mongoose.Types.ObjectId(id))
+    const properties = await RealStateModel.find({
+      _id: { $in: propertyIds }
+    }).select('-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary')
+
+    const propertiesMap = new Map(properties.map((p: any) => [p._id.toString(), p]))
+    const sortedProperties = property_ids.map((id: string) => propertiesMap.get(id)).filter(Boolean)
+
+    if (!sortedProperties) throw new AppError('Properties not found', 404)
+
+    responseHandler({
+      res,
+      data: sortedProperties,
+      code: 200
     })
   })
 )
