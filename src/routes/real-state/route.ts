@@ -9,72 +9,11 @@ import Logs from '@/src/services/logs/save-logs.service'
 import { getPagination } from '@/src/utils/get-pagination.utils'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
-import { algoliasearch } from 'algoliasearch'
 import { Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
 import { z } from 'zod'
 
 const RealStateRouter = Router()
-const client = algoliasearch(process.env.ALGOLIA_APP_ID as string, process.env.ALGOLIA_API_KEY as string)
-
-// Helper function to sync with Algolia
-const syncWithAlgolia = async (operation: 'save' | 'update' | 'delete', data: any) => {
-  try {
-    switch (operation) {
-      case 'save':
-      case 'update':
-        await client.saveObjects({ indexName: 'real_state', objects: [data] })
-        break
-      case 'delete':
-        await client.deleteObject(data._id.toString())
-        break
-    }
-    new Logs({
-      method: 'saveLogs',
-      message: `Algolia ${operation} operation successful`
-    })
-  } catch (error) {
-    new Logs({
-      method: 'saveErrorLogs',
-      message: `Error syncing with Algolia: ${error}`
-    })
-    throw new AppError(`Error syncing with Algolia: ${error}`, 500)
-  }
-}
-
-RealStateRouter.get(
-  '/search',
-  asyncHandler(async (req: Request, res: Response) => {
-    const query = req.query.q as string
-
-    const results = (await client.search({
-      requests: [
-        {
-          indexName: 'real_state',
-          query
-        }
-      ],
-      strategy: 'none'
-    })) as any
-
-    const hits = results.results[0].hits
-    if (!hits) throw new AppError('No properties found', 404)
-    if (hits.length === 0) {
-      return responseHandler({
-        res,
-        code: 200,
-        message: 'No properties found',
-        data: []
-      })
-    }
-
-    responseHandler({
-      res,
-      code: 200,
-      data: hits
-    })
-  })
-)
 
 /**
  * @description get all real state properties available
@@ -179,9 +118,6 @@ RealStateRouter.post(
 
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })
 
-      // Sync with Algolia
-      await syncWithAlgolia('save', property)
-
       responseHandler({
         res,
         code: 201,
@@ -219,9 +155,6 @@ RealStateRouter.delete(
 
     const deletedProperty = await RealStateModel.findByIdAndDelete(id)
     if (!deletedProperty) throw new AppError('Property not found', 404)
-
-    // Update Algolia
-    await syncWithAlgolia('delete', deletedProperty)
 
     await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
 
@@ -272,9 +205,6 @@ RealStateRouter.patch(
       }
     )
 
-    // Sync with Algolia
-    await syncWithAlgolia('update', updatedProperty)
-
     responseHandler({
       res,
       data: updatedProperty,
@@ -282,28 +212,6 @@ RealStateRouter.patch(
       message: 'Property updated successfully'
     })
 
-  })
-)
-
-RealStateRouter.post(
-  '/sync-algolia',
-  authMiddleware,
-  asyncHandler(async (req: Request, res: Response) => {
-    const datasetRequest = await RealStateModel.find().lean()
-
-    const objects = datasetRequest.map((doc) => ({
-      objectID: doc._id.toString(),
-      ...doc
-    }))
-
-    await client.saveObjects({ indexName: 'real_state', objects })
-
-    new Logs({
-      method: 'saveLogs',
-      message: 'Records synced with Algolia successfully'
-    })
-
-    res.json({ success: true, message: 'Sync completed successfully' })
   })
 )
 
