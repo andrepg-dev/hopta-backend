@@ -52,10 +52,6 @@ export const createUserSchema = z.object({
       work_experience: z.string().optional(),
       education: z.string().optional(),
       description: z.string().optional(),
-      certifications: z.array(z.string()).optional(),
-      languages: z.array(z.string()).optional(),
-      favorite_song: z.string().optional(),
-      where_im_living: z.string().optional()
     })
     .optional()
 })

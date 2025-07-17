@@ -153,18 +153,6 @@ const userSchema = new mongoose.Schema(
       },
       description: {
         type: String
-      },
-      certifications: {
-        type: [String]
-      },
-      languages: {
-        type: [String]
-      },
-      favorite_song: {
-        type: String
-      },
-      where_im_living: {
-        type: String
       }
     }
   },
