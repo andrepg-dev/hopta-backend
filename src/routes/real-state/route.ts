@@ -1,12 +1,14 @@
+import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import { authMiddleware } from '@/src/middlewares/authMiddleware'
+import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import Logs from '@/src/services/logs/save-logs.service'
 import { getPagination } from '@/src/utils/get-pagination.utils'
+import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import { Request, Response, Router } from 'express'
@@ -70,6 +72,20 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+
+    // Actualizar las visitas de una propiedad 
+    const accessToken = req.cookies[COOKIES.jwt_access_token.name]
+    let decoded: UserJWT | null = null
+
+    if (accessToken) {
+      decoded = TokenManager.verifyToken(accessToken) as UserJWT
+    }
+
+    if (decoded) {
+      await RealStateModel.updateOne({ _id: id }, { $push: { visitors: { user: decoded.userId, visit_date: new Date() } } })
+    }
+
+    await RealStateModel.updateOne({ _id: id }, { $inc: { 'stats.total_visits': 1 } })
 
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone')
     if (!property) throw new AppError('Property not found', 404)
