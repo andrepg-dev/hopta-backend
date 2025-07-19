@@ -20,6 +20,7 @@ import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
+import { z } from 'zod'
 
 const userRouter = Router()
 
@@ -325,6 +326,8 @@ userRouter.patch(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body
+
     // Agregar validación de campos automáticos
     const blockedFields = [
       'auth.sms.verified',
@@ -333,12 +336,21 @@ userRouter.patch(
       'personal_information.phone_number_verified'
     ]
 
-    if (blockedFields.some(field => req.body[field])) {
+    if (blockedFields.some(field => body[field])) {
       throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
     }
 
-    await userModel.updateOne({ _id: req.user?.userId }, req.body)
-      .then((user) => res.send(user))
+    try {
+      const response = await userModel.updateOne({ _id: req.user?.userId }, body)
+      responseHandler({
+        res,
+        code: 200,
+        message: 'User updated successfully',
+        data: response
+      })
+    } catch (error) {
+      throw new AppError('Error updating user', 500)
+    }
   })
 )
 
@@ -748,5 +760,82 @@ userRouter.post(
     })
   })
 )
+
+
+// User properties likes
+userRouter.post('/likes',
+  authMiddleware,
+  validateRequest(z.object({ propertyId: z.string() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { propertyId } = req.body
+
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'Property liked successfully'
+      })
+    } catch (error) {
+      throw new AppError('Error liking property', 500)
+    }
+  }))
+
+userRouter.get('/likes',
+  authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      responseHandler({
+        res,
+        code: 200,
+        data: {
+          likes: user?.favorites_properties
+        }
+      })
+    } catch (error) {
+      throw new AppError('Error getting likes', 500)
+    }
+  }))
+
+/**
+ * Delete the like of a property
+ */
+userRouter.delete('/likes',
+  authMiddleware,
+  validateRequest(z.object({ propertyId: z.string() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { propertyId } = req.body
+
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      await userModel.updateOne({ _id: req.user?.userId as string }, { $pull: { favorites_properties: propertyId } })
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'Property unliked successfully',
+      })
+    } catch (error) {
+      throw new AppError('Error unliking property', 500)
+    }
+  }))
 
 export default userRouter

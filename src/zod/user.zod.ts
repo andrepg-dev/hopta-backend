@@ -41,7 +41,7 @@ export const createUserSchema = z.object({
     .optional(),
   personal_information: z
     .object({
-      identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.'),
+      identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.').optional(),
       birth_date: z.string().datetime('Invalid date format.').optional(),
       // email_verified: z.boolean().default(false), // NOTE: Este campo se debe manejar desde el backend
       // phone_number_verified: z.boolean().default(false) // NOTE: Este campo se debe manejar desde el backend
@@ -49,13 +49,8 @@ export const createUserSchema = z.object({
     .optional(),
   about: z
     .object({
-      work_experience: z.string().optional(),
       education: z.string().optional(),
       description: z.string().optional(),
-      certifications: z.array(z.string()).optional(),
-      languages: z.array(z.string()).optional(),
-      favorite_song: z.string().optional(),
-      where_im_living: z.string().optional()
     })
     .optional()
 })

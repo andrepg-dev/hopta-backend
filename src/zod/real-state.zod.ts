@@ -1,3 +1,4 @@
+import { HOUSE_FEATURES_ALLOWED } from '@/constants/real-state/house-features-allowed'
 import z from 'zod'
 
 export const realStateSchema = z.object({
@@ -17,15 +18,15 @@ export const realStateSchema = z.object({
   currency: z.enum(['HNL', 'USD', 'EUR']),
   population: z.number().max(40000, 'Population must be at most 40,000.').optional(),
   additional_cost: z.object({ // owner will pay for these utilities
-    utilities_included: z.array(z.enum(['water', 'electricity', 'internet'])).optional()
+    utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional()
   }).optional(),
   house_features: z.object({
     rooms: z.number().positive('Rooms must be a positive number').max(20, 'Rooms must be at most 20.'),
     bathrooms: z.number().positive('Bathrooms must be a positive number').max(20, 'Bathrooms must be at most 20.'),
-    interior_extras: z.array(z.enum(['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets'])).optional(),
-    exterior_extras: z.array(z.enum(['balcony', 'patio', 'terrace', 'garden', 'swimming_pool'])).optional(),
-    community_extras: z.array(z.enum(['gym', 'parks', 'schools', 'shopping_malls', 'supermarkets', 'elevator'])).optional(),
-    security: z.array(z.enum(['gated_community'])).optional(),
+    interior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.interior)).optional(),
+    exterior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.exterior)).optional(),
+    community_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.community)).optional(),
+    security: z.array(z.enum(HOUSE_FEATURES_ALLOWED.security)).optional(),
   }),
   house_status: z.object({
     is_available: z.boolean().default(true),
@@ -52,16 +53,16 @@ export const realStateUpdateSchema = z
     currency: z.enum(['HNL', 'USD', 'EUR']).optional(),
     population: z.number().max(40000, 'Population must be at most 40,000.').optional(),
     additional_cost: z.object({ // owner will pay for these utilities
-      utilities_included: z.array(z.enum(['water', 'electricity', 'internet'])).optional()
+      utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional()
     }).optional(),
     house_features: z
       .object({
         rooms: z.number().positive('Rooms must be a positive number').max(20, 'Rooms must be at most 20.').optional(),
         bathrooms: z.number().positive('Bathrooms must be a positive number').max(20, 'Bathrooms must be at most 20.').optional(),
-        interior_extras: z.array(z.enum(['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets'])).optional(),
-        exterior_extras: z.array(z.enum(['balcony', 'patio', 'terrace', 'garden', 'swimming_pool'])).optional(),
-        community_extras: z.array(z.enum(['gym', 'parks', 'schools', 'shopping_malls', 'supermarkets', 'elevator'])).optional(),
-        security: z.array(z.enum(['gated_community'])).optional()
+        interior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.interior)).optional(),
+        exterior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.exterior)).optional(),
+        community_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.community)).optional(),
+        security: z.array(z.enum(HOUSE_FEATURES_ALLOWED.security)).optional()
       })
       .optional(),
     house_status: z
