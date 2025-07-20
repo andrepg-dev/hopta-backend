@@ -340,16 +340,61 @@ userRouter.patch(
       throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
     }
 
+    // Validar que el email no exista en otro usuario
+    if (body.email) {
+      const existingUserWithEmail = await userModel.findOne({
+        email: body.email,
+        _id: { $ne: req.user?.userId }
+      })
+
+      if (existingUserWithEmail) {
+        throw new AppError('El correo electrónico ya está en uso por otro usuario', 400)
+      }
+    }
+
+    // Validar que el número de teléfono no exista en otro usuario
+    if (body.contact?.phone_number) {
+      const phoneNumber = body.contact.phone_number
+      const existingUserWithPhone = await userModel.findOne({
+        $and: [
+          { _id: { $ne: req.user?.userId } },
+          {
+            $or: [
+              { 'contact.phone_number': phoneNumber },
+              { 'auth.sms.phoneNumber': phoneNumber },
+              { 'auth.sms.phoneNumber': `+504${phoneNumber}` },
+            ]
+          }
+        ]
+      })
+
+      if (existingUserWithPhone) {
+        throw new AppError('El número de teléfono ya está en uso por otro usuario', 400)
+      }
+    }
+
     try {
-      const response = await userModel.updateOne({ _id: req.user?.userId }, body)
+      const user = await userModel.findOne({ _id: req.user?.userId })
+
+      if (!user) {
+        throw new AppError('User not found', 404)
+      }
+
+      await userModel.updateOne({ _id: req.user?.userId }, body)
+
+      // Obtener los datos actualizados del usuario para devolverlos
+      const updatedUser = await userModel.findById(req.user?.userId).select('-auth.local.password')
+
       responseHandler({
         res,
         code: 200,
         message: 'User updated successfully',
-        data: response
+        data: {
+          user: updatedUser
+        }
       })
     } catch (error) {
-      throw new AppError('Error updating user', 500)
+      throw new AppError('Error updating user: ' + error, 500)
     }
   })
 )

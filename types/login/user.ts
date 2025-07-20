@@ -43,7 +43,11 @@ interface PersonalInformation {
 
 interface About {
   work_experience?: string
-  education?: string
+  education?: {
+    university?: string
+    degree?: string
+    end_date?: string
+  }
   description?: string
   certifications?: string[]
   languages?: string[]

@@ -121,4 +121,107 @@ aiRouter.post('/generate-description', async (req, res) => {
   }
 })
 
+aiRouter.post('/generate-title', async (req, res) => {
+  const { form } = req.body
+
+  console.log({ form })
+
+  try {
+    // Configurar headers para Server-Sent Events (SSE)
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    // Función helper para enviar datos SSE
+    const sendSSE = (eventType: string, data: any) => {
+      res.write(`event: ${eventType}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Enviar evento de inicio
+    sendSSE('start', { message: 'Generando título...' });
+
+    // Crear stream con Anthropic
+    const stream = await anthropic.messages.create({
+      model: "claude-3-5-haiku-latest",
+      messages: [
+        {
+          role: 'assistant',
+          content: `You are a professional assistant for generating real estate titles.
+
+          Your task is:
+            1. Write a property title in Spanish.
+            2. Output only the title, formatted as plain text.
+
+          Guidelines for the title:
+            1. The title should be in Spanish.
+            2. The title should be 10 words or less.
+            3. The title should be a single sentence.
+            4. Include one of the most important house features in the title.
+            5. Include the location title.
+            6. Put in the title the word "rent" or "rent in" if it is a rent and "apartment" if the rent has an elevator.
+          
+          Important:
+          Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
+          `.trim()
+        },
+        {
+          role: 'user',
+          content: `
+          Property data (input):
+            ${JSON.stringify(form)}
+          `.trim()
+        }
+      ],
+      max_tokens: 900,
+      temperature: 0.5,
+      stream: true // Habilitar streaming
+    });
+
+    let fullContent = '';
+
+    // Procesar el stream
+    for await (const messageStreamEvent of stream) {
+      if (messageStreamEvent.type === 'content_block_delta') {
+        // Verificar si el delta tiene texto
+        if ('text' in messageStreamEvent.delta) {
+          const deltaText = messageStreamEvent.delta.text;
+          if (deltaText) {
+            fullContent += deltaText;
+
+            // Enviar cada chunk al frontend
+            sendSSE('chunk', {
+              content: deltaText,
+              fullContent: fullContent
+            });
+          }
+        }
+      }
+    }
+
+    // Enviar evento de finalización
+    sendSSE('complete', {
+      message: 'Título generado exitosamente',
+      finalContent: fullContent
+    });
+
+    // Cerrar la conexión
+    res.write('event: close\n');
+    res.end();
+
+  } catch (error) {
+    console.error('Error en streaming:', error);
+
+    // Enviar error via SSE
+    res.write('event: error\n');
+    res.write(`data: ${JSON.stringify({
+      error: 'Error al generar el título',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    })}\n\n`);
+    res.end();
+  }
+})
+
 export default aiRouter

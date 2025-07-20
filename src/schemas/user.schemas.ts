@@ -149,7 +149,15 @@ const userSchema = new mongoose.Schema(
         type: String
       },
       education: {
-        type: String
+        university: {
+          type: String
+        },
+        degree: {
+          type: String
+        },
+        end_date: {
+          type: Date
+        }
       },
       description: {
         type: String

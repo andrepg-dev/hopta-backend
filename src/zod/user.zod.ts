@@ -6,7 +6,6 @@ export const createUserSchema = z.object({
   contact: z
     .object({
       phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').max(40).optional(),
-      // is_phone_number_verified: z.boolean().default(false), // NOTE: Este campo se debe manejar desde el backend
       email_contact: z.string().email('Invalid email address.').max(120).optional()
     })
     .optional(),
@@ -43,13 +42,15 @@ export const createUserSchema = z.object({
     .object({
       identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.').optional(),
       birth_date: z.string().datetime('Invalid date format.').optional(),
-      // email_verified: z.boolean().default(false), // NOTE: Este campo se debe manejar desde el backend
-      // phone_number_verified: z.boolean().default(false) // NOTE: Este campo se debe manejar desde el backend
     })
     .optional(),
   about: z
     .object({
-      education: z.string().optional(),
+      education: z.object({
+        university: z.string().optional(),
+        degree: z.string().optional(),
+        end_date: z.string().datetime('Invalid date format.').optional(),
+      }).optional(),
       description: z.string().optional(),
     })
     .optional()
