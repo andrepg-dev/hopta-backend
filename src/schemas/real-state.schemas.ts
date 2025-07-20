@@ -62,7 +62,7 @@ const realStateSchema = new mongoose.Schema(
       },
       interior_extras: {
         type: [String],
-        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets']
+        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', 'garage', 'allowPets']
       },
       exterior_extras: {
         type: [String],
@@ -74,7 +74,7 @@ const realStateSchema = new mongoose.Schema(
       },
       security: {
         type: [String],
-        enum: ['gated_community']
+        enum: ['gated_community', '24_7_security']
       }
     },
     additional_cost: {

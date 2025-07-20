@@ -105,7 +105,7 @@ RealStateRouter.post(
     const { body } = req
     const { title, description, price, house_features, images, house_status, location, square_meters, currency, population, additional_cost, previous_payment_required } = body
 
-    const owner = req.user?.userId
+    const owner = req?.user?.userId
 
     const foundUser = await userModel.findById(owner)
     if (!foundUser) throw new AppError('User not found', 404)
@@ -184,6 +184,7 @@ RealStateRouter.delete(
 
 RealStateRouter.patch(
   '/:id',
+  authMiddleware,
   validateRequest(realStateUpdateSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
@@ -198,8 +199,8 @@ RealStateRouter.patch(
     if (!property) throw new AppError('Property not found', 404)
 
     // Optional: Check if user is the owner
-    const { user } = req as any
-    if (property.owner.toString() !== user.userId) {
+    const { userId } = req.user as UserJWT
+    if (property.owner.toString() !== userId) {
       throw new AppError('Not authorized to update this property', 403)
     }
 
