@@ -81,6 +81,12 @@ const realStateSchema = new mongoose.Schema(
       utilities_included: {
         type: [String],
         enum: ['water', 'electricity', 'internet']
+      },
+      water: {
+        type: Number
+      },
+      electricity: {
+        type: Number
       }
     },
     owner: {

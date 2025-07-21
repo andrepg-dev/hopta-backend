@@ -18,7 +18,9 @@ export const realStateSchema = z.object({
   currency: z.enum(['HNL', 'USD', 'EUR']),
   population: z.number().max(40000, 'Population must be at most 40,000.').optional(),
   additional_cost: z.object({ // owner will pay for these utilities
-    utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional()
+    utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional(),
+    water: z.number().positive('Water must be a positive number').optional(),
+    electricity: z.number().positive('Electricity must be a positive number').optional()
   }).optional(),
   house_features: z.object({
     rooms: z.number().positive('Rooms must be a positive number').max(20, 'Rooms must be at most 20.'),
@@ -53,7 +55,9 @@ export const realStateUpdateSchema = z
     currency: z.enum(['HNL', 'USD', 'EUR']).optional(),
     population: z.number().max(40000, 'Population must be at most 40,000.').optional(),
     additional_cost: z.object({ // owner will pay for these utilities
-      utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional()
+      utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional(),
+      water: z.number().positive('Water must be a positive number').optional(),
+      electricity: z.number().positive('Electricity must be a positive number').optional()
     }).optional(),
     house_features: z
       .object({
