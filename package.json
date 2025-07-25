@@ -17,6 +17,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.56.0",
     "@aws-sdk/client-s3": "^3.705.0",
     "@sendgrid/mail": "^8.1.4",
     "@types/twilio": "^3.19.2",
@@ -53,7 +54,6 @@
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "^1.0.51",
-    "@anthropic-ai/sdk": "^0.56.0",
     "@types/algoliasearch": "^3.34.11",
     "@types/axios": "^0.9.36",
     "@types/bcrypt": "^5.0.2",
