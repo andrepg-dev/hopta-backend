@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
 COPY package*.json ./ 
@@ -10,12 +10,12 @@ COPY . .
 RUN npm run build
 
 # production
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /app
 
 # Copiar el package lock para instalar dependencias
-COPY package*.json /app/
+COPY package*.json .
 RUN npm install --production
 
 # Copiamos el dist del run anterior
