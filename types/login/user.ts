@@ -57,7 +57,7 @@ interface About {
 
 export interface UserI {
   name: string
-  last_name: string
+  last_name?: string
   contact?: Contact
   email: string
   auth?: Auth
