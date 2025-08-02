@@ -24,6 +24,7 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
+import contactRouter from './routes/contact-router/route'
 
 // Database connection
 connectToDatabase()
@@ -60,7 +61,9 @@ app.use(helmet())
 
 const port = CONNECTIONS.PORT
 
-app.get('/', (_: Request, res: Response) => { res.status(200).send('Welcome to Hopta') })
+app.get('/', (_: Request, res: Response) => {
+  res.status(200).send('Welcome to Hopta')
+})
 app.use('/health', healthRouter)
 app.use('/upload-image', s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
@@ -73,6 +76,7 @@ app.use('/webhooks/stripe/payments', stripeWebhookRouter)
 app.use('/reports', realStateReportRouter)
 app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
+app.use('/contact', contactRouter)
 app.use('/ai', aiRouter)
 
 app.use(errorHandler)

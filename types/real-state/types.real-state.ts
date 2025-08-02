@@ -4,6 +4,7 @@ export type InteriorExtrasType = 'water_tank' | 'water_cistern' | 'closets' | 'f
 export type ExteriorExtrasType = 'balcony' | 'patio' | 'terrace' | 'garden' | 'swimming_pool'
 export type CommunityExtrasType = 'gym' | 'parks' | 'schools' | 'shopping_malls' | 'supermarkets' | 'elevator'
 export type SecurityType = 'gated_community' | '24_7_security'
+export type UtilitiesType = 'water' | 'electricity' | 'internet'
 
 export interface InteriorExtras {
   [key: string]: InteriorExtrasType[]
@@ -19,6 +20,10 @@ export interface CommunityExtras {
 
 export interface Security {
   [key: string]: SecurityType[]
+}
+
+export interface Utilities {
+  [key: string]: UtilitiesType[]
 }
 
 export interface HouseFeatures {
@@ -68,7 +73,9 @@ export interface RatingSummary {
 }
 
 export interface AdditionalCost {
-  utilities_included: 'water' | 'electricity' | 'internet'
+  utilities_included?: UtilitiesType[]
+  water?: number
+  electricity?: number
 }
 
 export interface RealStateI {

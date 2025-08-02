@@ -2,7 +2,7 @@ import z from 'zod'
 
 export const createUserSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.').max(120),
-  last_name: z.string().min(3, 'Last name must be at least 3 characters long.').max(120),
+  last_name: z.string().min(3, 'Last name must be at least 3 characters long.').max(120).optional(),
   contact: z
     .object({
       phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').max(40).optional(),

@@ -49,15 +49,11 @@ interface About {
     end_date?: string
   }
   description?: string
-  certifications?: string[]
-  languages?: string[]
-  favorite_song?: string
-  where_im_living?: string
 }
 
 export interface UserI {
   name: string
-  last_name: string
+  last_name?: string
   contact?: Contact
   email: string
   auth?: Auth
