@@ -49,10 +49,6 @@ interface About {
     end_date?: string
   }
   description?: string
-  certifications?: string[]
-  languages?: string[]
-  favorite_song?: string
-  where_im_living?: string
 }
 
 export interface UserI {

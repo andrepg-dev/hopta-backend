@@ -45,9 +45,10 @@ RealStateRouter.get(
   })
 )
 
-RealStateRouter.get('/my-properties',
+RealStateRouter.get(
+  '/my-properties',
   authMiddleware,
-  asyncHandler(async (req: Request<{}, {}, {}, { page: string, limit: string, sortBy: string, order: 'asc' | 'desc' }>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, {}, { page: string; limit: string; sortBy: string; order: 'asc' | 'desc' }>, res: Response) => {
     const user = req.user
 
     if (!user) throw new AppError('User not found', 404)
@@ -73,7 +74,7 @@ RealStateRouter.get(
     const { id } = req.params
     if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
 
-    // Actualizar las visitas de una propiedad 
+    // Actualizar las visitas de una propiedad
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
     let decoded: UserJWT | null = null
 
@@ -87,7 +88,7 @@ RealStateRouter.get(
 
     await RealStateModel.updateOne({ _id: id }, { $inc: { 'stats.total_visits': 1 } })
 
-    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone')
+    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
     if (!property) throw new AppError('Property not found', 404)
     responseHandler({
       res,
@@ -103,7 +104,20 @@ RealStateRouter.post(
   validateRequest(realStateSchema),
   asyncHandler(async (req: Request<{}, {}, RealStateI, {}>, res: Response) => {
     const { body } = req
-    const { title, description, price, house_features, images, house_status, location, square_meters, currency, population, additional_cost, previous_payment_required } = body
+    const {
+      title,
+      description,
+      price,
+      house_features,
+      images,
+      house_status,
+      location,
+      square_meters,
+      currency,
+      population,
+      additional_cost,
+      previous_payment_required
+    } = body
 
     const owner = req?.user?.userId
 
@@ -228,7 +242,6 @@ RealStateRouter.patch(
       code: 200,
       message: 'Property updated successfully'
     })
-
   })
 )
 
