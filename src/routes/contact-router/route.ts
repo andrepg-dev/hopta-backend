@@ -34,7 +34,7 @@ contactRouter.post(
       },
       provider: 'sendgrid',
       subject: `El usuario ${name} te ha contactado`,
-      html: `El usuario ${name} te ha contactado, ${phone}, ${reason}, ${comment}, ${email} y quiere saber informacion de la propiedad ${propertyData}`
+      html: `El usuario ${name} te ha contactado, ${phone}, ${reason}, ${comment}, ${email} y quiere saber informacion de la propiedad ${propertyData.id}`
     })
 
     responseHandler({
