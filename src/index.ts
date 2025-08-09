@@ -14,6 +14,7 @@ import aiRouter from './routes/ai/route'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
 import s3UploadImageRouter from './routes/aws/s3/s3.route'
+import contactRouter from './routes/contact-router/route'
 import facebookRouter from './routes/facebook/facebook.route'
 import healthRouter from './routes/healt/route'
 import realStateReportRouter from './routes/real-state-report/route'
@@ -24,7 +25,7 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
-import contactRouter from './routes/contact-router/route'
+import { EmailService } from './services/email/email.service'
 
 // Database connection
 connectToDatabase()
@@ -78,6 +79,22 @@ app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
 app.use('/contact', contactRouter)
 app.use('/ai', aiRouter)
+
+app.get('/queloque', (req: Request, res: Response) => {
+  const emailService = new EmailService()
+  emailService.sendEmail({
+    to: {
+      email: 'asponceg@gmail.com',
+      name: 'André Ponce'
+    },
+    provider: 'amazon-ses',
+    subject:
+      'estoy enviando este correo desde queloque usando amazon ses service claro que si soy el puto amo aunque da igual alv me siento mal la puta madre aunque eso no importa',
+    html: '<h1>Hola, este es un correo de prueba</h1>'
+  })
+
+  res.status(200).send('Queloque is working!' + JSON.stringify(req.query))
+})
 
 app.use(errorHandler)
 

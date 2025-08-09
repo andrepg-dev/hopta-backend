@@ -1,11 +1,15 @@
 import { envs } from '@/constants/env.constants'
 import { AppError } from '@/src/handlers/error-handler'
 import sendgrid, { MailDataRequired } from '@sendgrid/mail'
+import AWS from 'aws-sdk'
+import { SendEmailRequest } from 'aws-sdk/clients/ses'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
 import Logs from '../logs/save-logs.service'
 
-interface SendMailOptions extends nodemailer.SendMailOptions { }
+const ses = new AWS.SES({ region: process.env.AWS_REGION })
+
+interface SendMailOptions extends nodemailer.SendMailOptions {}
 
 const templates = {
   verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd',
@@ -57,7 +61,6 @@ class EmailServiceSendGrid {
       const response = await sendgrid.send(message)
       return response
     } catch (error: any) {
-
       new Logs({
         method: 'saveErrorLogs',
         message: error
@@ -104,6 +107,38 @@ class EmailServiceNodeMailer {
   }
 }
 
+class EmailServiceAmazonSESService {
+  async sendEmail({ to, subject, html }) {
+    const params: SendEmailRequest = {
+      Destination: {
+        ToAddresses: [to.email]
+      },
+      Message: {
+        Body: {
+          Html: {
+            Charset: 'UTF-8',
+            Data: html
+          }
+        },
+        Subject: {
+          Charset: 'UTF-8',
+          Data: subject
+        }
+      },
+      Source: process.env.AWS_FROM_EMAIL ?? ''
+    }
+
+    try {
+      const result = await ses.sendEmail(params).promise()
+      console.log(result)
+      return result
+    } catch (error) {
+      console.error('Error sending email with Amazon SES:', error)
+      throw new AppError('Failed to send email with Amazon SES', 500)
+    }
+  }
+}
+
 /**
  * Email service options
  */
@@ -113,7 +148,7 @@ export interface EmailServiceOptions {
   html?: string
   dynamicTemplateData?: Record<string, string>
   template?: keyof typeof templates
-  provider?: 'sendgrid' | 'nodemailer'
+  provider: 'sendgrid' | 'nodemailer' | 'amazon-ses'
 }
 
 /**
@@ -122,28 +157,28 @@ export interface EmailServiceOptions {
 export class EmailService {
   private sendGridService: EmailServiceSendGrid
   private nodeMailerService: EmailServiceNodeMailer
+  private amazonSESService: EmailServiceAmazonSESService
 
   constructor() {
     this.sendGridService = new EmailServiceSendGrid()
     this.nodeMailerService = new EmailServiceNodeMailer()
+    this.amazonSESService = new EmailServiceAmazonSESService()
   }
 
   async sendEmail(options: EmailServiceOptions) {
+    if (options.provider == 'amazon-ses') {
+      this.amazonSESService.sendEmail({
+        to: options.to,
+        subject: options.subject ?? '',
+        html: options.html ?? ''
+      })
+    }
+
     if (options.provider == 'sendgrid') {
       if (options.template) {
-        return this.sendGridService.sendEmail(
-          options.to,
-          options.subject ?? '',
-          options.html ?? '',
-          options.dynamicTemplateData ?? {},
-          options.template
-        )
+        return this.sendGridService.sendEmail(options.to, options.subject ?? '', options.html ?? '', options.dynamicTemplateData ?? {}, options.template)
       } else {
-        return this.sendGridService.sendEmail(
-          options.to,
-          options.subject ?? '',
-          options.html ?? '',
-        )
+        return this.sendGridService.sendEmail(options.to, options.subject ?? '', options.html ?? '')
       }
     }
 

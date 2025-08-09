@@ -20,7 +20,7 @@ class TwilioSendSMSCodeService {
     const formattedPhone = this.formatPhone(phone)
 
     const code = RandomIntUtils.randomInt()
-    const message = `Your verification code is: ${code}. Don't share this code with anyone.`
+    const message = `Hopta: Tú código de verificación es: ${code}. No lo compartas con nadie.`
 
     await verificationSMSCodeModel.create({
       phone,

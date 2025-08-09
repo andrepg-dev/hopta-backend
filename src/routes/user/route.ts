@@ -21,7 +21,6 @@ import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.
 import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
 import { z } from 'zod'
-import mongoose from 'mongoose'
 
 const userRouter = Router()
 
@@ -47,7 +46,6 @@ userRouter.get(
     })
   })
 )
-
 
 userRouter.post(
   '/register',
@@ -774,8 +772,8 @@ userRouter.post(
           is_phone_number_verified: true
         }
       })
-      .catch(() => {
-        throw new AppError('Error creating user', 500)
+      .catch((err) => {
+        throw new AppError('Error creating user: ' + err, 500)
       })
 
     await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(() => {
@@ -795,15 +793,15 @@ userRouter.post(
 
     const { auth: _, ...userWithoutAuth } = user.toObject()
 
-    const smsTwilioService = new TwilioSendSMS()
-    await smsTwilioService
-      .sendSMS({
-        phone: decoded.phone,
-        message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
-      })
-      .catch((err) => {
-        new Logs({ message: err, method: 'saveErrorLogs' })
-      })
+    // const smsTwilioService = new TwilioSendSMS()
+    // await smsTwilioService
+    //   .sendSMS({
+    //     phone: decoded.phone,
+    //     message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
+    //   })
+    //   .catch((err) => {
+    //     new Logs({ message: err, method: 'saveErrorLogs' })
+    //   })
 
     responseHandler({
       res,
