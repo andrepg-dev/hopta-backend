@@ -13,7 +13,7 @@ import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import { Cookies } from '@/src/services/cookies/cookies.service'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
-import { TwilioSendSMS } from '@/src/services/twilio/twilio-sms.service'
+import { SMSSender } from '@/src/services/messages-sender/sms.service'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
@@ -412,7 +412,7 @@ userRouter.post(
     }
 
     // Send the SMS
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
       new Logs({
         method: 'saveErrorLogs',
@@ -460,7 +460,7 @@ userRouter.post(
     }
 
     // Check if the code is valid in the twilio collection database
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
     if (!isUserPhoneNumber) {

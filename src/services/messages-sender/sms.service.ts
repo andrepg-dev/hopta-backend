@@ -1,6 +1,7 @@
 import { AppError } from '@/src/handlers/error-handler'
 import { verificationSMSCodeModel } from '@/src/schemas/verify-sms-code.schemas'
 import RandomIntUtils from '@/src/utils/random-int.utils'
+import { formatPhone } from '@/src/utils/services/format-phone'
 import twilio, { Twilio } from 'twilio'
 
 class TwilioSendSMSCodeService {
@@ -12,12 +13,8 @@ class TwilioSendSMSCodeService {
     })
   }
 
-  protected formatPhone(phone: string) {
-    return phone.startsWith('+') ? phone : `+${phone}`.replaceAll(' ', '')
-  }
-
   async sendSMSCode({ phone }: { phone: string }) {
-    const formattedPhone = this.formatPhone(phone)
+    const formattedPhone = formatPhone(phone)
 
     const code = RandomIntUtils.randomInt()
     const message = `Hopta: Tú código de verificación es: ${code}. No lo compartas con nadie.`
@@ -43,7 +40,7 @@ class TwilioSendSMSCodeService {
    * @returns boolean
    */
   async verifySMSCode({ phone, code }: { phone: string; code: string }) {
-    const formattedPhone = this.formatPhone(phone)
+    const formattedPhone = formatPhone(phone)
 
     const verification = await verificationSMSCodeModel.findOne({ phone: formattedPhone, code })
 
@@ -62,13 +59,13 @@ class TwilioSendSMSCodeService {
   }
 }
 
-export class TwilioSendSMS extends TwilioSendSMSCodeService {
+export class SMSSender extends TwilioSendSMSCodeService {
   constructor() {
     super()
   }
 
   async sendSMS({ phone, message }: { phone: string; message: string }) {
-    const formattedPhone = this.formatPhone(phone)
+    const formattedPhone = formatPhone(phone)
 
     await this.client.messages.create({
       body: message,

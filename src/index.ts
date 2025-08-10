@@ -9,7 +9,8 @@ import express, { Request, Response } from 'express'
 import session from 'express-session'
 import helmet from 'helmet'
 import passport from 'passport'
-import { errorHandler } from './handlers/error-handler'
+import { AppError, errorHandler } from './handlers/error-handler'
+import { responseHandler } from './handlers/responseHandler'
 import aiRouter from './routes/ai/route'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
@@ -26,6 +27,7 @@ import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
 import { EmailService } from './services/email/email.service'
+import { WhatsAppMSGSender } from './services/messages-sender/send-whatsapp-msg.service'
 
 // Database connection
 connectToDatabase()
@@ -62,9 +64,29 @@ app.use(helmet())
 
 const port = CONNECTIONS.PORT
 
-app.get('/', (_: Request, res: Response) => {
-  res.status(200).send('Welcome to Hopta')
+app.get('/', async (_: Request, res: Response) => {
+  // res.status(200).send('Welcome to Hopta')
+
+  console.log('Entroooooo')
+
+  const whatsappSender = new WhatsAppMSGSender('+50488011529')
+
+  try {
+    const response = await whatsappSender.sendWhatsAppMSG({
+      message: 'Hola, este es un mensaje de prueba'
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Mensaje enviado correctamente',
+      data: response
+    })
+  } catch (error) {
+    throw new AppError('Error al enviar el mensaje: ' + error, 500)
+  }
 })
+
 app.use('/health', healthRouter)
 app.use('/upload-image', s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)
