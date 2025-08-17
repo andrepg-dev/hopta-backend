@@ -123,7 +123,7 @@ userRouter.post(
         name: `${name} ${last_name}`
       },
       provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${name}`,
         code: verificationCode,
@@ -552,7 +552,7 @@ userRouter.post(
         name: `${user.name} ${user.last_name}`
       },
       provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,
@@ -702,7 +702,7 @@ userRouter.post(
         name: userData.userData.name
       },
       provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,

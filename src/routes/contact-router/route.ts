@@ -41,6 +41,7 @@ contactRouter.post(
       decoded = TokenManager.verifyToken(accessToken) as UserJWT
     }
 
+
     // Send email
     if (ownerEmail) {
       try {
@@ -63,6 +64,8 @@ contactRouter.post(
             propertyId: property_id
           }
         })
+
+        console.log('Email sent successfully')
       } catch (error) {
         throw new AppError('Error sending email: ' + error, 500)
       }
@@ -122,7 +125,7 @@ contactRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Contact saved succesfully'
+      message: 'Contact succesfully sent'
     })
   })
 )

@@ -9,14 +9,18 @@ import Logs from '../logs/save-logs.service'
 
 const ses = new AWS.SES({ region: process.env.AWS_REGION })
 
-interface SendMailOptions extends nodemailer.SendMailOptions {}
+interface SendMailOptions extends nodemailer.SendMailOptions { }
 
 const templates = {
   verification_code: 'd-b2f3937c3b084c89bab5b8129243d5bd',
-  birthday: 'TODO: Add birthday template',
-  verification_code_not_link: 'd-4c5c66eae47f47919e5d58f1b302539d',
   forgot_password: 'd-4a0965ccf5e5485ba6c218202906af7b',
   contact: 'd-a0f7418714bb4f9ebac4890f892d029f'
+}
+
+const templatesAmazonSES = {
+  contact: 'hopta-contact',
+  forgot_password: 'hopta-forgot-password',
+  verification_code: 'hopta-code-verification',
 }
 
 /**
@@ -107,8 +111,39 @@ class EmailServiceNodeMailer {
   }
 }
 
+interface SendEmailAmazonSESOptions {
+  to: { email: string; name?: string }
+  subject: string
+  html: string
+  template?: keyof typeof templatesAmazonSES
+  dynamicTemplateData?: Record<string, string>
+}
+
 class EmailServiceAmazonSESService {
-  async sendEmail({ to, subject, html }) {
+  async sendEmail({ to, subject, html, template, dynamicTemplateData }: SendEmailAmazonSESOptions) {
+    // Sending message with template
+    if (template) {
+      const params: AWS.SES.SendTemplatedEmailRequest = {
+        Source: process.env.AWS_FROM_EMAIL ?? '',
+        Destination: {
+          ToAddresses: [to.email]
+        },
+        // using amazon ses templates
+        Template: templatesAmazonSES[template],
+        TemplateData: JSON.stringify(dynamicTemplateData)
+      }
+
+      try {
+        const result = await ses.sendTemplatedEmail(params).promise()
+        console.log(result)
+        return result
+      } catch (error) {
+        console.error('Error sending email with Amazon SES:', error)
+        throw new AppError('Failed to send email with Amazon SES', 500)
+      }
+    }
+
+    // Sending message without template
     const params: SendEmailRequest = {
       Destination: {
         ToAddresses: [to.email]
@@ -127,6 +162,7 @@ class EmailServiceAmazonSESService {
       },
       Source: process.env.AWS_FROM_EMAIL ?? ''
     }
+
 
     try {
       const result = await ses.sendEmail(params).promise()
@@ -147,7 +183,7 @@ export interface EmailServiceOptions {
   subject?: string
   html?: string
   dynamicTemplateData?: Record<string, string>
-  template?: keyof typeof templates
+  template?: keyof typeof templates | keyof typeof templatesAmazonSES
   provider: 'sendgrid' | 'nodemailer' | 'amazon-ses'
 }
 
@@ -167,10 +203,20 @@ export class EmailService {
 
   async sendEmail(options: EmailServiceOptions) {
     if (options.provider == 'amazon-ses') {
-      this.amazonSESService.sendEmail({
+      if (options.template) {
+        return this.amazonSESService.sendEmail({
+          to: options.to,
+          subject: options.subject ?? '',
+          html: options.html ?? '',
+          template: options.template,
+          dynamicTemplateData: options.dynamicTemplateData
+        })
+      }
+
+      return this.amazonSESService.sendEmail({
         to: options.to,
         subject: options.subject ?? '',
-        html: options.html ?? ''
+        html: options.html ?? '',
       })
     }
 

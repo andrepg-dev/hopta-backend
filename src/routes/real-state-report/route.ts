@@ -38,7 +38,7 @@ reportsRouter.post('/real-state',
       const user = await userModel.findById(decoded.userId)
       if (user?.email) {
         await emailService.sendEmail({
-          provider: 'sendgrid',
+          provider: 'amazon-ses',
           to: {
             email: user.email,
             name: user.name
