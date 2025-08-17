@@ -1,3 +1,4 @@
+import { AppError } from '@/src/handlers/error-handler'
 import { NextFunction, Request, Response } from 'express'
 import z from 'zod'
 
@@ -8,11 +9,15 @@ export const validateRequest = (schema: z.ZodSchema) => (req: Request, res: Resp
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map((e) => ({
-        path: e.path.join('.'),
-        message: e.message
+        field: e.path.join('.'),
+        message: e.message,
+        code: e.code
       }))
-      res.status(400).json({ success: false, errors: formattedErrors })
-      return
+
+      // Crear un mensaje de error más legible
+      const errorMessages = formattedErrors.map(err => `${err.field}: ${err.message}`).join(', ')
+
+      throw new AppError(`Error de validación: ${errorMessages}`, 400)
     }
 
     next(error)

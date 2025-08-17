@@ -8,7 +8,6 @@ import { contactModel } from '@/src/schemas/contact.schema'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { EmailService } from '@/src/services/email/email.service'
-import { WhatsAppMSGSender } from '@/src/services/messages-sender/send-whatsapp-msg.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import { contactSchema } from '@/src/zod/contact-owner.zod'
 import { Request, Response, Router } from 'express'
@@ -70,19 +69,36 @@ contactRouter.post(
     }
 
     if (ownerPhoneNumber) {
-      try {
-        const whatsappSender = new WhatsAppMSGSender(ownerPhoneNumber)
+      const emailService = new EmailService()
 
-        let message = `Hola ${userOwnerData?.name}!, el usuario ${name} te ha contactado, puedes contacta con el por WhatsApp! ${phone} o por correo electrónico! ${email}`
-        if (phone) message = `Hola ${userOwnerData?.name}!, el usuario ${name} te ha contactado, puedes contacta con el por WhatsApp! ${phone}`
-        if (email) message = `Hola ${userOwnerData?.name}!, el usuario ${name} te ha contactado, puedes contacta con el por correo electrónico! ${email}`
+      emailService.sendEmail({
+        to: {
+          email: 'asponceg@gmail.com',
+          name: 'André Ponce'
+        },
+        provider: 'amazon-ses',
+        subject: 'El usuario ' + name + ' ha contactado un propietario!!!!!',
+        html: `
+        Fecha: ${new Date().toLocaleDateString()} <br>
+        Hora: ${new Date().toLocaleTimeString()} <br>
 
-        await whatsappSender.sendWhatsAppMSG({
-          message
-        })
-      } catch (error) {
-        throw new AppError('Error sending whatsapp message: ' + error, 500)
-      }
+        Contacta por whatsapp al propietario: ${ownerPhoneNumber} <br>
+
+        Datos del dueño del alquiler: <br>
+        Nombre: ${userOwnerData?.name} <br>
+        Email: ${ownerEmail} <br>
+        Teléfono: ${ownerPhoneNumber} <br> 
+        <br>
+
+        Cliente: <br>
+        Nombre: ${name} <br>
+        Teléfono: ${phone || 'No proporcionado'} <br>
+        Razón: ${reason || 'No proporcionado'} <br>
+        Comentario: ${comment || 'No proporcionado'} <br>
+        Email: ${email || 'No proporcionado'} <br>
+        Propiedad: ${propertyData?.title || 'No proporcionado'} <br>
+        `
+      })
     }
 
     // Guardar el contacto en la base de datos
@@ -96,7 +112,8 @@ contactRouter.post(
           email,
           id: decoded?.userId ? decoded.userId : null
         },
-        reason
+        reason,
+        createdAt: Date.now()
       })
     } catch (error) {
       throw new AppError('Error saving contact: ' + error, 500)

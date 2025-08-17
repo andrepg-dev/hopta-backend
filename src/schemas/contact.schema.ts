@@ -1,3 +1,4 @@
+import { create } from 'axios'
 import mongoose from 'mongoose'
 
 // i need to know who did send the message, the name, email, phone number of the client
@@ -32,6 +33,10 @@ const contactSchema = new mongoose.Schema({
   },
   reason: {
     type: String
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 })
 

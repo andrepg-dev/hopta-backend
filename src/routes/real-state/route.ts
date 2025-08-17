@@ -121,14 +121,35 @@ RealStateRouter.post(
 
     const owner = req?.user?.userId
 
+    if (!owner) {
+      throw new AppError('Usuario no autenticado', 401)
+    }
+
     const foundUser = await userModel.findById(owner)
-    if (!foundUser) throw new AppError('User not found', 404)
+    if (!foundUser) {
+      throw new AppError('Usuario no encontrado', 404)
+    }
 
     try {
+      // Validar que las imágenes sean URLs válidas
+      if (!images || images.length < 3) {
+        throw new AppError('Debes subir al menos 3 imágenes', 400)
+      }
+
+      // Validar que las coordenadas sean válidas
+      if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
+        throw new AppError('Las coordenadas de ubicación son requeridas', 400)
+      }
+
+      // Validar que el precio sea positivo
+      if (!price || price <= 0) {
+        throw new AppError('El precio debe ser mayor a 0', 400)
+      }
+
       const property = await RealStateModel.create({
         price,
         location,
-        house_status,
+        house_status: house_status || { is_available: true, is_sold: false },
         house_features,
         population,
         currency,
@@ -142,19 +163,41 @@ RealStateRouter.post(
         visitors: [],
         saved_by: [],
         ratings: [],
-        additional_cost,
-        previous_payment_required
+        additional_cost: additional_cost || { utilities_included: [], water: null, electricity: null },
+        previous_payment_required: previous_payment_required || false
       })
 
+      // Actualizar el usuario con la nueva propiedad
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })
+
+      // Log de la creación exitosa
+      new Logs({
+        method: 'saveLogs',
+        message: `Property created successfully: ${title} by user ${owner}`
+      })
 
       responseHandler({
         res,
         code: 201,
+        message: 'Propiedad creada exitosamente',
         data: property
       })
     } catch (error: any) {
-      throw new AppError(error.message || 'Server error creating property', 500)
+      console.error('Error creating property:', error)
+      
+      // Si es un error de validación de Mongoose
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values(error.errors).map((err: any) => err.message)
+        throw new AppError(`Error de validación: ${validationErrors.join(', ')}`, 400)
+      }
+      
+      // Si es un error de duplicación
+      if (error.code === 11000) {
+        throw new AppError('Ya existe una propiedad con estos datos', 409)
+      }
+      
+      // Error general
+      throw new AppError(error.message || 'Error interno del servidor al crear la propiedad', 500)
     }
   })
 )
