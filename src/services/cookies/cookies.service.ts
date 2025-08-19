@@ -11,6 +11,7 @@ export class Cookies {
   }
 
   saveCookie(name: string, value: string, options?: CookieOptions) {
+    const isProduction = process.env.NODE_ENV === 'production'
 
     let body = {
       name,
@@ -18,8 +19,9 @@ export class Cookies {
       options: options ? options
         : {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict' as 'strict' | 'lax' | 'none'
+          secure: isProduction,
+          sameSite: 'strict' as 'strict' | 'lax' | 'none',
+          path: '/'
         }
     }
 
@@ -44,6 +46,15 @@ export class Cookies {
 
   deleteCookie(name: string) {
     this.res.clearCookie(name)
+
+    const isProd = process.env.NODE_ENV === 'production';
+
+    this.res.clearCookie(name, {
+      path: '/',
+      // domain: isProd ? '.hopta.hn' : undefined,
+      secure: isProd,
+      sameSite: isProd ? 'lax' : 'lax',
+    });
   }
 
   deleteAllCookies() {
