@@ -25,13 +25,16 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
-import { EmailService } from './services/email/email.service'
 
 // Database connection
 connectToDatabase()
 
 // Express configuration
 export const app = express()
+
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 2) // cloudflare + elb
+}
 
 // Middlewares
 app.use(RATE_LIMIT)
@@ -80,22 +83,6 @@ app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
 app.use('/contact', contactRouter)
 app.use('/ai', aiRouter)
-
-app.get('/queloque', (req: Request, res: Response) => {
-  const emailService = new EmailService()
-  emailService.sendEmail({
-    to: {
-      email: 'asponceg@gmail.com',
-      name: 'André Ponce'
-    },
-    provider: 'amazon-ses',
-    subject:
-      'estoy enviando este correo desde queloque usando amazon ses service claro que si soy el puto amo aunque da igual alv me siento mal la puta madre aunque eso no importa',
-    html: '<h1>Hola, este es un correo de prueba</h1>'
-  })
-
-  res.status(200).send('Queloque is working!' + JSON.stringify(req.query))
-})
 
 app.use(errorHandler)
 

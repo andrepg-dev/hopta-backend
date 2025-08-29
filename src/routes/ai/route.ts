@@ -56,6 +56,8 @@ aiRouter.post('/generate-description', async (req, res) => {
             8. Make it professional and not too informal.
             9. Use a professional and neutral tone (not too informal, not overly promotional).
             10.Avoid exaggerations or filler language.
+            11. The title should start with the word "alquiler" and the location.
+            12. The location is from Honduras
 
           You should know:
             1. The price of the light and water expenses is one month of the rent approximately.
@@ -163,6 +165,7 @@ aiRouter.post('/generate-title/stream', async (req, res) => {
             4. Include one of the most important house features in the title.
             5. Include the location title.
             6. Put in the title the word "rent" or "rent in" if it is a rent and "apartment" if the rent has an elevator.
+            7. The location is from Honduras
           
           Important:
           Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
@@ -248,6 +251,7 @@ aiRouter.post('/generate-title', async (req, res) => {
             4. Include one of the most important house features in the title.
             5. Include the location title.
             6. Put in the title the word "rent" or "rent in" if it is a rent and "apartment" if the rent has an elevator.
+            7. The location is from Honduras
           
           Important:
           Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
