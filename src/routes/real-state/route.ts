@@ -45,6 +45,68 @@ RealStateRouter.get(
   })
 )
 
+RealStateRouter.get('/autocomplete', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const results = await RealStateModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          autocomplete: {
+            query: query,
+            path: "title",
+            fuzzy: { maxEdits: 1 }
+          }
+        }
+      },
+      { $limit: 5 }
+    ]);
+
+    responseHandler({
+      res,
+      code: 200,
+      data: results
+    })
+  } catch (error) {
+    throw new AppError('Error autocompleting properties error: ' + error, 500)
+  }
+}))
+
+
+RealStateRouter.get('/search', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const results = await RealStateModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          text: {
+            query: query,
+            path: ["title", "location.title"],
+            fuzzy: {
+              maxEdits: 2,
+              prefixLength: 2
+            }
+          }
+        }
+      },
+      { $limit: 20 }
+    ])
+
+    responseHandler({
+      res,
+      code: 200,
+      data: results
+    })
+  } catch (error) {
+    throw new AppError('Error searching properties error: ' + error, 500)
+  }
+}))
+
 RealStateRouter.get(
   '/my-properties',
   authMiddleware,
@@ -184,18 +246,18 @@ RealStateRouter.post(
       })
     } catch (error: any) {
       console.error('Error creating property:', error)
-      
+
       // Si es un error de validación de Mongoose
       if (error.name === 'ValidationError') {
         const validationErrors = Object.values(error.errors).map((err: any) => err.message)
         throw new AppError(`Error de validación: ${validationErrors.join(', ')}`, 400)
       }
-      
+
       // Si es un error de duplicación
       if (error.code === 11000) {
         throw new AppError('Ya existe una propiedad con estos datos', 409)
       }
-      
+
       // Error general
       throw new AppError(error.message || 'Error interno del servidor al crear la propiedad', 500)
     }
