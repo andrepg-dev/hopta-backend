@@ -4,6 +4,7 @@ import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import { geoModel } from '@/src/schemas/geo.schema'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import Logs from '@/src/services/logs/save-logs.service'
@@ -74,6 +75,36 @@ RealStateRouter.get('/autocomplete', asyncHandler(async (req: Request, res: Resp
   }
 }))
 
+RealStateRouter.get('/autocomplete-by-location', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const result = await geoModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          autocomplete: {
+            query,
+            path: "properties.name",
+            fuzzy: {
+              maxEdits: 1
+            }
+          }
+        }
+      },
+      { $limit: 10 }
+    ])
+
+    responseHandler({
+      res,
+      code: 200,
+      data: result
+    })
+  } catch (error) {
+    throw new AppError('Error autocompleting properties error: ' + error, 500)
+  }
+}))
 
 RealStateRouter.get('/search', asyncHandler(async (req: Request, res: Response) => {
   const { query } = req.query
