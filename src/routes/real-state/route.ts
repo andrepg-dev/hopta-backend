@@ -93,7 +93,7 @@ RealStateRouter.get('/autocomplete-by-location', asyncHandler(async (req: Reques
           }
         }
       },
-      { $limit: 10 }
+      { $limit: 5 }
     ])
 
     responseHandler({
