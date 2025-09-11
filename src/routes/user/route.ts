@@ -122,7 +122,7 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
-      provider: 'sendgrid',
+      provider: 'amazon-ses',
       template: 'verification_code',
       dynamicTemplateData: {
         name: `${name}`,
@@ -599,7 +599,7 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'sendgrid',
+      provider: 'amazon-ses',
       template: 'forgot_password',
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -657,7 +657,7 @@ userRouter.post(
       },
       subject: 'Password updated successfully',
       html: `Your password has been updated successfully. You can now login with your new password.`,
-      provider: 'sendgrid'
+      provider: 'amazon-ses'
     })
 
     responseHandler({

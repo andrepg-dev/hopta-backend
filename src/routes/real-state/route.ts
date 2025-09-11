@@ -1,5 +1,6 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
@@ -411,5 +412,53 @@ RealStateRouter.post(
     })
   })
 )
+
+
+// TODO:
+/*
+Endpoint a crear 
+
+/real-state
+
+Eliminar propiedad
+Modificar propiedad
+Crear propiedad y poder modificarle cualquier campo
+Mostrar todas las propiedades Limite de 10 propiedades
+Buscador de todas las propiedades
+*/
+
+// Delete real state
+RealStateRouter.delete('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+
+
+    
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Your admin, role deleted property successfully'
+  })
+}))
+
+// Update real state
+RealStateRouter.patch('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  responseHandler({
+    res,
+    code: 200,
+    data: [],
+    message: 'Your admin, role updated property successfully'
+  })
+}))
+
+// Create real state
+RealStateRouter.post('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  responseHandler({
+    res,
+    code: 200,
+    data: [],
+    message: 'Your admin, role created property successfully'
+  })
+}))
+
+
 
 export default RealStateRouter
