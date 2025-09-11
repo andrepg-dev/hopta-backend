@@ -458,6 +458,7 @@ RealStateRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async 
 
 // Create real state
 RealStateRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  // To assign the owner, I need the id of the user given in the body.
   const property = await RealStateModel.create(req.body)
   if (!property) throw new AppError('Property not created', 404)
 

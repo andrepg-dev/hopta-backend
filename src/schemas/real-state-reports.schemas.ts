@@ -19,12 +19,16 @@ const realStateReportSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  reservationsUrl: {
+  url: {
     type: String,
     required: true
   },
   message: {
     type: String,
+  },
+  resolved: {
+    type: Boolean,
+    default: false
   }
 })
 

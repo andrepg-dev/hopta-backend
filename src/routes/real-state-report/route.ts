@@ -1,8 +1,9 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import { UserJWT } from '@/src/middlewares/authMiddleware'
+import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import RealStateReport from '@/src/schemas/real-state-reports.schemas'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
@@ -17,7 +18,7 @@ const reportsRouter = Router()
 reportsRouter.post('/real-state',
   validateRequest(reportPropertySchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { id, message, reason, reservationsUrl } = req.body
+    const { id, message, reason, url } = req.body
 
     const realState = await RealStateModel.findById(id)
 
@@ -47,7 +48,7 @@ reportsRouter.post('/real-state',
           html: `
             <h1>Hola ${user.name},</h1>
             <p>Hemos recibido un reporte de propiedad por el motivo de ${reason}.</p>
-            <p>De la siguiente URL: ${reservationsUrl}</p>
+            <p>De la siguiente URL: ${url}</p>
             <p>Gracias por tu ayuda. Revisaremos la propiedad lo antes posible y la eliminaremos si es necesario.</p>
           `
         })
@@ -64,7 +65,7 @@ reportsRouter.post('/real-state',
       html: `
         <p>Hola mi poderisisimo fundador, </p>
         <p>Un usuario ha reportado la propiedad <strong>${realState.title}</strong> por el motivo de <strong>${reason}</strong> dijo: <pre>${message}</pre></p>
-        <p>De la siguiente URL: ${reservationsUrl}</p>
+        <p>De la siguiente URL: ${url}</p>
       `,
     })
 
@@ -74,7 +75,7 @@ reportsRouter.post('/real-state',
         userId: decoded?.userId,
         message,
         reason,
-        reservationsUrl
+        url
       })
       responseHandler({
         res,
@@ -87,13 +88,31 @@ reportsRouter.post('/real-state',
     }
   }))
 
-/* reportsRouter.get('/real-state', (async (req: Request, res: Response) => {
-  const realStateReports = await RealStateReport.find()
+reportsRouter.get('/space/real-state', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 10
+
+  const realStateReports = await RealStateReport.find().sort({ created_at: -1 }).skip((page - 1) * limit).limit(limit)
+  if (!realStateReports) throw new AppError('Real state reports not found', 404)
+
   responseHandler({
     res,
     code: 200,
     data: realStateReports
   })
-}) as RequestHandler) */
+}))
+
+reportsRouter.patch('/space/real-state/resolved', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id, resolved } = req.body
+
+  const realStateReports = await RealStateReport.findByIdAndUpdate(id, { resolved }, { new: true })
+  if (!realStateReports) throw new AppError('Real state reports not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: realStateReports
+  })
+}))
 
 export default reportsRouter
