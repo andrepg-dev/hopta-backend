@@ -68,6 +68,7 @@ export interface UserI {
   personal_information?: PersonalInformation
   about?: About
   suscription?: mongoose.Types.ObjectId
+  role?: 'admin' | 'user'
 }
 
 export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | 'auth'> {

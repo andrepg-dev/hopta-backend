@@ -428,10 +428,12 @@ Buscador de todas las propiedades
 */
 
 // Delete real state
-RealStateRouter.delete('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+RealStateRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  const property = await RealStateModel.findByIdAndDelete(id)
+  if (!property) throw new AppError('Property not found', 404)
 
-
-    
   responseHandler({
     res,
     code: 200,
@@ -440,25 +442,31 @@ RealStateRouter.delete('', authMiddleware, isAdmin, asyncHandler(async (req: Req
 }))
 
 // Update real state
-RealStateRouter.patch('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+RealStateRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true })
+  if (!property) throw new AppError('Property not found', 404)
+
   responseHandler({
     res,
     code: 200,
-    data: [],
+    data: property,
     message: 'Your admin, role updated property successfully'
   })
 }))
 
 // Create real state
-RealStateRouter.post('', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+RealStateRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const property = await RealStateModel.create(req.body)
+  if (!property) throw new AppError('Property not created', 404)
+
   responseHandler({
     res,
     code: 200,
-    data: [],
+    data: property,
     message: 'Your admin, role created property successfully'
   })
 }))
-
-
 
 export default RealStateRouter

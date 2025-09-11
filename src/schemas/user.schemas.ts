@@ -163,6 +163,11 @@ const userSchema = new mongoose.Schema(
       description: {
         type: String
       }
+    },
+    role: {
+      type: String,
+      enum: ['admin', 'user'],
+      default: 'user'
     }
   },
   { versionKey: false }

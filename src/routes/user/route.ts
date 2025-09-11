@@ -1,6 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { getIpInfo } from '@/src/actions/user/ip-info'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
@@ -14,12 +15,14 @@ import { Cookies } from '@/src/services/cookies/cookies.service'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
 import { SMSSender } from '@/src/services/messages-sender/sms.service'
+import { getPagination } from '@/src/utils/get-pagination.utils'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
+import mongoose from 'mongoose'
 import { z } from 'zod'
 
 const userRouter = Router()
@@ -895,5 +898,74 @@ userRouter.delete(
     }
   })
 )
+
+// Admin endpoints
+
+/*
+/user
+Eliminar usuario
+Modificar usuario
+Mostrar todos los usuarios con paginacion
+Buscador de todos los usuarios
+*/
+
+userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndDelete(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200
+  })
+}))
+
+userRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const user = await userModel.create(req.body)
+  if (!user) throw new AppError('User not created', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 10
+  const sortBy = (req.query.sortBy as string) || 'created_at'
+  const order = (req.query.order as 'asc' | 'desc') || 'desc'
+
+  const users = await getPagination({
+    limit,
+    page,
+    Model: userModel,
+    sortBy,
+    order
+  })
+
+  if (!users) throw new AppError('Users not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: users
+  })
+}))
 
 export default userRouter
