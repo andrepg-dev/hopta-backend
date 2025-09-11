@@ -968,4 +968,18 @@ userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Reque
   })
 }))
 
+userRouter.get('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findById(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject(),
+    message: 'Your admin, role got user successfully'
+  })
+}))
+
 export default userRouter
