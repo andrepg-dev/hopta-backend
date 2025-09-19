@@ -554,7 +554,7 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'sendgrid',
+      provider: 'amazon-ses',
       template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -704,7 +704,7 @@ userRouter.post(
         email: userData.email,
         name: userData.userData.name
       },
-      provider: 'sendgrid',
+      provider: 'amazon-ses',
       template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,

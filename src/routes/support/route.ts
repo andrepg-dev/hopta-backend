@@ -31,7 +31,7 @@ supportRouter.post('/', asyncHandler(async (req: Request, res: Response) => {
     },
     subject: subject ? `Hopta - Support: ${subject}` : 'Hopta - Support: No subject',
     html: `${message} <br> <br> <strong>Phone Number:</strong> ${phoneNumber} <br> <strong>Email:</strong> ${email} <br> <strong>User:</strong> ${user.userId}`,
-    provider: 'sendgrid'
+    provider: 'nodemailer'
   })
 
   if (!response) {

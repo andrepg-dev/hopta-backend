@@ -47,6 +47,21 @@ RealStateRouter.get(
   })
 )
 
+
+RealStateRouter.get(
+  '/populate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const data = await RealStateModel.find().populate('visitors.user owner', 'name _id ').lean()
+
+    responseHandler({
+      res,
+      code: 200,
+      data
+    })
+  })
+)
+
+
 RealStateRouter.get('/autocomplete', asyncHandler(async (req: Request, res: Response) => {
   const { query } = req.query
   if (!query) throw new AppError('Query is required', 400)
@@ -177,10 +192,38 @@ RealStateRouter.get(
     }
 
     if (decoded) {
-      await RealStateModel.updateOne({ _id: id }, { $push: { visitors: { user: decoded.userId, visit_date: new Date() } } })
-    }
+      // Buscar si el usuario ya existe en visitors
+      const existingVisitor = await RealStateModel.findOne({
+        _id: id,
+        'visitors.user': decoded.userId
+      });
 
-    await RealStateModel.updateOne({ _id: id }, { $inc: { 'stats.total_visits': 1 } })
+      if (existingVisitor) {
+        // Si el usuario ya existe, agregar nueva visita
+        await RealStateModel.updateOne(
+          { _id: id, 'visitors.user': decoded.userId },
+          {
+            $push: { 'visitors.$.visit_date': new Date() },
+            $inc: { 'stats.total_visits': 1 }
+          },
+        );
+      } else {
+        // Si es la primera visita del usuario, crear nueva entrada
+        await RealStateModel.updateOne(
+          { _id: id },
+          {
+            $push: {
+              visitors: {
+                user: decoded.userId,
+                visit_date: [new Date()],
+                comments: null
+              }
+            }
+          },
+          { $inc: { 'stats.total_visits': 1 } }
+        );
+      }
+    }
 
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
     if (!property) throw new AppError('Property not found', 404)

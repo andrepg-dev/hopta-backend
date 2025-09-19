@@ -51,7 +51,7 @@ contactRouter.post(
             email: ownerEmail,
             name: userOwnerData?.name
           },
-          provider: 'sendgrid',
+          provider: 'amazon-ses',
           subject: `El usuario ${name} te ha contactado`,
           template: 'contact',
           dynamicTemplateData: {
