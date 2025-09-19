@@ -46,11 +46,14 @@ app.use(
   session({
     secret: process.env.GOOGLE_SECRET_KEY!,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // ✅ evita sesiones vacías en BD
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',       // HTTPS obligatorio en prod
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.hopta.hn' : undefined, // comparte entre subdominios
+      path: '/',
     }
   })
 )

@@ -462,6 +462,8 @@ RealStateRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req:
   const property = await RealStateModel.create(req.body)
   if (!property) throw new AppError('Property not created', 404)
 
+  await userModel.updateOne({ _id: req.body.owner }, { $push: { properties: property._id } })
+
   responseHandler({
     res,
     code: 200,

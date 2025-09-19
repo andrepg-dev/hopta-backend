@@ -14,3 +14,6 @@ logs/**/*
 !.elasticbeanstalk/*.global.yml
 
 dist/
+
+deploy.zip
+.DS_Store

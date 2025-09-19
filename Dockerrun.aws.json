@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend:multi-20251808",
+    "Name": "280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend:09-15-2025v3",
     "Update": "true"
   },
   "Ports": [

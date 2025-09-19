@@ -40,7 +40,7 @@ export class TokenManager {
    */
   static accessToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.jwt_access_token.expires
+      expiresIn: COOKIES.jwt_access_token.dayString
     }
     return jwt.sign(payload, COOKIES.jwt_access_token.SECRET_KEY ?? '', options)
   }
@@ -54,7 +54,7 @@ export class TokenManager {
  */
   static refreshToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.jwt_refresh_token.expires
+      expiresIn: COOKIES.jwt_refresh_token.dayString
     }
     const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', options)
     return refreshToken
