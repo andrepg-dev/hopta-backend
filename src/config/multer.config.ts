@@ -13,9 +13,8 @@ const ALLOWED_MIMES = [
 export const upload = multer({
   dest: 'uploads/',
   limits: {
-    fileSize: 1024 * 1024 * 5, // 5MB
-    files: 20,
-    fields: 1
+    fileSize: 1024 * 1024 * 13, // 5MB
+    files: 20
   },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIMES.includes(file.mimetype)) {
