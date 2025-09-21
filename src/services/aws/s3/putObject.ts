@@ -23,8 +23,10 @@ export const putObject = async ({ bucketName, key, filePath, ...params }: PutObj
 The object was too large. To upload objects larger than 5GB, use the S3 console (160GB max) \
 or the multipart upload API (5TB max).`
       )
+      return null
     } else if (err instanceof S3ServiceException) {
       console.error(`Error from S3 while uploading object to ${bucketName}.  ${err.name}: ${err.message}`)
+      return null
     } else {
       throw err
     }

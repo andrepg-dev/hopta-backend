@@ -181,7 +181,7 @@ RealStateRouter.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
 
     // Actualizar las visitas de una propiedad
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
@@ -345,7 +345,7 @@ RealStateRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
 
     const { user } = req as any
     const { userId: owner } = user
@@ -386,7 +386,7 @@ RealStateRouter.patch(
     if (!id) throw new AppError('Property ID is required', 400)
     if (!req.body) throw new AppError('No data to update', 400)
 
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
 
     // Verify property exists and user has permission to update it
     const property = (await RealStateModel.findById(id).lean()) as any
@@ -473,7 +473,7 @@ Buscador de todas las propiedades
 // Delete real state
 RealStateRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
   const property = await RealStateModel.findByIdAndDelete(id)
   if (!property) throw new AppError('Property not found', 404)
 
@@ -487,7 +487,7 @@ RealStateRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async
 // Update real state
 RealStateRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
   const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true })
   if (!property) throw new AppError('Property not found', 404)
 

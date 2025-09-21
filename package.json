@@ -83,6 +83,7 @@
     "@types/stripe": "^8.0.416",
     "@types/supertest": "^6.0.2",
     "@types/typescript": "^0.4.29",
+    "@types/validator": "^13.15.3",
     "@types/winston": "^2.4.4",
     "colors": "^1.4.0",
     "concurrently": "^9.1.0",

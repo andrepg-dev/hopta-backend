@@ -38,7 +38,7 @@ s3UploadImageRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const response = await deleteObject({
       bucketName: BUCKET_NAME,
-      key: req.params.key
+      key: req.params.key ?? ''
     })
 
     responseHandler({

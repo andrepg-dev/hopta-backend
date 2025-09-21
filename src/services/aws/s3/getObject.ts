@@ -18,8 +18,10 @@ export const getObject = async ({ bucketName, key, ...params }: IGetObjectParams
   } catch (caught) {
     if (caught instanceof NoSuchKey) {
       console.error(`Error from S3 while getting object "${key}" from "${bucketName}". No such key exists.`)
+      return null
     } else if (caught instanceof S3ServiceException) {
       console.error(`Error from S3 while getting object from ${bucketName}.  ${caught.name}: ${caught.message}`)
+      return null
     } else {
       throw caught
     }

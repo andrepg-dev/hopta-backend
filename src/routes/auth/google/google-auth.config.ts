@@ -14,7 +14,7 @@ passport.use(
       if (!profile.emails) return done(new AppError('No email found', 400))
 
       try {
-        const foundUser = await userModel.findOne({ email: profile.emails[0].value })
+        const foundUser = await userModel.findOne({ email: profile?.emails[0]?.value })
         if (foundUser) {
           return done(null, foundUser as unknown as any)
         }
@@ -23,7 +23,7 @@ passport.use(
           .create({
             name: profile.name?.givenName || '',
             last_name: profile.name?.familyName || '',
-            email: profile.emails[0].value,
+            email: profile.emails[0]?.value,
             auth: {
               google: {
                 id: profile.id

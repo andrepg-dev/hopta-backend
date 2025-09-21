@@ -1,13 +1,13 @@
 import { stripe } from '@/constants/stripe/config.constants'
 import { line_items } from '@/constants/stripe/session.constants'
-import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { AppError } from '@/src/handlers/error-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { userModel } from '@/src/schemas/user.schemas'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { Request, Response, Router } from 'express'
 import Stripe from 'stripe'
-import { responseHandler } from '@/src/handlers/responseHandler'
 
 const paymentRouter = Router()
 
@@ -30,13 +30,17 @@ paymentRouter.post(
     const line_item = line_items[plan as keyof typeof line_items]
     console.log(line_item)
 
+    if (!line_item) {
+      throw new AppError('Line item not found for the selected plan', 400)
+    }
+
     const user = await userModel.findById(req.user?.userId)
     if (!user) {
       throw new AppError('User not found', 404)
     }
 
     let createPaymentObject: Stripe.Checkout.SessionCreateParams = {
-      line_items: new Array(line_item),
+      line_items: [line_item],
       success_url: `${process.env.FRONTEND_URL}/payments/success?code=${code}`,
       cancel_url: `${process.env.FRONTEND_URL}/payments/cancel?code=${code}`,
       mode: 'subscription',

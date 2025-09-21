@@ -911,7 +911,7 @@ Buscador de todos los usuarios
 
 userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
   const user = await userModel.findByIdAndDelete(id)
   if (!user) throw new AppError('User not found', 404)
 
@@ -923,7 +923,7 @@ userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req
 
 userRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
   const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
   if (!user) throw new AppError('User not found', 404)
 
@@ -970,7 +970,7 @@ userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Reque
 
 userRouter.get('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
   const user = await userModel.findById(id)
   if (!user) throw new AppError('User not found', 404)
 
