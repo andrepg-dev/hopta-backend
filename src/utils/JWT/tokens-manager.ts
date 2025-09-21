@@ -39,10 +39,9 @@ export class TokenManager {
    * @returns string
    */
   static accessToken({ payload }: { payload: any }) {
-    const options: jwt.SignOptions = {
+    return jwt.sign(payload, COOKIES.jwt_access_token.SECRET_KEY ?? '', {
       expiresIn: COOKIES.jwt_access_token.dayString
-    }
-    return jwt.sign(payload, COOKIES.jwt_access_token.SECRET_KEY ?? '', options)
+    } as jwt.SignOptions)
   }
 
   /**
@@ -53,10 +52,9 @@ export class TokenManager {
  * @returns string
  */
   static refreshToken({ payload }: { payload: any }) {
-    const options: jwt.SignOptions = {
+    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', {
       expiresIn: COOKIES.jwt_refresh_token.dayString
-    }
-    const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', options)
+    } as jwt.SignOptions)
     return refreshToken
   }
 
@@ -107,10 +105,9 @@ export class TokenManager {
   }
 
   static tempToken({ payload }: { payload: any }) {
-    const options: jwt.SignOptions = {
+    return jwt.sign(payload, COOKIES.general.SECRET_KEY ?? '', {
       expiresIn: COOKIES.general.expiresIn.hourString
-    }
-    return jwt.sign(payload, COOKIES.general.SECRET_KEY ?? '', options)
+    } as jwt.SignOptions)
   }
 
   static verifyTempToken(token: string) {
