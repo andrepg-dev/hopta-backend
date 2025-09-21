@@ -1,0 +1,70 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to ECR
+        run: |
+          IMAGE_REPO="280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend"
+          IMAGE_TAG=${GITHUB_SHA}
+          docker build -t $IMAGE_REPO:$IMAGE_TAG -t $IMAGE_REPO:latest .
+          docker push $IMAGE_REPO:$IMAGE_TAG
+          docker push $IMAGE_REPO:latest
+
+      - name: Create Dockerrun.aws.json
+        run: |
+          cat > Dockerrun.aws.json <<EOF
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend:${GITHUB_SHA}",
+              "Update": "true"
+            },
+            "Ports": [
+              {
+                "ContainerPort": "3001"
+              }
+            ]
+          }
+          EOF
+
+      - name: Zip Dockerrun.aws.json
+        run: zip deploy.zip Dockerrun.aws.json
+
+      - name: Upload bundle to S3
+        run: |
+          aws s3 cp deploy.zip s3://elasticbeanstalk-us-east-2-280428843881/deploy-${GITHUB_SHA}.zip
+
+      - name: Create new Elastic Beanstalk Application Version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name hopta-backend \
+            --version-label "build-${GITHUB_SHA}" \
+            --source-bundle S3Bucket="elasticbeanstalk-us-east-2-280428843881",S3Key="deploy-${GITHUB_SHA}.zip"
+
+      - name: Update Elastic Beanstalk Environment
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name hopta-backend-official \
+            --version-label "build-${GITHUB_SHA}"

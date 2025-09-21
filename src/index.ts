@@ -39,6 +39,7 @@ if (process.env.NODE_ENV === 'production') {
 // Middlewares
 app.use(RATE_LIMIT)
 app.use(cors(CORS_OPTIONS))
+app.options('*', cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())

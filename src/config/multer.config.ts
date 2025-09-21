@@ -13,7 +13,7 @@ const ALLOWED_MIMES = [
 export const upload = multer({
   dest: 'uploads/',
   limits: {
-    fileSize: 1024 * 1024 * 13, // 5MB
+    fileSize: 1024 * 1024 * 10, // 13
     files: 20
   },
   fileFilter: (_req, file, cb) => {
@@ -25,8 +25,7 @@ export const upload = multer({
   }
 }).array('file', 20)
 
-
-export function multerConfig({ allowedMimes = ALLOWED_MIMES, maxFiles = 20, maxSize = 1024 * 1024 * 5, propName = 'file' }: { allowedMimes?: string[], maxFiles?: number, maxSize?: number, propName?: string }) {
+export function multerConfig({ allowedMimes = ALLOWED_MIMES, maxFiles = 20, maxSize = 1024 * 1024 * 10, propName = 'file' }: { allowedMimes?: string[], maxFiles?: number, maxSize?: number, propName?: string }) {
   return multer({
     dest: 'uploads/',
     limits: {
