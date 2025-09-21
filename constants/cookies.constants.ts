@@ -1,6 +1,4 @@
 export const COOKIES = {
-  cookies_token_name: 'access_token',
-  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY ?? (() => { throw new Error('JWT_SECRET_KEY_MISSING') })(),
   general: {
     name: 'general_cookies',
     SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY ?? (() => { throw new Error('GENERAL_COOKIES_SECRET_KEY IS MISSING') })(),

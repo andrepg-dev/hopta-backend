@@ -1,6 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { getIpInfo } from '@/src/actions/user/ip-info'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
@@ -13,15 +14,16 @@ import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import { Cookies } from '@/src/services/cookies/cookies.service'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
-import { TwilioSendSMS } from '@/src/services/twilio/twilio-sms.service'
+import { SMSSender } from '@/src/services/messages-sender/sms.service'
+import { getPagination } from '@/src/utils/get-pagination.utils'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
-import { z } from 'zod'
 import mongoose from 'mongoose'
+import { z } from 'zod'
 
 const userRouter = Router()
 
@@ -47,7 +49,6 @@ userRouter.get(
     })
   })
 )
-
 
 userRouter.post(
   '/register',
@@ -124,8 +125,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
-      provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      provider: 'amazon-ses',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${name}`,
         code: verificationCode,
@@ -414,7 +415,7 @@ userRouter.post(
     }
 
     // Send the SMS
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
       new Logs({
         method: 'saveErrorLogs',
@@ -462,7 +463,7 @@ userRouter.post(
     }
 
     // Check if the code is valid in the twilio collection database
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
     if (!isUserPhoneNumber) {
@@ -553,8 +554,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      provider: 'amazon-ses',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,
@@ -601,7 +602,7 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'sendgrid',
+      provider: 'amazon-ses',
       template: 'forgot_password',
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -659,7 +660,7 @@ userRouter.post(
       },
       subject: 'Password updated successfully',
       html: `Your password has been updated successfully. You can now login with your new password.`,
-      provider: 'sendgrid'
+      provider: 'amazon-ses'
     })
 
     responseHandler({
@@ -703,8 +704,8 @@ userRouter.post(
         email: userData.email,
         name: userData.userData.name
       },
-      provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      provider: 'amazon-ses',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,
@@ -774,8 +775,8 @@ userRouter.post(
           is_phone_number_verified: true
         }
       })
-      .catch(() => {
-        throw new AppError('Error creating user', 500)
+      .catch((err) => {
+        throw new AppError('Error creating user: ' + err, 500)
       })
 
     await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(() => {
@@ -795,15 +796,15 @@ userRouter.post(
 
     const { auth: _, ...userWithoutAuth } = user.toObject()
 
-    const smsTwilioService = new TwilioSendSMS()
-    await smsTwilioService
-      .sendSMS({
-        phone: decoded.phone,
-        message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
-      })
-      .catch((err) => {
-        new Logs({ message: err, method: 'saveErrorLogs' })
-      })
+    // const smsTwilioService = new TwilioSendSMS()
+    // await smsTwilioService
+    //   .sendSMS({
+    //     phone: decoded.phone,
+    //     message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
+    //   })
+    //   .catch((err) => {
+    //     new Logs({ message: err, method: 'saveErrorLogs' })
+    //   })
 
     responseHandler({
       res,
@@ -897,5 +898,88 @@ userRouter.delete(
     }
   })
 )
+
+// Admin endpoints
+
+/*
+/user
+Eliminar usuario
+Modificar usuario
+Mostrar todos los usuarios con paginacion
+Buscador de todos los usuarios
+*/
+
+userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndDelete(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200
+  })
+}))
+
+userRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const user = await userModel.create(req.body)
+  if (!user) throw new AppError('User not created', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 10
+  const sortBy = (req.query.sortBy as string) || 'created_at'
+  const order = (req.query.order as 'asc' | 'desc') || 'desc'
+
+  const users = await getPagination({
+    limit,
+    page,
+    Model: userModel,
+    sortBy,
+    order
+  })
+
+  if (!users) throw new AppError('Users not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: users
+  })
+}))
+
+userRouter.get('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findById(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject(),
+    message: 'Your admin, role got user successfully'
+  })
+}))
 
 export default userRouter

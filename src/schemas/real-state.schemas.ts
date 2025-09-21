@@ -117,10 +117,10 @@ const realStateSchema = new mongoose.Schema(
             required: true,
             immutable: true
           },
-          visit_date: {
+          visit_date: [{
             type: Date,
             default: Date.now
-          },
+          }],
           comments: {
             type: String
           }

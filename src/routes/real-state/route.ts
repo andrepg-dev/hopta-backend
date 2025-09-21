@@ -1,9 +1,11 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
+import { geoModel } from '@/src/schemas/geo.schema'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import Logs from '@/src/services/logs/save-logs.service'
@@ -45,6 +47,113 @@ RealStateRouter.get(
   })
 )
 
+
+RealStateRouter.get(
+  '/populate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const data = await RealStateModel.find().populate('visitors.user owner', 'name _id ').lean()
+
+    responseHandler({
+      res,
+      code: 200,
+      data
+    })
+  })
+)
+
+
+RealStateRouter.get('/autocomplete', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const results = await RealStateModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          autocomplete: {
+            query: query,
+            path: "title",
+            fuzzy: { maxEdits: 1 }
+          }
+        }
+      },
+      { $limit: 5 }
+    ]);
+
+    responseHandler({
+      res,
+      code: 200,
+      data: results
+    })
+  } catch (error) {
+    throw new AppError('Error autocompleting properties error: ' + error, 500)
+  }
+}))
+
+RealStateRouter.get('/autocomplete-by-location', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const result = await geoModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          autocomplete: {
+            query,
+            path: "properties.name",
+            fuzzy: {
+              maxEdits: 1
+            }
+          }
+        }
+      },
+      { $limit: 5 }
+    ])
+
+    responseHandler({
+      res,
+      code: 200,
+      data: result
+    })
+  } catch (error) {
+    throw new AppError('Error autocompleting properties error: ' + error, 500)
+  }
+}))
+
+RealStateRouter.get('/search', asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query
+  if (!query) throw new AppError('Query is required', 400)
+
+  try {
+    const results = await RealStateModel.aggregate([
+      {
+        $search: {
+          index: "default",
+          text: {
+            query: query,
+            path: ["title", "location.title"],
+            fuzzy: {
+              maxEdits: 2,
+              prefixLength: 2
+            }
+          }
+        }
+      },
+      { $limit: 20 }
+    ])
+
+    responseHandler({
+      res,
+      code: 200,
+      data: results
+    })
+  } catch (error) {
+    throw new AppError('Error searching properties error: ' + error, 500)
+  }
+}))
+
 RealStateRouter.get(
   '/my-properties',
   authMiddleware,
@@ -83,10 +192,38 @@ RealStateRouter.get(
     }
 
     if (decoded) {
-      await RealStateModel.updateOne({ _id: id }, { $push: { visitors: { user: decoded.userId, visit_date: new Date() } } })
-    }
+      // Buscar si el usuario ya existe en visitors
+      const existingVisitor = await RealStateModel.findOne({
+        _id: id,
+        'visitors.user': decoded.userId
+      });
 
-    await RealStateModel.updateOne({ _id: id }, { $inc: { 'stats.total_visits': 1 } })
+      if (existingVisitor) {
+        // Si el usuario ya existe, agregar nueva visita
+        await RealStateModel.updateOne(
+          { _id: id, 'visitors.user': decoded.userId },
+          {
+            $push: { 'visitors.$.visit_date': new Date() },
+            $inc: { 'stats.total_visits': 1 }
+          },
+        );
+      } else {
+        // Si es la primera visita del usuario, crear nueva entrada
+        await RealStateModel.updateOne(
+          { _id: id },
+          {
+            $push: {
+              visitors: {
+                user: decoded.userId,
+                visit_date: [new Date()],
+                comments: null
+              }
+            }
+          },
+          { $inc: { 'stats.total_visits': 1 } }
+        );
+      }
+    }
 
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
     if (!property) throw new AppError('Property not found', 404)
@@ -121,14 +258,35 @@ RealStateRouter.post(
 
     const owner = req?.user?.userId
 
+    if (!owner) {
+      throw new AppError('Usuario no autenticado', 401)
+    }
+
     const foundUser = await userModel.findById(owner)
-    if (!foundUser) throw new AppError('User not found', 404)
+    if (!foundUser) {
+      throw new AppError('Usuario no encontrado', 404)
+    }
 
     try {
+      // Validar que las imágenes sean URLs válidas
+      if (!images || images.length < 3) {
+        throw new AppError('Debes subir al menos 3 imágenes', 400)
+      }
+
+      // Validar que las coordenadas sean válidas
+      if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
+        throw new AppError('Las coordenadas de ubicación son requeridas', 400)
+      }
+
+      // Validar que el precio sea positivo
+      if (!price || price <= 0) {
+        throw new AppError('El precio debe ser mayor a 0', 400)
+      }
+
       const property = await RealStateModel.create({
         price,
         location,
-        house_status,
+        house_status: house_status || { is_available: true, is_sold: false },
         house_features,
         population,
         currency,
@@ -142,19 +300,41 @@ RealStateRouter.post(
         visitors: [],
         saved_by: [],
         ratings: [],
-        additional_cost,
-        previous_payment_required
+        additional_cost: additional_cost || { utilities_included: [], water: null, electricity: null },
+        previous_payment_required: previous_payment_required || false
       })
 
+      // Actualizar el usuario con la nueva propiedad
       await userModel.updateOne({ _id: owner }, { $push: { properties: property._id } })
+
+      // Log de la creación exitosa
+      new Logs({
+        method: 'saveLogs',
+        message: `Property created successfully: ${title} by user ${owner}`
+      })
 
       responseHandler({
         res,
         code: 201,
+        message: 'Propiedad creada exitosamente',
         data: property
       })
     } catch (error: any) {
-      throw new AppError(error.message || 'Server error creating property', 500)
+      console.error('Error creating property:', error)
+
+      // Si es un error de validación de Mongoose
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values(error.errors).map((err: any) => err.message)
+        throw new AppError(`Error de validación: ${validationErrors.join(', ')}`, 400)
+      }
+
+      // Si es un error de duplicación
+      if (error.code === 11000) {
+        throw new AppError('Ya existe una propiedad con estos datos', 409)
+      }
+
+      // Error general
+      throw new AppError(error.message || 'Error interno del servidor al crear la propiedad', 500)
     }
   })
 )
@@ -275,5 +455,64 @@ RealStateRouter.post(
     })
   })
 )
+
+
+// TODO:
+/*
+Endpoint a crear 
+
+/real-state
+
+Eliminar propiedad
+Modificar propiedad
+Crear propiedad y poder modificarle cualquier campo
+Mostrar todas las propiedades Limite de 10 propiedades
+Buscador de todas las propiedades
+*/
+
+// Delete real state
+RealStateRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  const property = await RealStateModel.findByIdAndDelete(id)
+  if (!property) throw new AppError('Property not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    message: 'Your admin, role deleted property successfully'
+  })
+}))
+
+// Update real state
+RealStateRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+  const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true })
+  if (!property) throw new AppError('Property not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: property,
+    message: 'Your admin, role updated property successfully'
+  })
+}))
+
+// Create real state
+RealStateRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  // To assign the owner, I need the id of the user given in the body.
+  const property = await RealStateModel.create(req.body)
+  if (!property) throw new AppError('Property not created', 404)
+
+  await userModel.updateOne({ _id: req.body.owner }, { $push: { properties: property._id } })
+
+  responseHandler({
+    res,
+    code: 200,
+    data: property,
+    message: 'Your admin, role created property successfully'
+  })
+}))
 
 export default RealStateRouter

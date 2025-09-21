@@ -14,6 +14,7 @@ import aiRouter from './routes/ai/route'
 import './routes/auth/google/google-auth.config'
 import googleRouter from './routes/auth/google/google.route'
 import s3UploadImageRouter from './routes/aws/s3/s3.route'
+import contactRouter from './routes/contact-router/route'
 import facebookRouter from './routes/facebook/facebook.route'
 import healthRouter from './routes/healt/route'
 import realStateReportRouter from './routes/real-state-report/route'
@@ -24,7 +25,6 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
-import contactRouter from './routes/contact-router/route'
 
 // Database connection
 connectToDatabase()
@@ -32,9 +32,14 @@ connectToDatabase()
 // Express configuration
 export const app = express()
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 2) // cloudflare + elb
+}
+
 // Middlewares
 app.use(RATE_LIMIT)
 app.use(cors(CORS_OPTIONS))
+app.options('*', cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -42,11 +47,14 @@ app.use(
   session({
     secret: process.env.GOOGLE_SECRET_KEY!,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // ✅ evita sesiones vacías en BD
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',       // HTTPS obligatorio en prod
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.hopta.hn' : undefined, // comparte entre subdominios
+      path: '/',
     }
   })
 )
@@ -61,9 +69,10 @@ app.use(helmet())
 
 const port = CONNECTIONS.PORT
 
-app.get('/', (_: Request, res: Response) => {
+app.get('/', async (_: Request, res: Response) => {
   res.status(200).send('Welcome to Hopta')
 })
+
 app.use('/health', healthRouter)
 app.use('/upload-image', s3UploadImageRouter)
 app.use('/real-state', RealStateRouter)

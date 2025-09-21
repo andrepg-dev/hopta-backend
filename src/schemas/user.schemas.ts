@@ -16,7 +16,8 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true
+      unique: true,
+      sparse: true
     },
     suscription: {
       type: mongoose.Schema.Types.ObjectId,
@@ -162,6 +163,11 @@ const userSchema = new mongoose.Schema(
       description: {
         type: String
       }
+    },
+    role: {
+      type: String,
+      enum: ['admin', 'user'],
+      default: 'user'
     }
   },
   { versionKey: false }
@@ -175,6 +181,6 @@ userSchema.pre('save', function (next) {
 
 userSchema.plugin(mongoosePaginate)
 
-interface UserDocument extends mongoose.Document, UserI { }
+export interface UserDocument extends mongoose.Document, UserI { }
 
 export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

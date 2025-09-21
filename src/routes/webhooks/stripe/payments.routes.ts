@@ -1,12 +1,12 @@
 import { stripe } from '@/constants/stripe/config.constants'
-import { AppError } from '@/src/handlers/error-handler'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
+import { AppError } from '@/src/handlers/error-handler'
+import { responseHandler } from '@/src/handlers/responseHandler'
+import { userModel } from '@/src/schemas/user.schemas'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
-import { userModel } from '@/src/schemas/user.schemas'
 import { Request, Response, Router } from 'express'
 import Stripe from 'stripe'
-import { responseHandler } from '@/src/handlers/responseHandler'
 
 const stripeWebhookRouter = Router()
 
@@ -47,7 +47,7 @@ stripeWebhookRouter.post(
         try {
           await emailService.sendEmail({
             to: { email: user.email, name: user.name },
-            provider: 'sendgrid',
+            provider: 'amazon-ses',
             subject: `Hola ${user.name}! Tu plan ha sido actualizado correctamente`,
             html: `
         <h1>Hola ${user.name}!</h1>
@@ -77,7 +77,7 @@ stripeWebhookRouter.post(
         try {
           await emailService.sendEmail({
             to: { email: user.email, name: user.name },
-            provider: 'sendgrid',
+            provider: 'amazon-ses',
             subject: `Tu suscripción no pudo ser actualizada`,
             html: `
         <h3>Hola ${user.name}! Tu suscripción no pudo ser actualizada</h3>

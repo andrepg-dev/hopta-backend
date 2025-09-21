@@ -4,25 +4,9 @@ import { multerConfig } from '@/src/config/multer.config'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { deleteObject } from '@/src/services/aws/s3/deleteObject'
-import { getObject } from '@/src/services/aws/s3/getObject'
 import { uploadS3Files } from '@/src/services/upload-s3-files/upload-files.service'
 import { Request, Response, Router } from 'express'
 const s3UploadImageRouter = Router()
-
-s3UploadImageRouter.get(
-  '/',
-  asyncHandler(async (_: Request, res: Response) => {
-    const objectResponse = await getObject({
-      bucketName: BUCKET_NAME,
-      key: 'extra-file.html'
-    })
-    responseHandler({
-      res,
-      code: 200,
-      data: objectResponse
-    })
-  })
-)
 
 s3UploadImageRouter.post(
   '/',

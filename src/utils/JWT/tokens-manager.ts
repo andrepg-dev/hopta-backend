@@ -4,29 +4,31 @@ import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import jwt, { SignOptions } from 'jsonwebtoken'
 
 const COOKIES = {
-  cookies_token_name: 'access_token',
-  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
-
   general: {
     name: 'general_cookies',
-    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY,
+    SECRET_KEY: process.env.GENERAL_COOKIES_SECRET_KEY ?? (() => { throw new Error('GENERAL_COOKIES_SECRET_KEY IS MISSING') })(),
     expiresIn: {
-      seconds: 3600, // 1 hour in seconds
+      hourString: '1h',
       hourInt: 1 * 60 * 60 * 1000
     }
   },
   expiresIn: {
-    seconds: 604800, // 7 days in seconds (7 * 24 * 60 * 60)
-    dayInt: 7 * 24 * 60 * 60 * 1000
+    hourString: '60m',
+    hourInt: 60 * 60 * 1000
   },
   jwt_refresh_token: {
     name: 'refresh_token',
-    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY,
-    seconds: 1209600, // 14 days in seconds (14 * 24 * 60 * 60)
+    SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY ?? (() => { throw new Error('JWT_REFRESH_SECRET_KEY IS MISSING') })(),
+    dayString: '14d',
     expires: 14 * 24 * 60 * 60 * 1000 // 14 días
+  },
+  jwt_access_token: {
+    name: 'access_token',
+    SECRET_KEY: process.env.JWT_ACCESS_SECRET_KEY ?? (() => { throw new Error('JWT_ACCESS_SECRET_KEY IS MISSING') })(),
+    dayString: '7d',
+    expires: 7 * 24 * 60 * 60 * 1000 // 7 días
   }
 }
-
 
 export class TokenManager {
   /**
@@ -38,9 +40,9 @@ export class TokenManager {
    */
   static accessToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.expiresIn.seconds
+      expiresIn: COOKIES.jwt_access_token.dayString
     }
-    return jwt.sign(payload, COOKIES.JWT_SECRET_KEY ?? '', options)
+    return jwt.sign(payload, COOKIES.jwt_access_token.SECRET_KEY ?? '', options)
   }
 
   /**
@@ -52,10 +54,9 @@ export class TokenManager {
  */
   static refreshToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.jwt_refresh_token.seconds
+      expiresIn: COOKIES.jwt_refresh_token.dayString
     }
     const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', options)
-
     return refreshToken
   }
 
@@ -68,7 +69,6 @@ export class TokenManager {
    */
   static async saveRefreshTokenInDB({ payload }: { payload: any }) {
     const token = this.refreshToken({ payload })
-
     const hashed = await hashGen(token)
 
     await refreshTokenModel.create({
@@ -91,7 +91,7 @@ export class TokenManager {
   }
 
   static verifyToken(token: string) {
-    return jwt.verify(token, COOKIES.JWT_SECRET_KEY ?? '')
+    return jwt.verify(token, COOKIES.jwt_access_token.SECRET_KEY ?? '')
   }
 
   static verifyRefreshToken(token: string) {
@@ -108,7 +108,7 @@ export class TokenManager {
 
   static tempToken({ payload }: { payload: any }) {
     const options: SignOptions = {
-      expiresIn: COOKIES.general.expiresIn.seconds
+      expiresIn: COOKIES.general.expiresIn.hourInt
     }
     return jwt.sign(payload, COOKIES.general.SECRET_KEY ?? '', options)
   }

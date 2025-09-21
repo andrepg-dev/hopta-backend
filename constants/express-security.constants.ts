@@ -11,8 +11,9 @@ export const RATE_LIMIT = rateLimit({
 
 // TODO: Cambiar el origen a la URL de producción
 export const CORS_OPTIONS = {
-  origin: ['http://localhost:3000', 'https://hopta.hn', 'https://www.hopta.hn', 'http://localhost:3002'], // Permitir solo este origen
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  origin: ['https://hopta.hn', 'https://www.hopta.hn', 'https://admin.hopta.hn', 'http://localhost:3005', 'http://localhost:3002'], // Permitir solo este origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true, // Permitir cookies y credenciales
-  maxAge: 3600 // Almacenar en caché los resultados de CORS por 1 hora
+  maxAge: 3600, // Almacenar en caché los resultados de CORS por 1 hora,,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }
