@@ -1,7 +1,7 @@
 import { AppError } from '@/src/handlers/error-handler'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
-import jwt, { SignOptions } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 
 const COOKIES = {
   cookies_token_name: 'access_token',
@@ -37,7 +37,7 @@ export class TokenManager {
    * @returns string
    */
   static accessToken({ payload }: { payload: any }) {
-    const options: SignOptions = {
+    const options = {
       expiresIn: COOKIES.expiresIn.seconds
     }
     return jwt.sign(payload, COOKIES.JWT_SECRET_KEY ?? '', options)
@@ -51,7 +51,7 @@ export class TokenManager {
  * @returns string
  */
   static refreshToken({ payload }: { payload: any }) {
-    const options: SignOptions = {
+    const options = {
       expiresIn: COOKIES.jwt_refresh_token.seconds
     }
     const refreshToken = jwt.sign(payload, COOKIES.jwt_refresh_token.SECRET_KEY ?? '', options)
@@ -107,7 +107,7 @@ export class TokenManager {
   }
 
   static tempToken({ payload }: { payload: any }) {
-    const options: SignOptions = {
+    const options = {
       expiresIn: COOKIES.general.expiresIn.seconds
     }
     return jwt.sign(payload, COOKIES.general.SECRET_KEY ?? '', options)
