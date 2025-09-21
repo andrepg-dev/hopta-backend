@@ -218,9 +218,9 @@ RealStateRouter.get(
                 visit_date: [new Date()],
                 comments: null
               }
-            }
-          },
-          { $inc: { 'stats.total_visits': 1 } }
+            },
+            $inc: { 'stats.total_visits': 1 }
+          }
         );
       }
     }
