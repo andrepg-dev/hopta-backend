@@ -26,28 +26,33 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
     const randomName = crypto.randomBytes(16).toString('hex')
     const extension = path.extname(file.originalname).toLowerCase()
     const key = `${folder}/${randomName}${extension}`
-    const fileUrl = `https://${bucketName}.s3.amazonaws.com/${key}`
 
     if (file.mimetype.includes('image')) {
       const fileBuffer = await readFile(file.path)
 
       const optimizedBuffer = await sharp(fileBuffer)
-        .resize({ width: 1280 })
-        .toFormat('jpeg', { quality: 80 })
+        .toFormat('webp', { quality: 80 })
         .toBuffer()
+
+      const webpKey = `${folder}/${randomName}.webp`
+      const webpUrl = `https://${bucketName}.s3.amazonaws.com/${webpKey}`
 
       const fileResult = await putObject({
         bucketName: bucketName,
-        key,
-        ContentType: file.mimetype,
+        key: webpKey,
+        ContentType: 'image/webp',
         Body: optimizedBuffer
       })
 
       if (fileResult) {
         filesResult.push({ fileResult })
       }
-      fileUrls.push(fileUrl)
+
+      fileUrls.push(webpUrl)
     } else {
+
+      const fileUrl = `https://${bucketName}.s3.amazonaws.com/${key}`
+
       const fileResult = await putObject({
         bucketName: bucketName,
         key,

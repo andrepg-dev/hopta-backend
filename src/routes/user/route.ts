@@ -1,6 +1,7 @@
 import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { getIpInfo } from '@/src/actions/user/ip-info'
+import { isAdmin } from '@/src/guards/isAdmin'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
@@ -13,13 +14,16 @@ import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
 import { Cookies } from '@/src/services/cookies/cookies.service'
 import { EmailService } from '@/src/services/email/email.service'
 import Logs from '@/src/services/logs/save-logs.service'
-import { TwilioSendSMS } from '@/src/services/twilio/twilio-sms.service'
+import { SMSSender } from '@/src/services/messages-sender/sms.service'
+import { getPagination } from '@/src/utils/get-pagination.utils'
 import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
 import RandomIntUtils from '@/src/utils/random-int.utils'
 import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
 import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
+import mongoose from 'mongoose'
+import { z } from 'zod'
 
 const userRouter = Router()
 
@@ -62,7 +66,7 @@ userRouter.post(
       location,
       profile_picture,
       properties,
-      about,
+      about
       // TODO: Add birth date
     } = req.body
 
@@ -121,8 +125,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
-      provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      provider: 'amazon-ses',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${name}`,
         code: verificationCode,
@@ -325,6 +329,8 @@ userRouter.patch(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
+    const body = req.body
+
     // Agregar validación de campos automáticos
     const blockedFields = [
       'auth.sms.verified',
@@ -333,12 +339,62 @@ userRouter.patch(
       'personal_information.phone_number_verified'
     ]
 
-    if (blockedFields.some(field => req.body[field])) {
+    if (blockedFields.some((field) => body[field])) {
       throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
     }
 
-    await userModel.updateOne({ _id: req.user?.userId }, req.body)
-      .then((user) => res.send(user))
+    // Validar que el email no exista en otro usuario
+    if (body.email) {
+      const existingUserWithEmail = await userModel.findOne({
+        email: body.email,
+        _id: { $ne: req.user?.userId }
+      })
+
+      if (existingUserWithEmail) {
+        throw new AppError('El correo electrónico ya está en uso por otro usuario', 400)
+      }
+    }
+
+    // Validar que el número de teléfono no exista en otro usuario
+    if (body.contact?.phone_number) {
+      const phoneNumber = body.contact.phone_number
+      const existingUserWithPhone = await userModel.findOne({
+        $and: [
+          { _id: { $ne: req.user?.userId } },
+          {
+            $or: [{ 'contact.phone_number': phoneNumber }, { 'auth.sms.phoneNumber': phoneNumber }, { 'auth.sms.phoneNumber': `+504${phoneNumber}` }]
+          }
+        ]
+      })
+
+      if (existingUserWithPhone) {
+        throw new AppError('El número de teléfono ya está en uso por otro usuario', 400)
+      }
+    }
+
+    try {
+      const user = await userModel.findOne({ _id: req.user?.userId })
+
+      if (!user) {
+        throw new AppError('User not found', 404)
+      }
+
+      await userModel.updateOne({ _id: req.user?.userId }, body)
+
+      // Obtener los datos actualizados del usuario para devolverlos
+      const updatedUser = await userModel.findById(req.user?.userId).select('-auth.local.password')
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'User updated successfully',
+        data: {
+          user: updatedUser
+        }
+      })
+    } catch (error) {
+      throw new AppError('Error updating user: ' + error, 500)
+    }
   })
 )
 
@@ -359,7 +415,7 @@ userRouter.post(
     }
 
     // Send the SMS
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
       new Logs({
         method: 'saveErrorLogs',
@@ -376,10 +432,9 @@ userRouter.post(
   })
 )
 
-
 /**
  * @description you need to complete the profile to create the user, this just verify the phone number of the user
- * 
+ *
  * @param phone
  * @param code
  */
@@ -408,7 +463,7 @@ userRouter.post(
     }
 
     // Check if the code is valid in the twilio collection database
-    const smsTwilioService = new TwilioSendSMS()
+    const smsTwilioService = new SMSSender()
     const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
     if (!isUserPhoneNumber) {
@@ -467,11 +522,11 @@ userRouter.post(
   })
 )
 
-
-/** 
+/**
  * If user exists, we will send a verification code to the email
-*/
-userRouter.post('/email-exists',
+ */
+userRouter.post(
+  '/email-exists',
   validateRequest(isValidEmail),
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body
@@ -499,8 +554,8 @@ userRouter.post('/email-exists',
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'sendgrid',
-      template: 'verification_code_not_link',
+      provider: 'amazon-ses',
+      template: 'verification_code',
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,
@@ -513,146 +568,158 @@ userRouter.post('/email-exists',
       code: 200,
       message: 'Email already exists'
     })
-  }))
+  })
+)
 
-userRouter.post('/forgot-password', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body
+userRouter.post(
+  '/forgot-password',
+  validateRequest(isValidEmail),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body
 
-  if (!email) {
-    throw new AppError('Email is required', 400)
-  }
-
-  const user = await userModel.findOne({ email })
-
-  if (!user) {
-    throw new AppError('Unregistered email', 404)
-  }
-
-  const userData = {
-    email: email.toLowerCase(),
-    code: RandomIntUtils.randomInt(),
-    userData: user.toObject()
-  }
-
-  await verificationCodeModel.create(userData) // add to database
-
-  // Send verification email
-  const emailService = new EmailService()
-  await emailService.sendEmail({
-    to: {
-      email: email.trim().toLowerCase(),
-      name: `${user.name} ${user.last_name}`
-    },
-    provider: 'sendgrid',
-    template: 'forgot_password',
-    dynamicTemplateData: {
-      name: `${user.name}`,
-      code: userData.code,
-      email: email.trim().toLowerCase()
+    if (!email) {
+      throw new AppError('Email is required', 400)
     }
-  })
 
-  responseHandler({
-    res,
-    code: 200,
-    message: 'Verification code sent successfully'
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      throw new AppError('Unregistered email', 404)
+    }
+
+    const userData = {
+      email: email.toLowerCase(),
+      code: RandomIntUtils.randomInt(),
+      userData: user.toObject()
+    }
+
+    await verificationCodeModel.create(userData) // add to database
+
+    // Send verification email
+    const emailService = new EmailService()
+    await emailService.sendEmail({
+      to: {
+        email: email.trim().toLowerCase(),
+        name: `${user.name} ${user.last_name}`
+      },
+      provider: 'amazon-ses',
+      template: 'forgot_password',
+      dynamicTemplateData: {
+        name: `${user.name}`,
+        code: userData.code,
+        email: email.trim().toLowerCase()
+      }
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Verification code sent successfully'
+    })
   })
-}))
+)
 
 // Verify forgotten password code
-userRouter.post('/verify-forgot-password', asyncHandler(async (req: Request, res: Response) => {
-  const { email, code, password } = req.body
+userRouter.post(
+  '/verify-forgot-password',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email, code, password } = req.body
 
-  if (!email || !code || !password) {
-    throw new AppError('Email, code and password are required', 400)
-  }
+    if (!email || !code || !password) {
+      throw new AppError('Email, code and password are required', 400)
+    }
 
-  const verificationCode = await verificationCodeModel.findOne({
-    email: email?.toString().toLowerCase(),
-    code: code?.toString()
+    const verificationCode = await verificationCodeModel.findOne({
+      email: email?.toString().toLowerCase(),
+      code: code?.toString()
+    })
+
+    if (!verificationCode) {
+      throw new AppError('Invalid or expired verification code', 400)
+    }
+
+    const userData = verificationCode.userData
+    await verificationCodeModel.deleteOne({ _id: verificationCode._id })
+
+    if (!userData) {
+      throw new AppError('User not found', 404)
+    }
+
+    // Hash the new password
+    const hashedPassword = await hashGen(password)
+
+    await userModel.updateOne({ _id: userData._id }, { $set: { 'auth.local.password': hashedPassword } })
+
+    // Send email to the user
+    const emailService = new EmailService()
+
+    await emailService.sendEmail({
+      to: {
+        email: userData.email,
+        name: userData.name
+      },
+      subject: 'Password updated successfully',
+      html: `Your password has been updated successfully. You can now login with your new password.`,
+      provider: 'amazon-ses'
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Password updated successfully'
+    })
   })
-
-  if (!verificationCode) {
-    throw new AppError('Invalid or expired verification code', 400)
-  }
-
-  const userData = verificationCode.userData
-  await verificationCodeModel.deleteOne({ _id: verificationCode._id })
-
-  if (!userData) {
-    throw new AppError('User not found', 404)
-  }
-
-  // Hash the new password 
-  const hashedPassword = await hashGen(password)
-
-  await userModel.updateOne({ _id: userData._id }, { $set: { 'auth.local.password': hashedPassword } })
-
-  // Send email to the user 
-  const emailService = new EmailService()
-
-  await emailService.sendEmail({
-    to: {
-      email: userData.email,
-      name: userData.name
-    },
-    subject: 'Password updated successfully',
-    html: `Your password has been updated successfully. You can now login with your new password.`,
-    provider: 'sendgrid'
-  })
-
-  responseHandler({
-    res,
-    code: 200,
-    message: 'Password updated successfully'
-  })
-}))
+)
 
 // Resend verification code
-userRouter.post('/resend-verification-code', validateRequest(isValidEmail), asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body
+userRouter.post(
+  '/resend-verification-code',
+  validateRequest(isValidEmail),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body
 
-  if (!email) {
-    throw new AppError('Email is required', 400)
-  }
-
-  const user = await userModel.findOne({ email })
-
-  if (!user) {
-    throw new AppError('Unregistered email', 404)
-  }
-
-  const verificationCode = RandomIntUtils.randomInt()
-
-  const userData = {
-    email: email.toLowerCase(),
-    code: verificationCode,
-    userData: user.toObject()
-  }
-
-  await verificationCodeModel.create(userData)
-
-  const emailService = new EmailService()
-  await emailService.sendEmail({
-    to: {
-      email: userData.email,
-      name: userData.userData.name
-    },
-    provider: 'sendgrid',
-    template: 'verification_code_not_link',
-    dynamicTemplateData: {
-      name: `${user.name}`,
-      code: verificationCode,
-      email: email.trim().toLowerCase()
+    if (!email) {
+      throw new AppError('Email is required', 400)
     }
-  })
 
-  responseHandler({
-    res,
-    code: 200,
-    message: 'Verification code sent successfully'
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      throw new AppError('Unregistered email', 404)
+    }
+
+    const verificationCode = RandomIntUtils.randomInt()
+
+    const userData = {
+      email: email.toLowerCase(),
+      code: verificationCode,
+      userData: user.toObject()
+    }
+
+    await verificationCodeModel.create(userData)
+
+    const emailService = new EmailService()
+    await emailService.sendEmail({
+      to: {
+        email: userData.email,
+        name: userData.userData.name
+      },
+      provider: 'amazon-ses',
+      template: 'verification_code',
+      dynamicTemplateData: {
+        name: `${user.name}`,
+        code: verificationCode,
+        email: email.trim().toLowerCase()
+      }
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Verification code sent successfully'
+    })
   })
-}))
+)
 
 /**
  * @description This function create the account via SMS
@@ -693,27 +760,28 @@ userRouter.post(
       throw new AppError('Invalid or expired verification', 400)
     }
 
-    const user = await userModel.create({
-      name,
-      last_name,
-      auth: {
-        sms: {
-          phoneNumber: decoded.phone,
-          verified: true
+    const user = await userModel
+      .create({
+        name,
+        last_name,
+        auth: {
+          sms: {
+            phoneNumber: decoded.phone,
+            verified: true
+          }
+        },
+        contact: {
+          phone_number: decoded.phone,
+          is_phone_number_verified: true
         }
-      },
-      contact: {
-        phone_number: decoded.phone,
-        is_phone_number_verified: true
-      }
-    }).catch(() => {
-      throw new AppError('Error creating user', 500)
-    })
-
-    await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(
-      () => {
-        console.error('Error deleting pending user line -> 713 file user/route.ts')
       })
+      .catch((err) => {
+        throw new AppError('Error creating user: ' + err, 500)
+      })
+
+    await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(() => {
+      console.error('Error deleting pending user line -> 713 file user/route.ts')
+    })
 
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
     const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id } })
@@ -728,15 +796,15 @@ userRouter.post(
 
     const { auth: _, ...userWithoutAuth } = user.toObject()
 
-    const smsTwilioService = new TwilioSendSMS()
-    await smsTwilioService
-      .sendSMS({
-        phone: decoded.phone,
-        message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
-      })
-      .catch((err) => {
-        new Logs({ message: err, method: 'saveErrorLogs' })
-      })
+    // const smsTwilioService = new TwilioSendSMS()
+    // await smsTwilioService
+    //   .sendSMS({
+    //     phone: decoded.phone,
+    //     message: `Hi ${name} ${last_name}!, welcome to Hopta. It's time to a new adventure.`
+    //   })
+    //   .catch((err) => {
+    //     new Logs({ message: err, method: 'saveErrorLogs' })
+    //   })
 
     responseHandler({
       res,
@@ -748,5 +816,170 @@ userRouter.post(
     })
   })
 )
+
+// User properties likes
+userRouter.post(
+  '/likes',
+  authMiddleware,
+  validateRequest(z.object({ propertyId: z.string() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { propertyId } = req.body
+
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'Property liked successfully'
+      })
+    } catch (error) {
+      throw new AppError('Error liking property', 500)
+    }
+  })
+)
+
+userRouter.get(
+  '/likes',
+  authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      responseHandler({
+        res,
+        code: 200,
+        data: {
+          likes: user?.favorites_properties
+        }
+      })
+    } catch (error) {
+      throw new AppError('Error getting likes', 500)
+    }
+  })
+)
+
+/**
+ * Delete the like of a property
+ */
+userRouter.delete(
+  '/likes',
+  authMiddleware,
+  validateRequest(z.object({ propertyId: z.string() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { propertyId } = req.body
+
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    try {
+      await userModel.updateOne({ _id: req.user?.userId as string }, { $pull: { favorites_properties: propertyId } })
+
+      responseHandler({
+        res,
+        code: 200,
+        message: 'Property unliked successfully'
+      })
+    } catch (error) {
+      throw new AppError('Error unliking property', 500)
+    }
+  })
+)
+
+// Admin endpoints
+
+/*
+/user
+Eliminar usuario
+Modificar usuario
+Mostrar todos los usuarios con paginacion
+Buscador de todos los usuarios
+*/
+
+userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndDelete(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200
+  })
+}))
+
+userRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const user = await userModel.create(req.body)
+  if (!user) throw new AppError('User not created', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject()
+  })
+}))
+
+userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 10
+  const sortBy = (req.query.sortBy as string) || 'created_at'
+  const order = (req.query.order as 'asc' | 'desc') || 'desc'
+
+  const users = await getPagination({
+    limit,
+    page,
+    Model: userModel,
+    sortBy,
+    order
+  })
+
+  if (!users) throw new AppError('Users not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: users
+  })
+}))
+
+userRouter.get('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+  const user = await userModel.findById(id)
+  if (!user) throw new AppError('User not found', 404)
+
+  responseHandler({
+    res,
+    code: 200,
+    data: user?.toObject(),
+    message: 'Your admin, role got user successfully'
+  })
+}))
 
 export default userRouter

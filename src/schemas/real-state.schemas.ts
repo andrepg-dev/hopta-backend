@@ -62,7 +62,7 @@ const realStateSchema = new mongoose.Schema(
       },
       interior_extras: {
         type: [String],
-        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', '24_7_security', 'garage', 'allowPets']
+        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', 'garage', 'allowPets']
       },
       exterior_extras: {
         type: [String],
@@ -74,13 +74,19 @@ const realStateSchema = new mongoose.Schema(
       },
       security: {
         type: [String],
-        enum: ['gated_community']
+        enum: ['gated_community', '24_7_security']
       }
     },
     additional_cost: {
       utilities_included: {
         type: [String],
-        enum: ['water', 'electricity', 'internet']
+        enum: ['water', 'electricity']
+      },
+      water: {
+        type: Number
+      },
+      electricity: {
+        type: Number
       }
     },
     owner: {
@@ -111,10 +117,10 @@ const realStateSchema = new mongoose.Schema(
             required: true,
             immutable: true
           },
-          visit_date: {
+          visit_date: [{
             type: Date,
             default: Date.now
-          },
+          }],
           comments: {
             type: String
           }

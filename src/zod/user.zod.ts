@@ -2,11 +2,10 @@ import z from 'zod'
 
 export const createUserSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.').max(120),
-  last_name: z.string().min(3, 'Last name must be at least 3 characters long.').max(120),
+  last_name: z.string().min(3, 'Last name must be at least 3 characters long.').max(120).optional(),
   contact: z
     .object({
       phone_number: z.string().min(6, 'Phone number must be at least 6 characters long.').max(40).optional(),
-      // is_phone_number_verified: z.boolean().default(false), // NOTE: Este campo se debe manejar desde el backend
       email_contact: z.string().email('Invalid email address.').max(120).optional()
     })
     .optional(),
@@ -41,21 +40,18 @@ export const createUserSchema = z.object({
     .optional(),
   personal_information: z
     .object({
-      identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.'),
+      identity_document: z.string().min(13, 'Identity document must be at least 13 characters long.').optional(),
       birth_date: z.string().datetime('Invalid date format.').optional(),
-      // email_verified: z.boolean().default(false), // NOTE: Este campo se debe manejar desde el backend
-      // phone_number_verified: z.boolean().default(false) // NOTE: Este campo se debe manejar desde el backend
     })
     .optional(),
   about: z
     .object({
-      work_experience: z.string().optional(),
-      education: z.string().optional(),
+      education: z.object({
+        university: z.string().optional(),
+        degree: z.string().optional(),
+        end_date: z.string().datetime('Invalid date format.').optional(),
+      }).optional(),
       description: z.string().optional(),
-      certifications: z.array(z.string()).optional(),
-      languages: z.array(z.string()).optional(),
-      favorite_song: z.string().optional(),
-      where_im_living: z.string().optional()
     })
     .optional()
 })

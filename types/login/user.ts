@@ -43,17 +43,17 @@ interface PersonalInformation {
 
 interface About {
   work_experience?: string
-  education?: string
+  education?: {
+    university?: string
+    degree?: string
+    end_date?: string
+  }
   description?: string
-  certifications?: string[]
-  languages?: string[]
-  favorite_song?: string
-  where_im_living?: string
 }
 
 export interface UserI {
   name: string
-  last_name: string
+  last_name?: string
   contact?: Contact
   email: string
   auth?: Auth
@@ -68,6 +68,7 @@ export interface UserI {
   personal_information?: PersonalInformation
   about?: About
   suscription?: mongoose.Types.ObjectId
+  role?: 'admin' | 'user'
 }
 
 export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | 'auth'> {
