@@ -1,13 +1,18 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend:21-09-2025",
+    "Name": "280428843881.dkr.ecr.us-east-2.amazonaws.com/hopta-backend:${GITHUB_SHA}",
     "Update": "true"
   },
   "Ports": [
+    { "ContainerPort": "80" },
+    { "ContainerPort": "443" }
+  ],
+  "Volumes": [
     {
-      "ContainerPort": "3001",
-      "HostPort": "3001"
+      "HostDirectory": "/opt/letsencrypt",
+      "ContainerDirectory": "/etc/letsencrypt"
     }
-  ]
+  ],
+  "Logging": "/var/log/nginx"
 }
