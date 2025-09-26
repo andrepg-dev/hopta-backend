@@ -27,11 +27,11 @@ COPY --from=builder /app/dist ./dist
 # Copiar el archivo .env de la build a producción, esto solo en modo desarrollo
 # COPY .env .
 
-COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
-
 # copiar script de entrypoint
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
+
+COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
 
 EXPOSE 80 443
 
