@@ -14,6 +14,8 @@ FROM node:20
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+
 # Copiar el package lock para instalar dependencias
 COPY package*.json .
 RUN npm install --production
@@ -26,6 +28,7 @@ COPY --from=builder /app/dist ./dist
 
 COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
 
-EXPOSE 3001
+EXPOSE 80
 
-CMD ["node", "dist/src/index.js"]
+CMD node dist/src/index.js & nginx -g "daemon off;"
+
