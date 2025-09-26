@@ -42,13 +42,16 @@ jobs:
               "Update": "true"
             },
             "Ports": [
+              { "ContainerPort": "80" },
+              { "ContainerPort": "443" }
+            ],
+            "Volumes": [
               {
-                "ContainerPort": "80"
-              },
-              {
-                "ContainerPort": "443"
+                "HostDirectory": "/opt/letsencrypt",
+                "ContainerDirectory": "/etc/letsencrypt"
               }
-            ]
+            ],
+            "Logging": "/var/log/nginx"
           }
           EOF
 
