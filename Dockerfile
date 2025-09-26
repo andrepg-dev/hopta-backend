@@ -30,7 +30,7 @@ COPY --from=builder /app/dist ./dist
 COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
 
 # copiar script de entrypoint
-COPY entrypoint.sh .
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x entrypoint.sh
 
 EXPOSE 80 443
