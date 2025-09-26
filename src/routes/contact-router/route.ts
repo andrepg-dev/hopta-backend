@@ -13,7 +13,6 @@ import { contactSchema } from '@/src/zod/contact-owner.zod'
 import { Request, Response, Router } from 'express'
 
 // First send email, and then send sms, because sending sms is not free
-
 const contactRouter = Router()
 
 // agregar validaciones con zod
@@ -40,7 +39,6 @@ contactRouter.post(
     if (accessToken) {
       decoded = TokenManager.verifyToken(accessToken) as UserJWT
     }
-
 
     // Send email
     if (ownerEmail) {
