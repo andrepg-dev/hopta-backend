@@ -14,7 +14,8 @@ FROM node:20
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y nginx certbot python3-certbot-nginx && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copiar el package lock para instalar dependencias
 COPY package*.json .
@@ -28,7 +29,10 @@ COPY --from=builder /app/dist ./dist
 
 COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
 
-EXPOSE 80
+# copiar script de entrypoint
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
-CMD node dist/src/index.js & nginx -g "daemon off;"
+EXPOSE 80 443
 
+ENTRYPOINT [ "/entrypoint.sh" ]

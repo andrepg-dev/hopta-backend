@@ -43,7 +43,10 @@ jobs:
             },
             "Ports": [
               {
-                "ContainerPort": "3001"
+                "ContainerPort": "80",
+              },
+              {
+                "ContainerPort": "443"
               }
             ]
           }
