@@ -24,9 +24,11 @@ COPY --from=builder /app/dist ./dist
 # Copiar configs de nginx
 COPY nginx/bootstrap.conf /app/nginx/bootstrap.conf
 COPY nginx/backend.conf   /app/nginx/backend.conf
+COPY nginx/options-ssl-nginx.conf /etc/letsencrypt/options-ssl-nginx.conf
 
 # Copiar script de entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
+
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 80 443
