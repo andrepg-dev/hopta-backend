@@ -2,11 +2,8 @@ FROM node:20 AS builder
 
 WORKDIR /app
 COPY package*.json ./ 
-
 RUN npm install
-
 COPY . .
-
 RUN npm run build
 
 # production
@@ -24,14 +21,13 @@ RUN npm install --production
 # Copiamos el dist del run anterior
 COPY --from=builder /app/dist ./dist
 
-# Copiar el archivo .env de la build a producción, esto solo en modo desarrollo
-# COPY .env .
+# Copiar configs de nginx
+COPY nginx/bootstrap.conf /app/nginx/bootstrap.conf
+COPY nginx/backend.conf   /app/nginx/backend.conf
 
-# copiar script de entrypoint
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
-
-COPY nginx/backend.conf /etc/nginx/conf.d/backend.conf
+# Copiar script de entrypoint
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 80 443
 
