@@ -39,6 +39,12 @@ if (process.env.NODE_ENV === 'production') {
 // Middlewares
 app.use(RATE_LIMIT)
 app.use(cors(CORS_OPTIONS))
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false
+  })
+)
 app.options('*', cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
@@ -63,7 +69,6 @@ app.use(
 app.use(passport.initialize())
 
 // Security middleware
-app.use(helmet())
 
 // app.set('trust proxy', true)
 

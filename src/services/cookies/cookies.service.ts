@@ -14,10 +14,10 @@ export class Cookies {
 
     this.baseOptions = {
       httpOnly: true,
-      secure: this.isProd,                      // HTTPS obligatorio en prod
-      sameSite: this.isProd ? 'none' : 'lax',   // 'none' permite subdominios / cross-site
+      secure: this.isProd, // HTTPS obligatorio en prod
+      sameSite: this.isProd ? 'none' : 'lax', // 'none' permite subdominios / cross-site
       domain: this.isProd ? '.hopta.hn' : undefined,
-      path: '/',                                // válido para todo el sitio
+      path: '/' // válido para todo el sitio
     }
   }
 
