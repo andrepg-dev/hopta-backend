@@ -15,5 +15,5 @@ export const CORS_OPTIONS = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true, // Permitir cookies y credenciales
   maxAge: 3600, // Almacenar en caché los resultados de CORS por 1 hora,,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }

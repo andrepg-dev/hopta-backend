@@ -909,77 +909,102 @@ Mostrar todos los usuarios con paginacion
 Buscador de todos los usuarios
 */
 
-userRouter.delete('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
-  const user = await userModel.findByIdAndDelete(id)
-  if (!user) throw new AppError('User not found', 404)
+userRouter.delete(
+  '/space/:id',
+  authMiddleware,
+  isAdmin,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    const user = await userModel.findByIdAndDelete(id)
+    if (!user) throw new AppError('User not found', 404)
 
-  responseHandler({
-    res,
-    code: 200
+    responseHandler({
+      res,
+      code: 200
+    })
   })
-}))
+)
 
-userRouter.patch('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
-  const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
-  if (!user) throw new AppError('User not found', 404)
+userRouter.patch(
+  '/space/:id',
+  authMiddleware,
+  isAdmin,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
+    if (!user) throw new AppError('User not found', 404)
 
-  responseHandler({
-    res,
-    code: 200,
-    data: user?.toObject()
+    responseHandler({
+      res,
+      code: 200,
+      data: user?.toObject()
+    })
   })
-}))
+)
 
-userRouter.post('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
-  const user = await userModel.create(req.body)
-  if (!user) throw new AppError('User not created', 404)
+userRouter.post(
+  '/space',
+  authMiddleware,
+  isAdmin,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await userModel.create(req.body)
+    if (!user) throw new AppError('User not created', 404)
 
-  responseHandler({
-    res,
-    code: 200,
-    data: user?.toObject()
+    responseHandler({
+      res,
+      code: 200,
+      data: user?.toObject()
+    })
   })
-}))
+)
 
-userRouter.get('/space', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1
-  const limit = parseInt(req.query.limit as string) || 10
-  const sortBy = (req.query.sortBy as string) || 'created_at'
-  const order = (req.query.order as 'asc' | 'desc') || 'desc'
+userRouter.get(
+  '/space',
+  authMiddleware,
+  isAdmin,
+  asyncHandler(async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const sortBy = (req.query.sortBy as string) || 'created_at'
+    const order = (req.query.order as 'asc' | 'desc') || 'desc'
 
-  const users = await getPagination({
-    limit,
-    page,
-    Model: userModel,
-    sortBy,
-    order
+    const users = await getPagination({
+      limit,
+      page,
+      Model: userModel,
+      sortBy,
+      order
+    })
+
+    if (!users) throw new AppError('Users not found', 404)
+
+    responseHandler({
+      res,
+      code: 200,
+      data: users
+    })
   })
+)
 
-  if (!users) throw new AppError('Users not found', 404)
+userRouter.get(
+  '/space/:id',
+  authMiddleware,
+  isAdmin,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    const user = await userModel.findById(id)
+    if (!user) throw new AppError('User not found', 404)
 
-  responseHandler({
-    res,
-    code: 200,
-    data: users
+    responseHandler({
+      res,
+      code: 200,
+      data: user?.toObject(),
+      message: 'Your admin, role got user successfully'
+    })
   })
-}))
-
-userRouter.get('/space/:id', authMiddleware, isAdmin, asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
-  const user = await userModel.findById(id)
-  if (!user) throw new AppError('User not found', 404)
-
-  responseHandler({
-    res,
-    code: 200,
-    data: user?.toObject(),
-    message: 'Your admin, role got user successfully'
-  })
-}))
+)
 
 export default userRouter
