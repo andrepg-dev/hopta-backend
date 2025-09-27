@@ -67,5 +67,5 @@ jobs:
       - name: Update Elastic Beanstalk Environment
         run: |
           aws elasticbeanstalk update-environment \
-            --environment-name hopta-backend-official \
+            --environment-name hopta-backend-env \
             --version-label "build-${GITHUB_SHA}"
