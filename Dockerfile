@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 COPY package*.json .
 RUN npm install --production
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/nginx.conf
 
 # Copiamos el dist del run anterior
 COPY --from=builder /app/dist ./dist
