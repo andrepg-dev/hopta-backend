@@ -9,7 +9,7 @@ import Logs from '../logs/save-logs.service'
 
 const ses = new AWS.SES({ region: process.env.AWS_REGION })
 
-interface SendMailOptions extends nodemailer.SendMailOptions { }
+interface SendMailOptions extends nodemailer.SendMailOptions {}
 
 const templates = {
   verification_code: 'd-4c5c66eae47f47919e5d58f1b302539d',
@@ -20,7 +20,7 @@ const templates = {
 const templatesAmazonSES = {
   contact: 'hopta-contact',
   forgot_password: 'hopta-forgot-password',
-  verification_code: 'hopta-code-verification',
+  verification_code: 'hopta-code-verification-v2'
 }
 
 /**
@@ -163,7 +163,6 @@ class EmailServiceAmazonSESService {
       Source: process.env.AWS_FROM_EMAIL ?? ''
     }
 
-
     try {
       const result = await ses.sendEmail(params).promise()
       console.log(result)
@@ -216,7 +215,7 @@ export class EmailService {
       return this.amazonSESService.sendEmail({
         to: options.to,
         subject: options.subject ?? '',
-        html: options.html ?? '',
+        html: options.html ?? ''
       })
     }
 
