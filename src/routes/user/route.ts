@@ -31,6 +31,8 @@ userRouter.get(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
+    console.log({ req })
+
     const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
       throw new AppError('User not found', 400)
     })
