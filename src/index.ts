@@ -2,7 +2,6 @@ import { connectToDatabase } from '@/connection/connect'
 import { CONNECTIONS } from '@/constants/connection.constants'
 import { CORS_OPTIONS, RATE_LIMIT } from '@/constants/express-security.constants'
 import Logs from '@/src/services/logs/save-logs.service'
-import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
@@ -33,7 +32,7 @@ connectToDatabase()
 export const app = express()
 
 if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 2) // cloudflare + elb
+  app.set('trust proxy', 1) // cloudflare + elb
 }
 
 // Middlewares
@@ -47,8 +46,8 @@ app.use(
     crossOriginEmbedderPolicy: false
   })
 )
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 app.use(cookieParser())
 app.use(
   session({
@@ -56,22 +55,17 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días
+      maxAge: 1000 * 60 * 60 * 24 * 30,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // HTTPS obligatorio en prod
+      secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.hopta.hn' : undefined, // comparte entre subdominios
+      domain: process.env.NODE_ENV === 'production' ? '.hopta.hn' : undefined,
       path: '/'
     }
   })
 )
 
-// Initialize Passport
 app.use(passport.initialize())
-
-// Security middleware
-
-// app.set('trust proxy', true)
 
 const port = CONNECTIONS.PORT
 
