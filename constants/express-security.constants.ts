@@ -14,6 +14,5 @@ export const CORS_OPTIONS = {
   origin: ['https://hopta.hn', 'https://www.hopta.hn', 'https://admin.hopta.hn', 'http://localhost:3005', 'http://localhost:3002'], // Permitir solo este origen
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true, // Permitir cookies y credenciales
-  maxAge: 3600, // Almacenar en caché los resultados de CORS por 1 hora,,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  maxAge: 3600
 }
