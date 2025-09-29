@@ -37,15 +37,16 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Middlewares
-app.use(RATE_LIMIT)
 app.use(cors(CORS_OPTIONS))
+app.options('*', cors(CORS_OPTIONS))
+
+app.use(RATE_LIMIT)
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false
   })
 )
-app.options('*', cors(CORS_OPTIONS))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -53,7 +54,7 @@ app.use(
   session({
     secret: process.env.GOOGLE_SECRET_KEY!,
     resave: false,
-    saveUninitialized: false, // ✅ evita sesiones vacías en BD
+    saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 días
       httpOnly: true,
