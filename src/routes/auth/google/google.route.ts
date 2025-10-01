@@ -12,24 +12,23 @@ googleRouter.get('/', (req, res, next) => {
 
   const authenticator = passport.authenticate('google', {
     scope: ['profile', 'email'],
-    state: callbackUrl as string,
-
+    state: callbackUrl as string
   })
 
   authenticator(req, res, next)
 })
 
-googleRouter.get('/callback',
-  passport.authenticate('google',
-    {
-      failureRedirect: 'https://www.hopta.hn/'
-    }),
+googleRouter.get(
+  '/callback',
+  passport.authenticate('google', {
+    failureRedirect: 'https://www.hopta.hn/'
+  }),
   async (req: any, res: Response) => {
     const user = req.user
     const callbackUrl = req.query.state as string
 
-    const URL_TO_REDIRECT = ["/user/dashboard", "/publicar-propiedad"]
-    const finalCallbackUrl = callbackUrl || "/user/dashboard" // default url
+    const URL_TO_REDIRECT = ['/user/dashboard', '/publicar-propiedad']
+    const finalCallbackUrl = callbackUrl || '/user/dashboard' // default url
 
     if (!URL_TO_REDIRECT.includes(finalCallbackUrl)) {
       throw new AppError('Invalid URL', 400)
@@ -48,6 +47,7 @@ googleRouter.get('/callback',
     cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
     return res.redirect(`${process.env.FRONTEND_URL}${finalCallbackUrl}`)
-  })
+  }
+)
 
 export default googleRouter
