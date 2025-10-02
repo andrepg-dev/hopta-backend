@@ -7,6 +7,7 @@ import { responseHandler } from '@/src/handlers/responseHandler'
 import { authMiddleware } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { pendingUserModel } from '@/src/schemas/pending-sms-user.schemas'
+import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
@@ -31,8 +32,6 @@ userRouter.get(
   '/',
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    console.log({ req })
-
     const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
       throw new AppError('User not found', 400)
     })
@@ -448,8 +447,6 @@ userRouter.post(
     phone = phone?.toString()
     code = code?.toString()
 
-    console.log(phone, code)
-
     if (!phone || !code) {
       throw new AppError('Phone and code are required', 400)
     }
@@ -734,8 +731,6 @@ userRouter.post(
     const cookies = new Cookies(req, res)
     const tempToken = cookies.getCookie('tempToken')
 
-    console.log({ tempToken, name, last_name })
-
     new Logs({ message: { tempToken, cookies, name, last_name } })
 
     if (!name || !last_name) {
@@ -747,8 +742,6 @@ userRouter.post(
     }
 
     const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
-
-    console.log({ decoded, phone: decoded.phone })
 
     if (!decoded.phone) {
       throw new AppError('Invalid token', 401)
@@ -825,16 +818,29 @@ userRouter.post(
   authMiddleware,
   validateRequest(z.object({ propertyId: z.string() })),
   asyncHandler(async (req: Request, res: Response) => {
-    const { propertyId } = req.body
+    const { propertyId } = req.body as { propertyId: string }
+
+    if (!propertyId)
+      return responseHandler({
+        res,
+        code: 404,
+        message: 'propertyId is required'
+      })
 
     const user = await userModel.findOne({ _id: req.user?.userId as string })
+    const property = await RealStateModel.findOne({ _id: propertyId })
 
+    console.log({ propertyId })
+    console.log(property)
+
+    if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
     if (!user) {
       throw new AppError('User not found', 404)
     }
 
     try {
       await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
+      await RealStateModel.updateOne({ _id: propertyId }, { $push: { saved_by: req.user?.userId } })
 
       responseHandler({
         res,
@@ -881,14 +887,25 @@ userRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const { propertyId } = req.body
 
-    const user = await userModel.findOne({ _id: req.user?.userId as string })
+    if (!propertyId) {
+      return responseHandler({
+        res,
+        code: 404,
+        message: 'propertyId is required'
+      })
+    }
 
+    const user = await userModel.findOne({ _id: req.user?.userId as string })
+    const property = await RealStateModel.findOne({ _id: propertyId })
+
+    if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
     if (!user) {
       throw new AppError('User not found', 404)
     }
 
     try {
       await userModel.updateOne({ _id: req.user?.userId as string }, { $pull: { favorites_properties: propertyId } })
+      await RealStateModel.updateOne({ _id: propertyId }, { $pull: { saved_by: req.user?.userId } })
 
       responseHandler({
         res,

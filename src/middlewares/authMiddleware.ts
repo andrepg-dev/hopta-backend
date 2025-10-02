@@ -11,7 +11,7 @@ export interface UserJWT {
 
 declare global {
   namespace Express {
-    interface User extends UserJWT { }
+    interface User extends UserJWT {}
   }
 }
 

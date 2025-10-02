@@ -184,6 +184,50 @@ RealStateRouter.get(
   })
 )
 
+// Likes given to the owner
+
+// Obtener mis propiedades
+// De mis propiedades, recorrer la propiedad saved_by, juntarlos todos y hacer la suma total de usuarios, y ademas mostrar a los usuarios que le dieron like
+
+// Objetivo, quiero la propiedad, y los usuarios que la guardaron
+RealStateRouter.get(
+  '/likes',
+  // authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = req.user
+
+    const myProperties = await RealStateModel.find({ owner: user?.userId }).select('_id title owner saved_by images')
+    const userInDB = await userModel.findById(user?.userId)
+
+    if (!myProperties) {
+      return responseHandler({
+        res,
+        code: 200,
+        message: "You don't have properties yet"
+      })
+    }
+
+    if (!userInDB) throw new AppError('User not found', 404)
+
+    const properties = myProperties.filter((value) => {
+      if (value) {
+        if (value.saved_by) {
+          return value.saved_by.length > 0
+        }
+      }
+
+      return null
+    })
+
+    return responseHandler({
+      res,
+      code: 200,
+      data: properties,
+      message: 'Properties with likes retrieved successfully'
+    })
+  })
+)
+
 RealStateRouter.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {

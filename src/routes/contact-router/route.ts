@@ -2,7 +2,7 @@ import { COOKIES } from '@/constants/cookies.constants'
 import asyncHandler from '@/src/actions/try-catch-async-handler'
 import { AppError } from '@/src/handlers/error-handler'
 import { responseHandler } from '@/src/handlers/responseHandler'
-import { UserJWT } from '@/src/middlewares/authMiddleware'
+import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
 import { validateRequest } from '@/src/middlewares/validate-request'
 import { contactModel } from '@/src/schemas/contact.schema'
 import { RealStateModel } from '@/src/schemas/real-state.schemas'
@@ -22,6 +22,21 @@ contactRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { email, name, phone, reason, comment, owner_id, property_id } = req.body
 
+    const accessToken = req.cookies[COOKIES.jwt_access_token.name]
+    let decoded: UserJWT | null = null
+
+    if (accessToken) {
+      decoded = TokenManager.verifyToken(accessToken) as UserJWT
+    }
+
+    if (owner_id === decoded?.userId) {
+      return responseHandler({
+        code: 200,
+        res,
+        message: 'You should not contact yourself, skip.'
+      })
+    }
+
     const userOwnerData = await userModel.findById(owner_id)
     const propertyData = await RealStateModel.findById(property_id)
 
@@ -32,9 +47,6 @@ contactRouter.post(
     const ownerEmail = userOwnerData?.contact?.email_contact || userOwnerData?.email
 
     if (!ownerEmail && !ownerPhoneNumber) throw new AppError('Owner email and phone number not found', 404)
-
-    const accessToken = req.cookies[COOKIES.jwt_access_token.name]
-    let decoded: UserJWT | null = null
 
     if (accessToken) {
       decoded = TokenManager.verifyToken(accessToken) as UserJWT
@@ -124,6 +136,23 @@ contactRouter.post(
       res,
       code: 200,
       message: 'Contact succesfully sent'
+    })
+  })
+)
+
+// Get the contacts maded
+contactRouter.get(
+  '/',
+  authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = req.user
+    if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
+    const contacts = await contactModel.find({ ownerId: user?.userId })
+
+    responseHandler({
+      code: 200,
+      res,
+      data: contacts
     })
   })
 )

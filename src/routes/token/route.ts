@@ -11,8 +11,6 @@ const tokenRouter = Router()
 tokenRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    console.log({ req })
-
     const token = req.cookies[COOKIES.jwt_refresh_token.name]
 
     if (!token) throw new AppError('Refresh token not found', 404)
