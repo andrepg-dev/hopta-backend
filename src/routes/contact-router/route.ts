@@ -15,6 +15,23 @@ import { Request, Response, Router } from 'express'
 // First send email, and then send sms, because sending sms is not free
 const contactRouter = Router()
 
+// Get the contacts maded
+contactRouter.get(
+  '/',
+  authMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = req.user
+    if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
+    const contacts = await contactModel.find({ ownerId: user?.userId })
+
+    responseHandler({
+      code: 200,
+      res,
+      data: contacts
+    })
+  })
+)
+
 // agregar validaciones con zod
 contactRouter.post(
   '/',
@@ -136,23 +153,6 @@ contactRouter.post(
       res,
       code: 200,
       message: 'Contact succesfully sent'
-    })
-  })
-)
-
-// Get the contacts maded
-contactRouter.get(
-  '/',
-  authMiddleware,
-  asyncHandler(async (req: Request, res: Response) => {
-    const user = req.user
-    if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
-    const contacts = await contactModel.find({ ownerId: user?.userId })
-
-    responseHandler({
-      code: 200,
-      res,
-      data: contacts
     })
   })
 )

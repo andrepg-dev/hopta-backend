@@ -192,7 +192,7 @@ RealStateRouter.get(
 // Objetivo, quiero la propiedad, y los usuarios que la guardaron
 RealStateRouter.get(
   '/likes',
-  // authMiddleware,
+  authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
 
@@ -219,10 +219,18 @@ RealStateRouter.get(
       return null
     })
 
+    let total = 0
+    for (let i = 0; i < properties.length; i++) {
+      if (properties[i]) {
+        const sum = properties[i]?.saved_by?.length || 0
+        total += sum
+      }
+    }
+
     return responseHandler({
       res,
       code: 200,
-      data: properties,
+      data: { properties, total_saved_by: total },
       message: 'Properties with likes retrieved successfully'
     })
   })
