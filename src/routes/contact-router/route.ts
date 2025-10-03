@@ -50,7 +50,7 @@ contactRouter.post(
       return responseHandler({
         code: 200,
         res,
-        message: 'You should not contact yourself, skip.'
+        message: 'You cannot contact yourself, skip.'
       })
     }
 
