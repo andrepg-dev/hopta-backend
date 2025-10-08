@@ -9,6 +9,7 @@ import { RealStateModel } from '@/src/schemas/real-state.schemas'
 import { userModel } from '@/src/schemas/user.schemas'
 import { EmailService } from '@/src/services/email/email.service'
 import { TokenManager } from '@/src/utils/JWT/tokens-manager'
+import { contactFormSchema } from '@/src/zod/contact-form.zod'
 import { contactSchema } from '@/src/zod/contact-owner.zod'
 import { Request, Response, Router } from 'express'
 
@@ -153,6 +154,42 @@ contactRouter.post(
       res,
       code: 200,
       message: 'Contact succesfully sent'
+    })
+  })
+)
+
+contactRouter.post(
+  '/contact-form',
+  validateRequest(contactFormSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { agency, name, phone } = req.body
+
+    if (!agency || !name || !phone) {
+      throw new AppError('Agency, name and phone are required', 400)
+    }
+
+    const emailService = new EmailService()
+
+    emailService.sendEmail({
+      to: {
+        email: 'asponceg@gmail.com',
+        name: 'Support'
+      },
+      provider: 'nodemailer',
+      subject: 'El usuario ' + name + ' ha contactado desde el formulario de contacto',
+      html: `
+      Fecha: ${new Date().toLocaleDateString()} <br>
+      Hora: ${new Date().toLocaleTimeString()} <br>
+      Agencia: ${agency || 'No proporcionado'} <br>
+      Teléfono: ${phone || 'No proporcionado'} <br>
+      Razón: ${'Quiero conocer mas información'} <br>
+      `
+    })
+
+    responseHandler({
+      res,
+      code: 200,
+      message: 'Email sent successfully'
     })
   })
 )
