@@ -539,13 +539,23 @@ RealStateRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
-    const property = await RealStateModel.findByIdAndDelete(id)
+
+    const property = await RealStateModel.findOne({ _id: id })
     if (!property) throw new AppError('Property not found', 404)
+
+    // @ts-expect-error: owner may not be in the TS type, but exists in the DB
+    const owner = await userModel.findById(property?.owner)
+    if (!owner) throw new AppError('Owner not found', 404)
+
+    // remove the property and the owner
+    await userModel.updateOne({ _id: owner._id }, { $pull: { properties: id } })
+    await RealStateModel.findByIdAndDelete(id)
 
     responseHandler({
       res,
       code: 200,
-      message: 'Your admin, role deleted property successfully'
+      message: 'Your admin, role deleted property successfully',
+      data: property
     })
   })
 )
