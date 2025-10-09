@@ -2,7 +2,7 @@ import validator from 'validator'
 import z from 'zod'
 
 export const contactFormSchema = z.object({
-  agency: z.string().min(3, 'Agency must be at least 3 characters long.').max(120),
+  agency: z.string().max(120).optional(),
   name: z.string().min(3, 'Name must be at least 3 characters long.').max(120),
   phone: z
     .string()
