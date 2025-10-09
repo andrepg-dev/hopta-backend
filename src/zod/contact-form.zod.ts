@@ -7,5 +7,6 @@ export const contactFormSchema = z.object({
   phone: z
     .string()
     .max(30)
-    .refine((v) => validator.isMobilePhone(v, 'any'), { message: 'invalid' })
+    .refine((v) => validator.isMobilePhone(v, 'any'), { message: 'invalid' }),
+  who_is_the_client: z.string().max(120).optional()
 })

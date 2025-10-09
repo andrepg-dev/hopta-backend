@@ -162,9 +162,9 @@ contactRouter.post(
   '/contact-form',
   validateRequest(contactFormSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { agency, name, phone } = req.body
+    const { agency, name, phone, who_is_the_client } = req.body
 
-    if (!agency || !name || !phone) {
+    if (!name || !phone) {
       throw new AppError('Agency, name and phone are required', 400)
     }
 
@@ -181,6 +181,7 @@ contactRouter.post(
       Fecha: ${new Date().toLocaleDateString()} <br>
       Hora: ${new Date().toLocaleTimeString()} <br>
       Agencia: ${agency || 'No proporcionado'} <br>
+      Quien es el cliente: ${who_is_the_client || 'No proporcionado'} <br>
       Teléfono: ${phone || 'No proporcionado'} <br>
       Razón: ${'Quiero conocer mas información'} <br>
       `
