@@ -243,6 +243,11 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+
+    // Verify if the property exists
+    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
+    if (!property) throw new AppError('Property not found', 404)
+
     const { modify } = req.query
 
     // Actualizar las visitas de una propiedad
@@ -253,6 +258,7 @@ RealStateRouter.get(
       decoded = TokenManager.verifyToken(accessToken) as UserJWT
     }
 
+    // <================== IF USER EXISTS, log in ==================>
     if (decoded && !modify) {
       // Buscar si el usuario ya existe en visitors
       const existingVisitor = await RealStateModel.findOne({
@@ -277,8 +283,7 @@ RealStateRouter.get(
             $push: {
               visitors: {
                 user: decoded.userId,
-                visit_date: [new Date()],
-                comments: null
+                visit_date: [new Date()]
               }
             },
             $inc: { 'stats.total_visits': 1 }
@@ -287,8 +292,39 @@ RealStateRouter.get(
       }
     }
 
-    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
-    if (!property) throw new AppError('Property not found', 404)
+    // <================== IF USER DON'T EXIST, write in the database with a different approach ==================>
+    if (!decoded) {
+      const existingAnonymousUser = await RealStateModel.findOne({
+        _id: id,
+        'visitors.user': req.ip
+      })
+
+      if (existingAnonymousUser) {
+        // Si el usuario ya existe, agregar nueva visita
+        await RealStateModel.updateOne(
+          { _id: id, 'visitors.user': req.ip },
+          {
+            $push: { 'visitors.$.visit_date': new Date() },
+            $inc: { 'stats.total_visits': 1 }
+          }
+        )
+      } else {
+        // Si es la primera visita del usuario, crear nueva entrada
+        await RealStateModel.updateOne(
+          { _id: id },
+          {
+            $push: {
+              visitors: {
+                user: req.ip,
+                visit_date: [new Date()]
+              }
+            },
+            $inc: { 'stats.total_visits': 1 }
+          }
+        )
+      }
+    }
+
     responseHandler({
       res,
       code: 200,

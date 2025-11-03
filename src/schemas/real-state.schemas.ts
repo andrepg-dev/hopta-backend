@@ -31,7 +31,7 @@ const realStateSchema = new mongoose.Schema(
           type: Number,
           required: true
         }
-      },
+      }
     },
     previous_payment_required: {
       type: Boolean,
@@ -112,15 +112,17 @@ const realStateSchema = new mongoose.Schema(
       type: [
         {
           user: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.Mixed,
             ref: 'User',
             required: true,
             immutable: true
           },
-          visit_date: [{
-            type: Date,
-            default: Date.now
-          }],
+          visit_date: [
+            {
+              type: Date,
+              default: Date.now
+            }
+          ],
           comments: {
             type: String
           }
@@ -209,6 +211,6 @@ realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
 
 realStateSchema.plugin(mongoosePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI { }
+interface RealStateDocument extends mongoose.Document, RealStateI {}
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)
