@@ -1,4 +1,3 @@
-import { create } from 'axios'
 import mongoose from 'mongoose'
 
 // i need to know who did send the message, the name, email, phone number of the client
@@ -8,8 +7,9 @@ import mongoose from 'mongoose'
 // need to know the owner id
 
 const contactSchema = new mongoose.Schema({
-  propertyId: {
-    type: String,
+  property: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RealState',
     required: true
   },
   ownerId: {
@@ -18,7 +18,8 @@ const contactSchema = new mongoose.Schema({
   },
   client: {
     id: {
-      type: mongoose.Schema.Types.ObjectId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     },
     name: {
       type: String,

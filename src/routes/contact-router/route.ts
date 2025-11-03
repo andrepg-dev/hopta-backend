@@ -23,7 +23,7 @@ contactRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
     if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
-    const contacts = await contactModel.find({ ownerId: user?.userId })
+    const contacts = await contactModel.find({ ownerId: user?.userId }).populate('client.id property', '')
 
     responseHandler({
       code: 200,

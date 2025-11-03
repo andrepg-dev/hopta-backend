@@ -128,9 +128,16 @@ class EmailServiceAmazonSESService {
         Destination: {
           ToAddresses: [to.email]
         },
-        // using amazon ses templates
+        // Using AWS SES TEMPLATES
         Template: templatesAmazonSES[template],
-        TemplateData: JSON.stringify(dynamicTemplateData)
+        TemplateData: JSON.stringify(dynamicTemplateData),
+        ConfigurationSetName: 'my-first-configuration-set',
+        Tags: [
+          {
+            Name: 'source',
+            Value: 'hopta-admin'
+          }
+        ]
       }
 
       try {

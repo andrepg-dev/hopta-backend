@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
+import { EmailService } from '../services/email/email.service'
 import Logs from '../services/logs/save-logs.service'
 
 export class AppError extends Error {
   /**
    * @description The status code of the error
    * @default 500
-   * 
+   *
    * Explanation of status codes:
    * 500: Internal server error
    * 400: Bad request
@@ -32,6 +33,19 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
   })
 
   if (statusCode == 500) {
+    if (process.env.NODE_ENV !== 'development') {
+      const email = new EmailService()
+      email.sendEmail({
+        provider: 'nodemailer',
+        to: {
+          email: 'asponceg@gmail.com',
+          name: 'André Ponce'
+        },
+        subject: 'ALERTA! Errores en producción activos! 🚨',
+        html: `El servidor está teniendo errores: <br>${err}</b>`
+      })
+    }
+
     res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
     return
   }
