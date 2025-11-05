@@ -26,7 +26,7 @@ export class VerificationCode {
       },
       subject: subject ?? 'Forgot password',
       html: html ?? `Your verification code is ${verificationCode}`,
-      provider: 'amazon-ses'
+      provider: 'resend'
     })
   }
 

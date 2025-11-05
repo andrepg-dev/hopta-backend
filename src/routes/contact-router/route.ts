@@ -79,7 +79,7 @@ contactRouter.post(
             email: ownerEmail,
             name: userOwnerData?.name
           },
-          provider: 'amazon-ses',
+          provider: 'resend',
           subject: `El usuario ${name} te ha contactado`,
           template: 'contact',
           dynamicTemplateData: {
@@ -107,7 +107,7 @@ contactRouter.post(
           email: 'asponceg@gmail.com',
           name: 'André Ponce'
         },
-        provider: 'amazon-ses',
+        provider: 'resend',
         subject: 'El usuario ' + name + ' ha contactado un propietario!!!!!',
         html: `
         Fecha: ${new Date().toLocaleDateString()} <br>

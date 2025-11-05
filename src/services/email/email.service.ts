@@ -5,6 +5,7 @@ import AWS from 'aws-sdk'
 import { SendEmailRequest } from 'aws-sdk/clients/ses'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
+import { Resend } from 'resend'
 import Logs from '../logs/save-logs.service'
 
 const ses = new AWS.SES({ region: process.env.AWS_REGION })
@@ -23,8 +24,79 @@ const templatesAmazonSES = {
   verification_code: 'hopta-code-verification-v2'
 }
 
+const resendTemplates = {
+  contact: '333b90c3-2bb9-46fa-8d13-bf2bc358e132',
+  forgot_password: 'bc6898c3-7945-4e13-930a-9203d4a4c131',
+  verification_code: 'f898ac5e-b489-4d9a-8f78-89fad6bf6e18'
+}
+
+class EmailServiceResend {
+  private resend: Resend
+
+  constructor() {
+    this.resend = new Resend(process.env.RESEND_API_KEY)
+  }
+
+  convertKeysOjectToUpperCase(object?: Record<string, string>) {
+    if (!object) return undefined
+
+    let entries = Object.entries(object)
+    let capsEntries = entries.map((entry) => [entry[0].toUpperCase(), entry[1]]) // ['KEY', value]
+    return Object.fromEntries(capsEntries) // [] => {}
+  }
+
+  async sendEmail({
+    to,
+    subject,
+    html,
+    template,
+    dynamicTemplateData
+  }: {
+    to: [string]
+    subject: string
+    html: string
+    template?: keyof typeof resendTemplates
+    dynamicTemplateData?: Record<string, string>
+  }) {
+    if (template) {
+      console.log({ variables: this.convertKeysOjectToUpperCase(dynamicTemplateData) })
+
+      return await this.resend.emails
+        .send({
+          from: `Hopta <${process.env.RESEND_FROM_EMAIL}>`,
+          to,
+          replyTo: 'admin@hopta.hn',
+          subject,
+          template: {
+            id: resendTemplates[template],
+            variables: this.convertKeysOjectToUpperCase(dynamicTemplateData)
+          }
+        })
+        .catch((err) => {
+          throw new AppError(`Error ${err}`, 500)
+        })
+    }
+
+    return await this.resend.emails
+      .send({
+        from: `Hopta <${process.env.RESEND_FROM_EMAIL}>`,
+        to,
+        replyTo: 'admin@hopta.hn',
+        subject,
+        html
+      })
+      .catch((err) => {
+        throw new AppError(`Error ${err}`, 500)
+      })
+  }
+}
+
 /**
- * Sendgrid service
+ * @deprecated
+ * Sendgrid service we need to pay to use this service, just 60 days for free trial
+ *
+ * @see https://sendgrid.com/
+ * @see https://sendgrid.com/pricing/
  */
 class EmailServiceSendGrid {
   constructor() {
@@ -43,7 +115,7 @@ class EmailServiceSendGrid {
 
       if (!template) {
         message = {
-          from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+          from: `Hopta <${process.env.SENDGRID_FROM_EMAIL}>`,
           to: { email: to.email, name: to.name ?? undefined },
           subject: subject,
           content: [
@@ -55,7 +127,7 @@ class EmailServiceSendGrid {
         }
       } else {
         message = {
-          from: { email: process.env.SENDGRID_FROM_EMAIL as string, name: process.env.SENDGRID_FROM_NAME as string },
+          from: `Hopta <${process.env.SENDGRID_FROM_EMAIL}>`,
           to: { email: to.email, name: to.name ?? undefined },
           templateId: templates[template],
           dynamicTemplateData
@@ -119,12 +191,17 @@ interface SendEmailAmazonSESOptions {
   dynamicTemplateData?: Record<string, string>
 }
 
+/**
+ * Amazon SES Service
+ * @deprecated
+ * This is not working
+ */
 class EmailServiceAmazonSESService {
   async sendEmail({ to, subject, html, template, dynamicTemplateData }: SendEmailAmazonSESOptions) {
     // Sending message with template
     if (template) {
       const params: AWS.SES.SendTemplatedEmailRequest = {
-        Source: process.env.AWS_FROM_EMAIL ?? '',
+        Source: `Hopta <${process.env.AWS_FROM_EMAIL}>`,
         Destination: {
           ToAddresses: [to.email]
         },
@@ -167,7 +244,7 @@ class EmailServiceAmazonSESService {
           Data: subject
         }
       },
-      Source: process.env.AWS_FROM_EMAIL ?? ''
+      Source: `Hopta <${process.env.AWS_FROM_EMAIL}>`
     }
 
     try {
@@ -189,24 +266,28 @@ export interface EmailServiceOptions {
   subject?: string
   html?: string
   dynamicTemplateData?: Record<string, string>
-  template?: keyof typeof templates | keyof typeof templatesAmazonSES
-  provider: 'sendgrid' | 'nodemailer' | 'amazon-ses'
+  template?: keyof typeof templates | keyof typeof templatesAmazonSES | undefined
+  provider: 'sendgrid' | 'nodemailer' | 'amazon-ses' | 'resend'
 }
 
-/**
- * Email service
- */
 export class EmailService {
   private sendGridService: EmailServiceSendGrid
   private nodeMailerService: EmailServiceNodeMailer
   private amazonSESService: EmailServiceAmazonSESService
+  private resendService: EmailServiceResend
 
   constructor() {
     this.sendGridService = new EmailServiceSendGrid()
     this.nodeMailerService = new EmailServiceNodeMailer()
     this.amazonSESService = new EmailServiceAmazonSESService()
+    this.resendService = new EmailServiceResend()
   }
 
+  /**
+   * Send email service
+   * @param options
+   * @returns
+   */
   async sendEmail(options: EmailServiceOptions) {
     if (options.provider == 'amazon-ses') {
       if (options.template) {
@@ -234,8 +315,29 @@ export class EmailService {
       }
     }
 
+    if (options.provider == 'resend') {
+      if (options.template) {
+        return this.resendService.sendEmail({
+          to: [options.to.email],
+          subject: options.subject ?? '',
+          html: options.html ?? '',
+          template: options.template,
+          dynamicTemplateData: options.dynamicTemplateData
+        })
+      }
+
+      // No template
+      if (!options.template) {
+        return this.resendService.sendEmail({
+          to: [options.to.email],
+          subject: options.subject ?? '',
+          html: options.html ?? ''
+        })
+      }
+    }
+
     return this.nodeMailerService.sendEmail({
-      from: envs.MAILER_EMAIL,
+      from: `Hopta <${envs.MAILER_EMAIL}>`,
       to: options.to.email,
       subject: options.subject,
       html: options.html

@@ -44,6 +44,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "playwright": "^1.50.0",
+    "resend": "^6.4.0",
     "response-time": "^2.3.3",
     "session": "^0.1.0",
     "sharp": "^0.33.5",

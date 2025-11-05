@@ -47,7 +47,7 @@ stripeWebhookRouter.post(
         try {
           await emailService.sendEmail({
             to: { email: user.email, name: user.name },
-            provider: 'amazon-ses',
+            provider: 'resend',
             subject: `Hola ${user.name}! Tu plan ha sido actualizado correctamente`,
             html: `
         <h1>Hola ${user.name}!</h1>
@@ -77,7 +77,7 @@ stripeWebhookRouter.post(
         try {
           await emailService.sendEmail({
             to: { email: user.email, name: user.name },
-            provider: 'amazon-ses',
+            provider: 'resend',
             subject: `Tu suscripción no pudo ser actualizada`,
             html: `
         <h3>Hola ${user.name}! Tu suscripción no pudo ser actualizada</h3>

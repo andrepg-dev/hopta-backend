@@ -126,8 +126,9 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
-      provider: 'amazon-ses',
+      provider: 'resend',
       template: 'verification_code',
+      subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${name}`,
         code: verificationCode,
@@ -553,8 +554,9 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'amazon-ses',
+      provider: 'resend',
       template: 'verification_code',
+      subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,
@@ -601,7 +603,7 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'amazon-ses',
+      provider: 'resend',
       template: 'forgot_password',
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -659,7 +661,7 @@ userRouter.post(
       },
       subject: 'Password updated successfully',
       html: `Your password has been updated successfully. You can now login with your new password.`,
-      provider: 'amazon-ses'
+      provider: 'resend'
     })
 
     responseHandler({
@@ -703,8 +705,9 @@ userRouter.post(
         email: userData.email,
         name: userData.userData.name
       },
-      provider: 'amazon-ses',
+      provider: 'resend',
       template: 'verification_code',
+      subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${user.name}`,
         code: verificationCode,

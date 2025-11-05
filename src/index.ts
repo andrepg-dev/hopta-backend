@@ -24,6 +24,10 @@ import suscribeRouter from './routes/suscribe/route'
 import tokenRouter from './routes/token/route'
 import userRouter from './routes/user/route'
 import stripeWebhookRouter from './routes/webhooks/stripe/payments.routes'
+import { verifyEnviroment } from './utils/check-enviroments-variables'
+
+// Check if all enviroments exists
+verifyEnviroment()
 
 // Database connection
 connectToDatabase()
@@ -32,7 +36,7 @@ connectToDatabase()
 export const app = express()
 
 if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1) // cloudflare + elb
+  app.set('trust proxy', 1) // CLOUDFLARE + ELB
 }
 
 // Middlewares
