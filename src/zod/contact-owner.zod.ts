@@ -9,5 +9,5 @@ export const contactSchema = z.object({
   reason: z.string().max(2000).min(5),
   comment: z.string().max(2000).optional(),
   owner_id: ObjectIdSchema,
-  property_id: ObjectIdSchema
+  property: ObjectIdSchema
 })

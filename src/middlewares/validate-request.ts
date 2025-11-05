@@ -15,9 +15,8 @@ export const validateRequest = (schema: z.ZodSchema) => (req: Request, res: Resp
       }))
 
       // Crear un mensaje de error más legible
-      const errorMessages = formattedErrors.map(err => `${err.field}: ${err.message}`).join(', ')
-
-      throw new AppError(`Error de validación: ${errorMessages}`, 400)
+      const errorMessages = formattedErrors.map((err) => `${err.field}: ${err.message}`).join(', ')
+      throw new AppError(`zod validation error: ${errorMessages}`, 400)
     }
 
     next(error)

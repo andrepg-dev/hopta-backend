@@ -423,7 +423,7 @@ RealStateRouter.post(
       // Si es un error de validación de Mongoose
       if (error.name === 'ValidationError') {
         const validationErrors = Object.values(error.errors).map((err: any) => err.message)
-        throw new AppError(`Error de validación: ${validationErrors.join(', ')}`, 400)
+        throw new AppError(`Validation error: ${validationErrors.join(', ')}`, 400)
       }
 
       // Si es un error de duplicación

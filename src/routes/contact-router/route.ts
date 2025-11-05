@@ -23,7 +23,12 @@ contactRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
     if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
-    const contacts = await contactModel.find({ ownerId: user?.userId }).populate('client.id property', '')
+    const contacts = await contactModel
+      .find({ ownerId: user?.userId })
+      .populate(
+        'client.id property',
+        'client.name client.last_name client.email client._id client.profile_picture client.contact.phone_number propertyId reason createdAt _id'
+      )
 
     responseHandler({
       code: 200,
@@ -33,12 +38,16 @@ contactRouter.get(
   })
 )
 
-// agregar validaciones con zod
+/**
+ * Client -> Owner of the property
+ */
 contactRouter.post(
   '/',
   validateRequest(contactSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, name, phone, reason, comment, owner_id, property_id } = req.body
+    const { email, name, phone, reason, comment, owner_id, property: propertyId } = req.body
+
+    console.log(req.body)
 
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
     let decoded: UserJWT | null = null
@@ -56,7 +65,7 @@ contactRouter.post(
     }
 
     const userOwnerData = await userModel.findById(owner_id)
-    const propertyData = await RealStateModel.findById(property_id)
+    const propertyData = await RealStateModel.findById(propertyId)
 
     if (!propertyData) throw new AppError('Property not found', 404)
     if (!userOwnerData) throw new AppError('User not found', 404)
@@ -89,7 +98,7 @@ contactRouter.post(
             reason: reason || 'No proporcionado',
             comment: comment || 'No proporcionado',
             email: email || 'No proporcionado',
-            propertyId: property_id
+            propertyId: propertyId
           }
         })
 
@@ -135,7 +144,7 @@ contactRouter.post(
     // Guardar el contacto en la base de datos
     try {
       await contactModel.create({
-        propertyId: property_id,
+        property: propertyId,
         ownerId: owner_id,
         client: {
           name,
@@ -158,6 +167,15 @@ contactRouter.post(
   })
 )
 
+// <================== Manage user ==================>
+contactRouter.post(
+  '/manage-clients',
+  asyncHandler((req: Request, res: Response) => {
+    responseHandler({ res, code: 200 })
+  })
+)
+
+// <================== Dashboard contact form ==================>
 contactRouter.post(
   '/contact-form',
   validateRequest(contactFormSchema),
