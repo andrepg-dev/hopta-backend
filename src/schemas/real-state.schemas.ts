@@ -122,20 +122,24 @@ const realStateSchema = new mongoose.Schema(
               type: Date,
               default: Date.now
             }
-          ],
-          comments: {
-            type: String
-          }
+          ]
         }
       ],
       default: []
     },
     saved_by: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        immutable: true
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+          immutable: true
+        },
+        saved_at: {
+          type: Date,
+          default: Date.now,
+          immutable: true
+        }
       }
     ],
     stats: {

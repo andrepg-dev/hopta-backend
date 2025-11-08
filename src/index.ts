@@ -15,9 +15,10 @@ import googleRouter from './routes/auth/google/google.route'
 import s3UploadImageRouter from './routes/aws/s3/s3.route'
 import contactRouter from './routes/contact-router/route'
 import facebookRouter from './routes/facebook/facebook.route'
-import healthRouter from './routes/healt/route'
+import healthRouter from './routes/health/route'
 import realStateReportRouter from './routes/real-state-report/route'
 import RealStateRouter from './routes/real-state/route'
+import statsRouter from './routes/stats/stats.route'
 import stripeRouter from './routes/stripe/route'
 import supportRouter from './routes/support/route'
 import suscribeRouter from './routes/suscribe/route'
@@ -91,6 +92,7 @@ app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
 app.use('/contact', contactRouter)
 app.use('/ai', aiRouter)
+app.use('/stats', statsRouter)
 
 app.use(errorHandler)
 

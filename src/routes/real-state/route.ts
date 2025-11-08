@@ -184,12 +184,9 @@ RealStateRouter.get(
   })
 )
 
-// Likes given to the owner
-
-// Obtener mis propiedades
-// De mis propiedades, recorrer la propiedad saved_by, juntarlos todos y hacer la suma total de usuarios, y ademas mostrar a los usuarios que le dieron like
-
-// Objetivo, quiero la propiedad, y los usuarios que la guardaron
+/**
+ * This endpoint is used in the dashboard section from the frontend client.
+ */
 RealStateRouter.get(
   '/likes',
   authMiddleware,
@@ -198,7 +195,7 @@ RealStateRouter.get(
 
     const myProperties = await RealStateModel.find({ owner: user?.userId })
       .select('_id title owner saved_by images')
-      .populate('saved_by', 'name last_name profile_picture')
+      .populate('saved_by.user', 'name last_name profile_picture')
     const userInDB = await userModel.findById(user?.userId)
 
     if (!myProperties) {
@@ -365,28 +362,28 @@ RealStateRouter.post(
     const owner = req?.user?.userId
 
     if (!owner) {
-      throw new AppError('Usuario no autenticado', 401)
+      throw new AppError('Not authorized', 401)
     }
 
     const foundUser = await userModel.findById(owner)
     if (!foundUser) {
-      throw new AppError('Usuario no encontrado', 404)
+      throw new AppError('User not found', 404)
     }
 
     try {
       // Validar que las imágenes sean URLs válidas
       if (!images || images.length < 3) {
-        throw new AppError('Debes subir al menos 3 imágenes', 400)
+        throw new AppError('At least 3 images are required', 400)
       }
 
       // Validar que las coordenadas sean válidas
       if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
-        throw new AppError('Las coordenadas de ubicación son requeridas', 400)
+        throw new AppError('Location coordinates are required', 400)
       }
 
       // Validar que el precio sea positivo
       if (!price || price <= 0) {
-        throw new AppError('El precio debe ser mayor a 0', 400)
+        throw new AppError('Price must be greater than 0', 400)
       }
 
       const property = await RealStateModel.create({

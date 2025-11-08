@@ -91,7 +91,12 @@ export interface RealStateI {
   house_features: HouseFeatures
   house_status?: HouseStatus
   visitors?: Visitor[]
-  saved_by?: (string | Types.ObjectId)[]
+  saved_by?: [
+    {
+      user: string
+      saved_at: Date
+    }
+  ]
   stats?: Stats
   ratings?: Rating[]
   rating_summary?: RatingSummary

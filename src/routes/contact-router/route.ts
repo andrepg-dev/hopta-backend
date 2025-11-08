@@ -22,13 +22,10 @@ contactRouter.get(
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
-    if (!user?.userId) return responseHandler({ code: 404, res, message: 'You are not log in.' })
     const contacts = await contactModel
       .find({ ownerId: user?.userId })
-      .populate(
-        'client.id property',
-        'client.name client.last_name client.email client._id client.profile_picture client.contact.phone_number propertyId reason createdAt _id'
-      )
+      .populate('property', 'title images _id')
+      .populate('client.id', '_id name last_name email profile_picture')
 
     responseHandler({
       code: 200,
@@ -153,7 +150,8 @@ contactRouter.post(
           id: decoded?.userId ? decoded.userId : null
         },
         reason,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        comment
       })
     } catch (error) {
       throw new AppError('Error saving contact: ' + error, 500)

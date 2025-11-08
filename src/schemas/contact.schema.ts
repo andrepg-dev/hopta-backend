@@ -35,6 +35,9 @@ const contactSchema = new mongoose.Schema({
   reason: {
     type: String
   },
+  comment: {
+    type: String
+  },
   createdAt: {
     type: Date,
     default: Date.now

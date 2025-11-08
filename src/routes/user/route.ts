@@ -840,12 +840,12 @@ userRouter.post(
 
     try {
       await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
-      await RealStateModel.updateOne({ _id: propertyId }, { $push: { saved_by: req.user?.userId } })
+      await RealStateModel.updateOne({ _id: propertyId }, { $push: { saved_by: { user: req.user?.userId, saved_at: Date.now() } } })
 
       responseHandler({
         res,
         code: 200,
-        message: 'Property liked successfully'
+        message: 'Property liked'
       })
     } catch (error) {
       throw new AppError('Error liking property', 500)
