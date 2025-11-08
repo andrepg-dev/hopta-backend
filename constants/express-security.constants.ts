@@ -10,7 +10,7 @@ export const RATE_LIMIT = rateLimit({
 })
 
 export const CORS_OPTIONS = {
-  origin: ['https://hopta.hn', 'https://www.hopta.hn', 'https://admin.hopta.hn', 'http://localhost:3005', 'http://localhost:3002'],
+  origin: ['https://hopta.hn', 'https://www.hopta.hn', 'https://admin.hopta.hn', 'http://localhost:3005', 'http://localhost:3002', 'https://development.hopta.hn'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
   maxAge: 3600

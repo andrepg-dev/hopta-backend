@@ -833,9 +833,6 @@ userRouter.post(
     const user = await userModel.findOne({ _id: req.user?.userId as string })
     const property = await RealStateModel.findOne({ _id: propertyId })
 
-    console.log({ propertyId })
-    console.log(property)
-
     if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
     if (!user) {
       throw new AppError('User not found', 404)

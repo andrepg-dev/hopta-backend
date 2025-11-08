@@ -260,6 +260,8 @@ RealStateRouter.get(
 
     // <================== IF USER EXISTS, log in ==================>
     if (decoded && !modify) {
+      console.log('El usuario si existe, está logueado')
+
       // Buscar si el usuario ya existe en visitors
       const existingVisitor = await RealStateModel.findOne({
         _id: id,
@@ -276,6 +278,8 @@ RealStateRouter.get(
           }
         )
       } else {
+        console.log('Está logueado pero no ha visitado nada')
+
         // Si es la primera visita del usuario, crear nueva entrada
         await RealStateModel.updateOne(
           { _id: id },
@@ -300,6 +304,8 @@ RealStateRouter.get(
       })
 
       if (existingAnonymousUser) {
+        console.log('El usuario ya existe en visitors por IP:', req.ip)
+
         // Si el usuario ya existe, agregar nueva visita
         await RealStateModel.updateOne(
           { _id: id, 'visitors.user': req.ip },
@@ -309,6 +315,8 @@ RealStateRouter.get(
           }
         )
       } else {
+        console.log('El usuario no existe en visitors por IP:', req.ip)
+
         // Si es la primera visita del usuario, crear nueva entrada
         await RealStateModel.updateOne(
           { _id: id },
