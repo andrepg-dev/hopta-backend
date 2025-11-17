@@ -181,6 +181,6 @@ userSchema.pre('save', function (next) {
 
 userSchema.plugin(mongoosePaginate)
 
-export interface UserDocument extends mongoose.Document, UserI { }
+export interface UserDocument extends mongoose.Document, UserI {}
 
 export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)

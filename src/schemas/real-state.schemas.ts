@@ -1,3 +1,4 @@
+import { PROPERTY_TYPE } from '@/constants/real-state/property_type'
 import Logs from '@/src/services/logs/save-logs.service'
 import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
 import mongoose, { model } from 'mongoose'
@@ -12,6 +13,14 @@ const realStateSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true
+    },
+    property_type: {
+      type: String,
+      enum: PROPERTY_TYPE,
+      required: true
+    },
+    one_month_upfront: {
+      type: Boolean
     },
     images: {
       type: [String],
@@ -32,10 +41,6 @@ const realStateSchema = new mongoose.Schema(
           required: true
         }
       }
-    },
-    previous_payment_required: {
-      type: Boolean,
-      default: false
     },
     square_meters: {
       type: Number

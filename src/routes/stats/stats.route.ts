@@ -59,7 +59,7 @@ statsRouter.get(
     const likes = getLikes(properties)
 
     // <================== Leads ==================>
-    const leadsVisits = leads.map((value) => value.createdAt)
+    const leadsContactDate = leads.map((value) => value.createdAt)
 
     // <================== Views system ==================>
     const visits = getVisits(properties)
@@ -67,12 +67,21 @@ statsRouter.get(
     responseHandler({
       res,
       code: 200,
-      data: { visits, leads: leadsVisits, likes, count: { visits: visits.length, leads: leadsVisits.length, likes: likes.length }, from, to }
+      data: {
+        visits,
+        leads: leadsContactDate,
+        likes,
+        count: { visits: visits.length, leads: leadsContactDate.length, likes: likes.length },
+        visitsWithFormat: getVisistsWithFormat(visits),
+        from,
+        to,
+        properties
+      }
     })
   })
 )
 
-function getLikes(properties: any) {
+export function getLikes(properties: any) {
   const visits = properties.map((property: any) => {
     return property.saved_by
   }) as any
@@ -87,20 +96,55 @@ function getLikes(properties: any) {
   return dates.filter(Boolean)
 }
 
-function getVisits(properties: any) {
-  const visits = properties.map((property: any) => {
-    return property.visitors
-  })
+export function getVisistsWithFormat(visits: Array<string | Date>) {
+  const map: Record<string, { date: string; count: number }> = {}
 
-  let result = []
+  for (const iso of visits) {
+    const dateString = iso instanceof Date ? iso.toISOString() : String(iso)
+    const date = dateString.split('T')[0] as keyof typeof map
+
+    if (!map[date]) {
+      map[date] = { date, count: 0 }
+    }
+
+    map[date].count++
+  }
+
+  const result = Object.values(map)
+  return result
+}
+
+/**
+ * Array of visits with dates
+ *
+ * Takes all the properties, and return an array of dates, you can set only one propertie or an array of properties
+ *
+ * @param properties
+ *
+ * @returns ["xxxx-xx-xx", "xxxx-xx-xx"]
+ */
+export function getVisits(properties: any) {
+  let visits = []
+
+  if (Array.isArray(properties)) {
+    visits = properties.map((property: any) => {
+      return property.visitors
+    })
+  } else {
+    visits = properties.visitors
+  }
+
+  let result: any[] = []
   for (let i = 0; i < visits.length; i++) {
-    for (let j = 0; j < visits.length; j++) {
-      if (visits[j] === undefined) continue
-      result = visits[j]?.map((value: any) => value.visit_date).flat() as any[]
+    if (visits[i] === undefined) continue
+    if (Array.isArray(visits[i])) {
+      result.push(visits[i]?.map((value: any) => value.visit_date).flat())
+    } else {
+      result = visits?.map((value: any) => value.visit_date).flat() as any[]
     }
   }
 
-  return result.filter(Boolean)
+  return Array.isArray(result) ? result.flat().filter(Boolean) : []
 }
 
 export default statsRouter

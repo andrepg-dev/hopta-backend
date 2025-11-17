@@ -356,7 +356,8 @@ RealStateRouter.post(
       currency,
       population,
       additional_cost,
-      previous_payment_required
+      one_month_upfront,
+      property_type
     } = body
 
     const owner = req?.user?.userId
@@ -404,7 +405,8 @@ RealStateRouter.post(
         saved_by: [],
         ratings: [],
         additional_cost: additional_cost || { utilities_included: [], water: null, electricity: null },
-        previous_payment_required: previous_payment_required || false
+        one_month_upfront,
+        property_type
       })
 
       // Actualizar el usuario con la nueva propiedad

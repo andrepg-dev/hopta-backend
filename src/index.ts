@@ -91,8 +91,8 @@ app.use('/reports', realStateReportRouter)
 app.use('/support', supportRouter)
 app.use('/suscribe', suscribeRouter)
 app.use('/contact', contactRouter)
-app.use('/ai', aiRouter)
 app.use('/stats', statsRouter)
+app.use('/ai', aiRouter)
 
 app.use(errorHandler)
 

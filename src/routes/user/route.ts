@@ -25,6 +25,7 @@ import { CreateUserI, UserI } from '@/types/login/user'
 import { NextFunction, Request, Response, Router } from 'express'
 import mongoose from 'mongoose'
 import { z } from 'zod'
+import { getVisistsWithFormat, getVisits } from '../stats/stats.route'
 
 const userRouter = Router()
 
@@ -1023,6 +1024,51 @@ userRouter.get(
       data: user?.toObject(),
       message: 'Your admin, role got user successfully'
     })
+  })
+)
+
+// <================== GET PROFILE INFORMATION ==================>
+userRouter.get(
+  '/:id/profile',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string }
+    if (!id) throw new AppError('error: id param cant be empty', 404)
+
+    const data = 'name last_name contact social_media about created_at properties contact reviews profile_picture'
+    const realStateData = 'title description images created_at visitors'
+    const user = await userModel.findById(id).select(data).populate({
+      path: 'properties',
+      select: realStateData
+    })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    // Convertir el documento de Mongoose a objeto plano
+    const userObj = user.toObject()
+    const { properties, ...rest } = userObj
+
+    if (properties && Array.isArray(properties)) {
+      // Convertir cada propiedad a objeto plano y agregar visitsDates
+      const propertiesWithVisits = properties.map((property: any) => {
+        const propertyObj = property.toObject ? property.toObject() : property
+        return {
+          ...propertyObj,
+          visitsDates: getVisits(propertyObj),
+          visistsWithFormat: getVisistsWithFormat(getVisits(propertyObj))
+        }
+      })
+
+      const userWithProperties = {
+        ...rest,
+        properties: propertiesWithVisits
+      }
+
+      return responseHandler({ res, code: 200, data: userWithProperties })
+    }
+
+    responseHandler({ res, code: 200, data: userObj })
   })
 )
 

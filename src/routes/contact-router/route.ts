@@ -121,7 +121,7 @@ contactRouter.post(
 
         Contacta por whatsapp al propietario: ${ownerPhoneNumber} <br>
 
-        Datos del dueño del alquiler: <br>
+        Datos del dueño de la propiedad: <br>
         Nombre: ${userOwnerData?.name} <br>
         Email: ${ownerEmail} <br>
         Teléfono: ${ownerPhoneNumber} <br> 
