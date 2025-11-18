@@ -478,8 +478,8 @@ userRouter.post(
 
     if (user) {
       // Generate access token and refresh token
-      const accessToken = TokenManager.accessToken({ payload: { userId: user._id as string } })
-      const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
+      const accessToken = TokenManager.accessToken({ payload: { userId: String(user._id) } })
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: String(user._id) } })
 
       // Save refresh token in cookies
       const cookies = new Cookies(req, res)
@@ -489,7 +489,7 @@ userRouter.post(
       cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
       // Save refresh token in database
-      await TokenManager.saveRefreshTokenInDB({ payload: { userId: user._id as string } })
+      await TokenManager.saveRefreshTokenInDB({ payload: { userId: String(user._id) } })
 
       const { auth: _, ...rest } = user.toObject()
 
