@@ -824,12 +824,13 @@ userRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { propertyId } = req.body as { propertyId: string }
 
-    if (!propertyId)
+    if (!propertyId) {
       return responseHandler({
         res,
         code: 404,
         message: 'propertyId is required'
       })
+    }
 
     const user = await userModel.findOne({ _id: req.user?.userId as string })
     const property = await RealStateModel.findOne({ _id: propertyId })
@@ -896,7 +897,9 @@ userRouter.delete(
       })
     }
 
-    const user = await userModel.findOne({ _id: req.user?.userId as string })
+    const userId = req?.user?.userId
+
+    const user = await userModel.findOne({ _id: userId })
     const property = await RealStateModel.findOne({ _id: propertyId })
 
     if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
@@ -905,8 +908,8 @@ userRouter.delete(
     }
 
     try {
-      await userModel.updateOne({ _id: req.user?.userId as string }, { $pull: { favorites_properties: propertyId } })
-      await RealStateModel.updateOne({ _id: propertyId }, { $pull: { saved_by: req.user?.userId } })
+      await userModel.updateOne({ _id: userId as string }, { $pull: { favorites_properties: propertyId } })
+      await RealStateModel.updateOne({ _id: propertyId }, { $pull: { saved_by: { user: userId } } })
 
       responseHandler({
         res,

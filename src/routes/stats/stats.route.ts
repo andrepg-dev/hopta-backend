@@ -36,7 +36,7 @@ statsRouter.get(
     const user = req.user
 
     const today = new Date()
-    const priorDate = new Date(new Date().setDate(today.getDate() - 35))
+    const priorDate = new Date(new Date().setDate(today.getDate() - 30))
 
     const { from = priorDate, to = today } = req.query as any
 
@@ -45,12 +45,7 @@ statsRouter.get(
 
     // Get from the database all the properties and leads of the owner
     const properties = await RealStateModel.find({
-      owner: user?.userId,
-      visitors: {
-        $elemMatch: {
-          visit_date: { $elemMatch: { $gte: fromDate, $lt: toDate } }
-        }
-      }
+      owner: user?.userId
     })
 
     const leads = await contactModel.find({ ownerId: user?.userId, createdAt: { $gte: fromDate, $lt: toDate } })
@@ -74,8 +69,7 @@ statsRouter.get(
         count: { visits: visits.length, leads: leadsContactDate.length, likes: likes.length },
         visitsWithFormat: getVisistsWithFormat(visits),
         from,
-        to,
-        properties
+        to
       }
     })
   })
@@ -88,12 +82,14 @@ export function getLikes(properties: any) {
 
   let dates = []
   for (let i = 0; i < visits.length; i++) {
-    dates = visits[i]?.map((value: any) => {
-      return value.saved_at
-    })
+    dates.push(
+      visits[i]?.map((value: any) => {
+        return value.saved_at
+      })
+    )
   }
 
-  return dates.filter(Boolean)
+  return dates.flat().filter(Boolean)
 }
 
 export function getVisistsWithFormat(visits: Array<string | Date>) {
@@ -144,7 +140,13 @@ export function getVisits(properties: any) {
     }
   }
 
-  return Array.isArray(result) ? result.flat().filter(Boolean) : []
+  return filterDates(Array.isArray(result) ? result.flat().filter(Boolean) : []).sort((a: any, b: any) => a - b)
+}
+
+function filterDates(dates: string[]) {
+  const to = new Date()
+  const from = new Date(new Date().setDate(to.getDate() - 30))
+  return dates.map((d) => new Date(d)).filter((dates) => dates <= to && dates >= from)
 }
 
 export default statsRouter
