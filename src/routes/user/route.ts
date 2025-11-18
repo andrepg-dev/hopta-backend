@@ -171,10 +171,10 @@ userRouter.post(
 
     if (userExists) {
       // Access token
-      const accessToken = TokenManager.accessToken({ payload: { userId: userExists._id as string } })
+      const accessToken = TokenManager.accessToken({ payload: { userId: String(userExists._id) } })
 
       // Refresh token
-      const refreshToken = TokenManager.refreshToken({ payload: { userId: userExists._id as string } })
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: String(userExists._id) } })
 
       // Save the refresh token in the cookies with the class name of Cookies
       const cookies = new Cookies(req, res)
@@ -183,7 +183,7 @@ userRouter.post(
       // Save the acces token in cookies
       cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
-      TokenManager.saveRefreshTokenInDB({ payload: { userId: userExists._id as string } })
+      TokenManager.saveRefreshTokenInDB({ payload: { userId: String(userExists._id) } })
 
       // Delete verification data from database
       await verificationCodeModel.deleteOne({ _id: verificationData._id })
