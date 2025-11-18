@@ -27,7 +27,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       throw new AppError('Refresh token expired', 401)
     }
 
-    console.log({ decoded })
     req.user = decoded as UserJWT
     next()
   } catch (error) {

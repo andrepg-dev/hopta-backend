@@ -44,8 +44,6 @@ contactRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { email, name, phone, reason, comment, owner_id, property: propertyId } = req.body
 
-    console.log(req.body)
-
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
     let decoded: UserJWT | null = null
 

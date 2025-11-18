@@ -410,8 +410,6 @@ userRouter.post(
       throw new AppError('Phone number is required', 400)
     }
 
-    console.log(isPhoneNumber(phone), phone)
-
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
       throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
