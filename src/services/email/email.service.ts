@@ -72,7 +72,7 @@ class EmailServiceResend {
             variables: this.convertKeysOjectToUpperCase(dynamicTemplateData)
           }
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           throw new AppError(`Error ${err}`, 500)
         })
     }
@@ -85,7 +85,7 @@ class EmailServiceResend {
         subject,
         html
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         throw new AppError(`Error ${err}`, 500)
       })
   }

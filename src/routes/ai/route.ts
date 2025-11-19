@@ -29,7 +29,6 @@ aiRouter.post('/generate-description', async (req, res) => {
       Connection: 'keep-alive'
     })
 
-
     res?.flushHeaders?.()
 
     // Función helper para enviar datos SSE
@@ -131,7 +130,6 @@ aiRouter.post('/generate-description', async (req, res) => {
     res.end()
   }
 })
-
 
 aiRouter.post('/generate-title', async (req, res) => {
   const { form } = req.body

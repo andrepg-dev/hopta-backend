@@ -216,10 +216,10 @@ userRouter.post(
     await verificationCodeModel.deleteOne({ _id: verificationData._id })
 
     // Access token
-    const accessToken = TokenManager.accessToken({ payload: { userId: userData._id as string } })
+    const accessToken = TokenManager.accessToken({ payload: { userId: String(userData._id) } })
 
     // Refresh token
-    const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: String(userData._id) } })
 
     // Save refresh token in cookies
     const cookies = new Cookies(req, res)
@@ -228,7 +228,7 @@ userRouter.post(
     // Save access token in cookies
     cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
-    TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
+    TokenManager.saveRefreshTokenInDB({ payload: { userId: String(userData._id) } })
 
     responseHandler({
       res,
@@ -269,10 +269,10 @@ userRouter.post(
     const { auth: _, ...userWithoutAuth } = userData
 
     // Access token
-    const token = TokenManager.accessToken({ payload: { userId: userData._id as string } })
+    const token = TokenManager.accessToken({ payload: { userId: String(userData._id) } })
 
     // Refresh token
-    const refreshToken = TokenManager.refreshToken({ payload: { userId: userData._id as string } })
+    const refreshToken = TokenManager.refreshToken({ payload: { userId: String(userData._id) } })
 
     // Save refresh token in cookies
     const cookies = new Cookies(req, res)
@@ -281,7 +281,7 @@ userRouter.post(
     // Save access token in cookies
     cookies.saveCookie(COOKIES.jwt_access_token.name, token)
 
-    TokenManager.saveRefreshTokenInDB({ payload: { userId: userData._id as string } })
+    TokenManager.saveRefreshTokenInDB({ payload: { userId: String(userData._id) } })
 
     responseHandler({
       res,
@@ -477,9 +477,12 @@ userRouter.post(
     const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
 
     if (user) {
+      type UserDoc = { _id: string }
+      const typedUser = user as UserDoc
+
       // Generate access token and refresh token
-      const accessToken = TokenManager.accessToken({ payload: { userId: String(user._id) } })
-      const refreshToken = TokenManager.refreshToken({ payload: { userId: String(user._id) } })
+      const accessToken = TokenManager.accessToken({ payload: { userId: typedUser } })
+      const refreshToken = TokenManager.refreshToken({ payload: { userId: typedUser } })
 
       // Save refresh token in cookies
       const cookies = new Cookies(req, res)
@@ -489,7 +492,7 @@ userRouter.post(
       cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
 
       // Save refresh token in database
-      await TokenManager.saveRefreshTokenInDB({ payload: { userId: String(user._id) } })
+      await TokenManager.saveRefreshTokenInDB({ payload: { userId: typedUser } })
 
       const { auth: _, ...rest } = user.toObject()
 
