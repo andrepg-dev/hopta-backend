@@ -22,6 +22,10 @@ const realStateSchema = new mongoose.Schema(
     one_month_upfront: {
       type: Boolean
     },
+    isAccepted: {
+      type: Boolean,
+      default: false
+    },
     images: {
       type: [String],
       required: true

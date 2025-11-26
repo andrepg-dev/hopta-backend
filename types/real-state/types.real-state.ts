@@ -85,6 +85,7 @@ export interface RealStateI {
   property_id: [String]
   property_type: 'rent_house' | 'rent_premises' | 'land' | 'sell_house'
   one_month_upfront: boolean
+  isAccepted: boolean
   location: Location
   square_meters?: number
   price: number

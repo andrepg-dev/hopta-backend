@@ -69,7 +69,6 @@ userRouter.post(
       profile_picture,
       properties,
       about
-      // TODO: Add birth date
     } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
