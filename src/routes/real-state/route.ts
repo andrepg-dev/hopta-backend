@@ -245,7 +245,7 @@ RealStateRouter.get(
     const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
     if (!property) throw new AppError('Property not found', 404)
 
-    const { modify } = req.query
+    const { isVisit } = req.query
 
     // Actualizar las visitas de una propiedad
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
@@ -256,8 +256,8 @@ RealStateRouter.get(
     }
 
     // <================== IF USER EXISTS, log in ==================>
-    if (decoded && !modify) {
-      console.log('El usuario si existe, está logueado')
+    if (decoded && isVisit) {
+      console.log('El usuario si existe, está logueado: ', decoded)
 
       // Buscar si el usuario ya existe en visitors
       const existingVisitor = await RealStateModel.findOne({
@@ -294,7 +294,7 @@ RealStateRouter.get(
     }
 
     // <================== IF USER DON'T EXIST, write in the database with a different approach ==================>
-    if (!decoded) {
+    if (!decoded && isVisit) {
       const existingAnonymousUser = await RealStateModel.findOne({
         _id: id,
         'visitors.user': req.ip
