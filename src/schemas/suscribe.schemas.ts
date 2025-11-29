@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 const suscribeSchema = new mongoose.Schema({
   email: {
@@ -14,6 +14,6 @@ const suscribeSchema = new mongoose.Schema({
   }
 })
 
-const suscribeModel = mongoose.model('Suscribe', suscribeSchema)
+const suscribeModel = mongoose.model("Suscribe", suscribeSchema)
 
 export default suscribeModel

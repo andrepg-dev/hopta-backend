@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import "dotenv/config"
 
 export const envs = {
   NODE_ENV: process.env.NODE_ENV as string,

@@ -4,7 +4,7 @@ import RandomIntUtils from "@/src/utils/random-int.utils"
 import { UserI } from "@/types/login/user"
 
 export class VerificationCode {
-  constructor() { }
+  constructor() {}
 
   static async SendGmailVerificationCode(email: string, user: UserI, subject?: string, html?: string) {
     const verificationCode = RandomIntUtils.randomInt()
@@ -24,9 +24,9 @@ export class VerificationCode {
         email: email.toLowerCase(),
         name: user.name
       },
-      subject: subject ?? 'Forgot password',
+      subject: subject ?? "Forgot password",
       html: html ?? `Your verification code is ${verificationCode}`,
-      provider: 'resend'
+      provider: "resend"
     })
   }
 

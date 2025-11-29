@@ -1,4 +1,4 @@
-import winston from 'winston'
+import winston from "winston"
 // import DailyRotateFile from 'winston-daily-rotate-file'
 
 class Logs {
@@ -14,23 +14,23 @@ class Logs {
   //   maxFiles: '14d'
   // }
 
-  constructor({ method, message = 'saveLogs' }: { method?: 'saveLogs' | 'saveErrorLogs'; message: any }) {
-    if (method === 'saveLogs') {
+  constructor({ method, message = "saveLogs" }: { method?: "saveLogs" | "saveErrorLogs"; message: any }) {
+    if (method === "saveLogs") {
       this.saveLogs().info(message)
-    } else if (method === 'saveErrorLogs') {
+    } else if (method === "saveErrorLogs") {
       this.saveLogs().error(message)
     }
   }
 
   private saveLogs() {
     return winston.createLogger({
-      level: 'info',
+      level: "info",
       format: winston.format.json(),
       transports: [
         // Console
         new winston.transports.Console({
           format: winston.format.combine(winston.format.colorize(), winston.format.simple())
-        }),
+        })
 
         // // Log in rotation
         // new DailyRotateFile({

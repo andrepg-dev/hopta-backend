@@ -1,16 +1,16 @@
-import { refreshTokenI } from '@/types/refresh-token/types'
-import mongoose from 'mongoose'
+import { refreshTokenI } from "@/types/refresh-token/types"
+import mongoose from "mongoose"
 
 const refreshToken = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true
   },
   token: {
     type: String,
     required: true,
-    expires: '7d'
+    expires: "7d"
   },
   expires: {
     type: Date,
@@ -30,4 +30,4 @@ const refreshToken = new mongoose.Schema({
   }
 })
 
-export const refreshTokenModel = mongoose.model<refreshTokenI>('RefreshToken', refreshToken)
+export const refreshTokenModel = mongoose.model<refreshTokenI>("RefreshToken", refreshToken)

@@ -1,17 +1,17 @@
-import Logs from '../services/logs/save-logs.service'
+import Logs from "../services/logs/save-logs.service"
 
 interface Pagination {
   page: number
   limit: number
   Model: any
   sortBy?: string
-  order?: 'asc' | 'desc'
+  order?: "asc" | "desc"
   filters?: Record<string, any>
 }
 
-export async function getPagination({ page, limit, Model, order = 'desc', sortBy = 'created_at', filters = {} }: Pagination) {
+export async function getPagination({ page, limit, Model, order = "desc", sortBy = "created_at", filters = {} }: Pagination) {
   try {
-    const sortOrder = order === 'desc' ? -1 : 1
+    const sortOrder = order === "desc" ? -1 : 1
 
     const options = {
       page,
@@ -23,7 +23,7 @@ export async function getPagination({ page, limit, Model, order = 'desc', sortBy
     return result
   } catch (error) {
     new Logs({
-      method: 'saveErrorLogs',
+      method: "saveErrorLogs",
       message: error
     })
   }

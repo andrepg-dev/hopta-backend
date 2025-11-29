@@ -9,13 +9,12 @@
  * @returns boolean indicating if the string is a valid phone number
  */
 
-
 export function isPhoneNumber(phone: string): boolean {
   // Remove any whitespace
-  const cleanPhone = phone.replace(/\s/g, '');
+  const cleanPhone = phone.replace(/\s/g, "")
 
   // Pattern that matches common phone number formats
-  const pattern = /^(\+\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}$/;
+  const pattern = /^(\+\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}$/
 
-  return pattern.test(cleanPhone);
+  return pattern.test(cleanPhone)
 }

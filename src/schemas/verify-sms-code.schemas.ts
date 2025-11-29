@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 const verificationSMSCodeSchema = new mongoose.Schema({
   phone: {
@@ -22,4 +22,4 @@ const verificationSMSCodeSchema = new mongoose.Schema({
 
 verificationSMSCodeSchema.index({ expires: 1 }, { expireAfterSeconds: 0 })
 
-export const verificationSMSCodeModel = mongoose.model('VerificationSMSCode', verificationSMSCodeSchema)
+export const verificationSMSCodeModel = mongoose.model("VerificationSMSCode", verificationSMSCodeSchema)

@@ -1,14 +1,14 @@
-import mongoose, { model } from 'mongoose'
+import mongoose, { model } from "mongoose"
 
 const realStateReportSchema = new mongoose.Schema({
   realStateId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'RealState',
+    ref: "RealState",
     required: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: false
   },
   createdAt: {
@@ -24,7 +24,7 @@ const realStateReportSchema = new mongoose.Schema({
     required: true
   },
   message: {
-    type: String,
+    type: String
   },
   resolved: {
     type: Boolean,
@@ -32,6 +32,6 @@ const realStateReportSchema = new mongoose.Schema({
   }
 })
 
-const RealStateReport = model('RealStateReport', realStateReportSchema)
+const RealStateReport = model("RealStateReport", realStateReportSchema)
 
 export default RealStateReport

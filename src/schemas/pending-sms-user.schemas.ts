@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 const pendingSmsUserSchema = new mongoose.Schema({
   phone: {
@@ -17,4 +17,4 @@ const pendingSmsUserSchema = new mongoose.Schema({
   }
 })
 
-export const pendingUserModel = mongoose.model('pending-sms-user', pendingSmsUserSchema)
+export const pendingUserModel = mongoose.model("pending-sms-user", pendingSmsUserSchema)

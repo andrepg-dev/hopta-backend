@@ -1,8 +1,8 @@
-import { PROPERTY_TYPE } from '@/constants/real-state/property_type'
-import Logs from '@/src/services/logs/save-logs.service'
-import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
-import mongoose, { model } from 'mongoose'
-import mongoosePaginate from 'mongoose-paginate-v2'
+import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
+import Logs from "@/src/services/logs/save-logs.service"
+import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
+import mongoose, { model } from "mongoose"
+import mongoosePaginate from "mongoose-paginate-v2"
 
 const realStateSchema = new mongoose.Schema(
   {
@@ -71,25 +71,25 @@ const realStateSchema = new mongoose.Schema(
       },
       interior_extras: {
         type: [String],
-        enum: ['water_tank', 'water_cistern', 'closets', 'furnished', 'air_conditioning', 'garage', 'allowPets']
+        enum: ["water_tank", "water_cistern", "closets", "furnished", "air_conditioning", "garage", "allowPets"]
       },
       exterior_extras: {
         type: [String],
-        enum: ['balcony', 'patio', 'terrace', 'garden', 'swimming_pool']
+        enum: ["balcony", "patio", "terrace", "garden", "swimming_pool"]
       },
       community_extras: {
         type: [String],
-        enum: ['gym', 'parks', 'schools', 'shopping_malls', 'supermarkets', 'elevator']
+        enum: ["gym", "parks", "schools", "shopping_malls", "supermarkets", "elevator"]
       },
       security: {
         type: [String],
-        enum: ['gated_community', '24_7_security']
+        enum: ["gated_community", "24_7_security"]
       }
     },
     additional_cost: {
       utilities_included: {
         type: [String],
-        enum: ['water', 'electricity']
+        enum: ["water", "electricity"]
       },
       water: {
         type: Number
@@ -100,7 +100,7 @@ const realStateSchema = new mongoose.Schema(
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       immutable: true
     },
@@ -122,7 +122,7 @@ const realStateSchema = new mongoose.Schema(
         {
           user: {
             type: mongoose.Schema.Types.Mixed,
-            ref: 'User',
+            ref: "User",
             required: true,
             immutable: true
           },
@@ -140,7 +140,7 @@ const realStateSchema = new mongoose.Schema(
       {
         user: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
+          ref: "User",
           required: true,
           immutable: true
         },
@@ -166,7 +166,7 @@ const realStateSchema = new mongoose.Schema(
         {
           user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: "User",
             required: true,
             immutable: true
           },
@@ -210,14 +210,14 @@ const realStateSchema = new mongoose.Schema(
   { versionKey: false }
 )
 
-realStateSchema.pre('save', function (next) {
+realStateSchema.pre("save", function (next) {
   this.updated_at = new Date()
   next()
 })
 
-realStateSchema.post('save', async function (doc: RealStateIWithOwner) {
+realStateSchema.post("save", async function (doc: RealStateIWithOwner) {
   new Logs({
-    method: 'saveLogs',
+    method: "saveLogs",
     message: `New property created: ${doc.title} at (${doc.location.coordinates.lat}, ${doc.location.coordinates.lng})`
   })
 })
@@ -226,4 +226,4 @@ realStateSchema.plugin(mongoosePaginate)
 
 interface RealStateDocument extends mongoose.Document, RealStateI {}
 
-export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>('RealState', realStateSchema)
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>("RealState", realStateSchema)

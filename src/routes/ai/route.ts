@@ -2,31 +2,31 @@
 // TODO: subir imágenes a la API de Anthropic
 // TODO: mostrar los datos de la ubicación a la API para que tenga los datos de la ubicación recolectada
 
-import { responseHandler } from '@/src/handlers/responseHandler'
-import Anthropic from '@anthropic-ai/sdk'
-import { Router } from 'express'
+import { responseHandler } from "@/src/handlers/responseHandler"
+import Anthropic from "@anthropic-ai/sdk"
+import { Router } from "express"
 const aiRouter = Router()
 
 const anthropic = new Anthropic({
-  apiKey: process.env['ANTHROPIC_API_KEY']
+  apiKey: process.env["ANTHROPIC_API_KEY"]
 })
 
-aiRouter.post('/generate-description', async (req, res) => {
+aiRouter.post("/generate-description", async (req, res) => {
   const { form } = req.body
 
-  const allowedOrigins = ['https://hopta.hn', 'https://www.hopta.hn', 'https://admin.hopta.hn', 'http://localhost:3005', 'http://localhost:3002']
+  const allowedOrigins = ["https://hopta.hn", "https://www.hopta.hn", "https://admin.hopta.hn", "http://localhost:3005", "http://localhost:3002"]
   const origin = req.headers.origin
 
   if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('access-control-allow-origin', origin)
+    res.setHeader("access-control-allow-origin", origin)
   }
 
   try {
     // Configurar headers para Server-Sent Events (SSE)
     res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive'
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive"
     })
 
     res?.flushHeaders?.()
@@ -38,14 +38,14 @@ aiRouter.post('/generate-description', async (req, res) => {
     }
 
     // Enviar evento de inicio
-    sendSSE('start', { message: 'Generando descripción...' })
+    sendSSE("start", { message: "Generando descripción..." })
 
     // Crear stream con Anthropic
     const stream = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: "claude-3-5-haiku-latest",
       messages: [
         {
-          role: 'assistant',
+          role: "assistant",
           content: `You are a professional assistant for generating real estate descriptions.
 
           Your task is:
@@ -74,7 +74,7 @@ aiRouter.post('/generate-description', async (req, res) => {
           `.trim()
         },
         {
-          role: 'user',
+          role: "user",
           content: `
           Property data (input):
             ${JSON.stringify(form)}
@@ -86,19 +86,19 @@ aiRouter.post('/generate-description', async (req, res) => {
       stream: true // Habilitar streaming
     })
 
-    let fullContent = ''
+    let fullContent = ""
 
     // Procesar el stream
     for await (const messageStreamEvent of stream) {
-      if (messageStreamEvent.type === 'content_block_delta') {
+      if (messageStreamEvent.type === "content_block_delta") {
         // Verificar si el delta tiene texto
-        if ('text' in messageStreamEvent.delta) {
+        if ("text" in messageStreamEvent.delta) {
           const deltaText = messageStreamEvent.delta.text
           if (deltaText) {
             fullContent += deltaText
 
             // Enviar cada chunk al frontend
-            sendSSE('chunk', {
+            sendSSE("chunk", {
               content: deltaText,
               fullContent: fullContent
             })
@@ -108,30 +108,30 @@ aiRouter.post('/generate-description', async (req, res) => {
     }
 
     // Enviar evento de finalización
-    sendSSE('complete', {
-      message: 'Descripción generada exitosamente',
+    sendSSE("complete", {
+      message: "Descripción generada exitosamente",
       finalContent: fullContent
     })
 
     // Cerrar la conexión
-    res.write('event: close\n')
+    res.write("event: close\n")
     res.end()
   } catch (error) {
-    console.error('Error en streaming:', error)
+    console.error("Error en streaming:", error)
 
     // Enviar error via SSE
-    res.write('event: error\n')
+    res.write("event: error\n")
     res.write(
       `data: ${JSON.stringify({
-        error: 'Error al generar la descripción',
-        details: error instanceof Error ? error.message : 'Error desconocido'
+        error: "Error al generar la descripción",
+        details: error instanceof Error ? error.message : "Error desconocido"
       })}\n\n`
     )
     res.end()
   }
 })
 
-aiRouter.post('/generate-title', async (req, res) => {
+aiRouter.post("/generate-title", async (req, res) => {
   const { form } = req.body
 
   try {
@@ -139,7 +139,7 @@ aiRouter.post('/generate-title', async (req, res) => {
       max_tokens: 900,
       messages: [
         {
-          role: 'assistant',
+          role: "assistant",
           content: `You are a professional assistant for generating real estate titles.
 
           Your task is:
@@ -159,14 +159,14 @@ aiRouter.post('/generate-title', async (req, res) => {
           `.trim()
         },
         {
-          role: 'user',
+          role: "user",
           content: `
           Property data (input):
             ${JSON.stringify(form)}
           `.trim()
         }
       ],
-      model: 'claude-3-5-haiku-latest'
+      model: "claude-3-5-haiku-latest"
     })
 
     responseHandler({
@@ -178,7 +178,7 @@ aiRouter.post('/generate-title', async (req, res) => {
     responseHandler({
       res,
       code: 500,
-      message: 'Title cannot be created'
+      message: "Title cannot be created"
     })
   }
 })

@@ -1,7 +1,7 @@
-import { client } from '@/constants/aws/s3/credential.constants'
-import { AppError } from '@/src/handlers/error-handler'
-import { IDeleteObjectParams } from '@/types/aws/s3.model'
-import { DeleteObjectCommand, S3ServiceException, waitUntilObjectNotExists } from '@aws-sdk/client-s3'
+import { client } from "@/constants/aws/s3/credential.constants"
+import { AppError } from "@/src/handlers/error-handler"
+import { IDeleteObjectParams } from "@/types/aws/s3.model"
+import { DeleteObjectCommand, S3ServiceException, waitUntilObjectNotExists } from "@aws-sdk/client-s3"
 
 export const deleteObject = async ({ bucketName, key, ...params }: IDeleteObjectParams) => {
   try {
@@ -17,7 +17,7 @@ export const deleteObject = async ({ bucketName, key, ...params }: IDeleteObject
     // a 204 response code.
     return `The object "${key}" from bucket "${bucketName}" was deleted, or it didn't exist.`
   } catch (caught) {
-    if (caught instanceof S3ServiceException && caught.name === 'NoSuchBucket') {
+    if (caught instanceof S3ServiceException && caught.name === "NoSuchBucket") {
       throw new AppError(`Error from S3 while deleting object from ${bucketName}. The bucket doesn't exist.`, 400)
     } else if (caught instanceof S3ServiceException) {
       throw new AppError(`Error from S3 while deleting object from ${bucketName}.  ${caught.name}: ${caught.message}`, 400)

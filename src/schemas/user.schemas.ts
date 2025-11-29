@@ -1,6 +1,6 @@
-import { UserI } from '@/types/login/user'
-import mongoose from 'mongoose'
-import mongoosePaginate from 'mongoose-paginate-v2'
+import { UserI } from "@/types/login/user"
+import mongoose from "mongoose"
+import mongoosePaginate from "mongoose-paginate-v2"
 
 // TODO: add if the user is married or not as optional
 
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     },
     suscription: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'subscription'
+      ref: "subscription"
     },
     auth: {
       local: {
@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema(
         {
           user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: "User",
             required: true
           },
           review: {
@@ -73,11 +73,11 @@ const userSchema = new mongoose.Schema(
     },
     properties: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'RealState'
+      ref: "RealState"
     },
     favorites_properties: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'RealState'
+      ref: "RealState"
     },
     profile_picture: {
       type: String,
@@ -85,7 +85,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v: string) {
           return /^https?:\/\/.+/i.test(v)
         },
-        message: 'Invalid URL format for profile picture'
+        message: "Invalid URL format for profile picture"
       }
     },
     location: {
@@ -112,7 +112,7 @@ const userSchema = new mongoose.Schema(
           validator: function (v: string) {
             return /^https?:\/\/(www\.)?facebook\.com\/.+/i.test(v)
           },
-          message: 'Invalid Facebook URL'
+          message: "Invalid Facebook URL"
         }
       },
       instagram: {
@@ -121,7 +121,7 @@ const userSchema = new mongoose.Schema(
           validator: function (v: string) {
             return /^https?:\/\/(www\.)?instagram\.com\/.+/i.test(v)
           },
-          message: 'Invalid Instagram URL'
+          message: "Invalid Instagram URL"
         }
       },
       twitter: {
@@ -130,7 +130,7 @@ const userSchema = new mongoose.Schema(
           validator: function (v: string) {
             return /^https?:\/\/(www\.)?twitter\.com\/.+/i.test(v)
           },
-          message: 'Invalid Twitter URL'
+          message: "Invalid Twitter URL"
         }
       }
     },
@@ -166,15 +166,15 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'user'],
-      default: 'user'
+      enum: ["admin", "user"],
+      default: "user"
     }
   },
   { versionKey: false }
 )
 
 // Middleware para actualizar `updated_at` automáticamente antes de guardar
-userSchema.pre('save', function (next) {
+userSchema.pre("save", function (next) {
   this.updated_at = new Date()
   next()
 })
@@ -183,4 +183,4 @@ userSchema.plugin(mongoosePaginate)
 
 export interface UserDocument extends mongoose.Document, UserI {}
 
-export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>('User', userSchema)
+export const userModel = mongoose.model<UserDocument, mongoose.PaginateModel<UserDocument>>("User", userSchema)

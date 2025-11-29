@@ -1,8 +1,8 @@
-import { AppError } from '@/src/handlers/error-handler'
-import { verificationSMSCodeModel } from '@/src/schemas/verify-sms-code.schemas'
-import RandomIntUtils from '@/src/utils/random-int.utils'
-import { formatPhone } from '@/src/utils/services/format-phone'
-import twilio, { Twilio } from 'twilio'
+import { AppError } from "@/src/handlers/error-handler"
+import { verificationSMSCodeModel } from "@/src/schemas/verify-sms-code.schemas"
+import RandomIntUtils from "@/src/utils/random-int.utils"
+import { formatPhone } from "@/src/utils/services/format-phone"
+import twilio, { Twilio } from "twilio"
 
 class TwilioSendSMSCodeService {
   protected client: Twilio
@@ -32,9 +32,9 @@ class TwilioSendSMSCodeService {
   }
 
   /**
-   * 
+   *
    * @description Verify if the code is valid using the database, after verification, we delete the code on the collection database and return a boolean
-   * 
+   *
    * @param phone
    * @param code
    * @returns boolean
@@ -45,11 +45,11 @@ class TwilioSendSMSCodeService {
     const verification = await verificationSMSCodeModel.findOne({ phone: formattedPhone, code })
 
     if (!verification) {
-      throw new AppError('Invalid or expired verification code', 400)
+      throw new AppError("Invalid or expired verification code", 400)
     }
 
     if (verification.expires < new Date()) {
-      throw new AppError('Verification code has expired', 400)
+      throw new AppError("Verification code has expired", 400)
     }
 
     // after verification, delete the code

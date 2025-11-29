@@ -1,4 +1,4 @@
-import { CronJob } from 'cron'
+import { CronJob } from "cron"
 
 interface createJobProps {
   cronTime: string

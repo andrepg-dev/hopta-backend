@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 interface Contact {
   phone_number?: string
@@ -68,10 +68,10 @@ export interface UserI {
   personal_information?: PersonalInformation
   about?: About
   suscription?: mongoose.Types.ObjectId
-  role?: 'admin' | 'user'
+  role?: "admin" | "user"
 }
 
-export interface CreateUserI extends Omit<UserI, 'created_at' | 'reviews' | 'auth'> {
+export interface CreateUserI extends Omit<UserI, "created_at" | "reviews" | "auth"> {
   email: string
   password: string
 }

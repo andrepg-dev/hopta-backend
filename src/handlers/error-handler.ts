@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from 'express'
-import { EmailService } from '../services/email/email.service'
-import Logs from '../services/logs/save-logs.service'
+import { NextFunction, Request, Response } from "express"
+import { EmailService } from "../services/email/email.service"
+import Logs from "../services/logs/save-logs.service"
 
 export class AppError extends Error {
   /**
@@ -25,28 +25,28 @@ export class AppError extends Error {
 
 export const errorHandler = (err: AppError, req: Request, res: Response, next: NextFunction) => {
   const statusCode = err.statusCode || 500
-  const message = err.message || 'Internal server error'
+  const message = err.message || "Internal server error"
 
   new Logs({
-    method: 'saveErrorLogs',
+    method: "saveErrorLogs",
     message: message
   })
 
   if (statusCode == 500) {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== "development") {
       const email = new EmailService()
       email.sendEmail({
-        provider: 'nodemailer',
+        provider: "nodemailer",
         to: {
-          email: 'asponceg@gmail.com',
-          name: 'André Ponce'
+          email: "asponceg@gmail.com",
+          name: "André Ponce"
         },
-        subject: 'ALERTA! Errores en producción activos! 🚨',
+        subject: "ALERTA! Errores en producción activos! 🚨",
         html: `El servidor está teniendo errores: <br>${err}</b>`
       })
     }
 
-    res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === 'development' ? message : 'Internal server error' })
+    res.status(statusCode).json({ success: false, error: process.env.NODE_ENV === "development" ? message : "Internal server error" })
     return
   }
 
