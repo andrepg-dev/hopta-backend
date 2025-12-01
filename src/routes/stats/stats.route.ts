@@ -4,27 +4,9 @@ import { authMiddleware } from "@/src/middlewares/authMiddleware"
 import { contactModel } from "@/src/schemas/contact.schema"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { Request, Response, Router } from "express"
+import mongoose from "mongoose"
 
 const statsRouter = Router()
-
-/*
-New structure of the saved_by
-
-
-"saved_by": [
-{
-"user": "68dcae9302b73ac239e19f8b",
-"saved_at": "2025-11-08T12:04:26.277Z",
-"_id": "690f31ca4896f31f2a767b2f"
-},
-{
-"user": "68de0e2a77c7df323a171add",
-"saved_at": "2025-11-08T12:09:48.014Z",
-"_id": "690f330c87813a2fb808bab8"
-}
-]
-
- */
 
 /**
  * Analitycs of the manager
@@ -36,38 +18,88 @@ statsRouter.get(
     const user = req.user
 
     const today = new Date()
-    const priorDate = new Date(new Date().setDate(today.getDate() - 30))
+    const prior = new Date(new Date().setDate(today.getDate() - 30))
 
-    const { from = priorDate, to = today } = req.query as any
+    const { from = prior, to = today } = req.query as any
 
-    const fromDate = new Date(from)
-    const toDate = new Date(to)
+    const newMongooseObjectId = new mongoose.Types.ObjectId(req.user?.userId)
 
-    // Get from the database all the properties and leads of the owner
-    const properties = await RealStateModel.find({
-      owner: user?.userId
-    }).select("saved_by visitors")
-
-    const leads = await contactModel.find({ ownerId: user?.userId, createdAt: { $gte: fromDate, $lt: toDate } })
-
-    // <================== Likes system ==================>
-    const likes = getLikes(properties)
+    // <================== Views & Likes system ==================>
+    const visits = await RealStateModel.aggregate([
+      {
+        $match: {
+          owner: newMongooseObjectId
+        }
+      },
+      {
+        $unwind: {
+          path: "$visitors"
+        }
+      },
+      {
+        $unwind:
+          /**
+           * path: Path to the array field.
+           * includeArrayIndex: Optional name for index.
+           * preserveNullAndEmptyArrays: Optional
+           *   toggle to unwind null and empty values.
+           */
+          {
+            path: "$visitors.visit_date"
+          }
+      },
+      {
+        $addFields:
+          /**
+           * newField: The new field name.
+           * expression: The new field expression.
+           */
+          {
+            visit_day: "$visitors.visit_date",
+            saved_by_count: {
+              $cond: {
+                if: {
+                  $isArray: "$saved_by"
+                },
+                then: {
+                  $size: "$saved_by"
+                },
+                else: 0
+              }
+            }
+          }
+      },
+      {
+        $group:
+          /**
+           * _id: The id of the group.
+           * fieldN: The first field name.
+           */
+          {
+            _id: "$title",
+            dates: {
+              $push: "$visit_day"
+            },
+            visits: {
+              $sum: 1
+            },
+            likes: {
+              $first: "$saved_by_count"
+            }
+          }
+      }
+    ]).exec()
 
     // <================== Leads ==================>
+    const leads = await contactModel.find({ ownerId: user?.userId, createdAt: { $gte: new Date(from), $lt: new Date(to) } })
     const leadsContactDate = leads.map((value) => value.createdAt)
-
-    // <================== Views system ==================>
-    const visits = getVisits(properties)
 
     responseHandler({
       res,
       code: 200,
       data: {
-        visits,
+        visits_and_likes: visits,
         leads: leadsContactDate,
-        likes,
-        count: { visits: visits.length, leads: leadsContactDate.length, likes: likes.length },
-        visitsWithFormat: getVisistsWithFormat(visits),
         from,
         to
       }
@@ -90,24 +122,6 @@ export function getLikes(properties: any) {
   }
 
   return dates.flat().filter(Boolean)
-}
-
-export function getVisistsWithFormat(visits: Array<string | Date>) {
-  const map: Record<string, { date: string; count: number }> = {}
-
-  for (const iso of visits) {
-    const dateString = iso instanceof Date ? iso.toISOString() : String(iso)
-    const date = dateString.split("T")[0] as keyof typeof map
-
-    if (!map[date]) {
-      map[date] = { date, count: 0 }
-    }
-
-    map[date].count++
-  }
-
-  const result = Object.values(map)
-  return result
 }
 
 /**
@@ -141,6 +155,24 @@ export function getVisits(properties: any) {
   }
 
   return filterDates(Array.isArray(result) ? result.flat().filter(Boolean) : []).sort((a: any, b: any) => a - b)
+}
+
+export function getVisistsWithFormat(visits: Array<string | Date>) {
+  const map: Record<string, { date: string; count: number }> = {}
+
+  for (const iso of visits) {
+    const dateString = iso instanceof Date ? iso.toISOString() : String(iso)
+    const date = dateString.split("T")[0] as keyof typeof map
+
+    if (!map[date]) {
+      map[date] = { date, count: 0 }
+    }
+
+    map[date].count++
+  }
+
+  const result = Object.values(map)
+  return result
 }
 
 function filterDates(dates: string[]) {
