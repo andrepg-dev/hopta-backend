@@ -200,6 +200,7 @@ RealStateRouter.get(
   })
 )
 
+let visitCount = 0
 RealStateRouter.get(
   "/:id",
   asyncHandler(async (req: Request, res: Response) => {
@@ -211,6 +212,9 @@ RealStateRouter.get(
     if (!property) throw new AppError("Property not found", 404)
 
     const { isVisit } = req.query
+
+    visitCount++
+    console.log("Visita del usuario número: ", visitCount)
 
     // Actualizar las visitas de una propiedad
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
@@ -224,7 +228,6 @@ RealStateRouter.get(
     if (decoded && isVisit) {
       console.log("El usuario si existe, está logueado: ", decoded)
 
-      // Buscar si el usuario ya existe en visitors
       const existingVisitor = await RealStateModel.findOne({
         _id: id,
         "visitors.user": decoded.userId
