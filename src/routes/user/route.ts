@@ -1,40 +1,40 @@
-import { COOKIES } from '@/constants/cookies.constants'
-import asyncHandler from '@/src/actions/try-catch-async-handler'
-import { getIpInfo } from '@/src/actions/user/ip-info'
-import { isAdmin } from '@/src/guards/isAdmin'
-import { AppError } from '@/src/handlers/error-handler'
-import { responseHandler } from '@/src/handlers/responseHandler'
-import { authMiddleware } from '@/src/middlewares/authMiddleware'
-import { validateRequest } from '@/src/middlewares/validate-request'
-import { pendingUserModel } from '@/src/schemas/pending-sms-user.schemas'
-import { RealStateModel } from '@/src/schemas/real-state.schemas'
-import { refreshTokenModel } from '@/src/schemas/refresh-token.schemas'
-import { userModel } from '@/src/schemas/user.schemas'
-import { verificationCodeModel } from '@/src/schemas/verification-code.schemas'
-import { hashCompare, hashGen } from '@/src/services/bcrypt/hash.service'
-import { Cookies } from '@/src/services/cookies/cookies.service'
-import { EmailService } from '@/src/services/email/email.service'
-import Logs from '@/src/services/logs/save-logs.service'
-import { SMSSender } from '@/src/services/messages-sender/sms.service'
-import { getPagination } from '@/src/utils/get-pagination.utils'
-import { isPhoneNumber } from '@/src/utils/is-phone-number.utils'
-import { TokenManager } from '@/src/utils/JWT/tokens-manager'
-import RandomIntUtils from '@/src/utils/random-int.utils'
-import { createUserSchema, isValidEmail, UserLoginSchema } from '@/src/zod/user.zod'
-import { CreateUserI, UserI } from '@/types/login/user'
-import { NextFunction, Request, Response, Router } from 'express'
-import mongoose from 'mongoose'
-import { z } from 'zod'
-import { getVisistsWithFormat, getVisits } from '../stats/stats.route'
+import { COOKIES } from "@/constants/cookies.constants"
+import asyncHandler from "@/src/actions/try-catch-async-handler"
+import { getIpInfo } from "@/src/actions/user/ip-info"
+import { isAdmin } from "@/src/guards/isAdmin"
+import { AppError } from "@/src/handlers/error-handler"
+import { responseHandler } from "@/src/handlers/responseHandler"
+import { authMiddleware } from "@/src/middlewares/authMiddleware"
+import { validateRequest } from "@/src/middlewares/validate-request"
+import { pendingUserModel } from "@/src/schemas/pending-sms-user.schemas"
+import { RealStateModel } from "@/src/schemas/real-state.schemas"
+import { refreshTokenModel } from "@/src/schemas/refresh-token.schemas"
+import { userModel } from "@/src/schemas/user.schemas"
+import { verificationCodeModel } from "@/src/schemas/verification-code.schemas"
+import { hashCompare, hashGen } from "@/src/services/bcrypt/hash.service"
+import { Cookies } from "@/src/services/cookies/cookies.service"
+import { EmailService } from "@/src/services/email/email.service"
+import Logs from "@/src/services/logs/save-logs.service"
+import { SMSSender } from "@/src/services/messages-sender/sms.service"
+import { getPagination } from "@/src/utils/get-pagination.utils"
+import { isPhoneNumber } from "@/src/utils/is-phone-number.utils"
+import { TokenManager } from "@/src/utils/JWT/tokens-manager"
+import RandomIntUtils from "@/src/utils/random-int.utils"
+import { createUserSchema, isValidEmail, UserLoginSchema } from "@/src/zod/user.zod"
+import { CreateUserI, UserI } from "@/types/login/user"
+import { NextFunction, Request, Response, Router } from "express"
+import mongoose from "mongoose"
+import { z } from "zod"
+import { getVisistsWithFormat, getVisits } from "../stats/stats.route"
 
 const userRouter = Router()
 
 userRouter.get(
-  '/',
+  "/",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
-      throw new AppError('User not found', 400)
+      throw new AppError("User not found", 400)
     })
     if (!user) return
 
@@ -53,7 +53,7 @@ userRouter.get(
 )
 
 userRouter.post(
-  '/register',
+  "/register",
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
     const {
@@ -69,21 +69,20 @@ userRouter.post(
       profile_picture,
       properties,
       about
-      // TODO: Add birth date
     } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
-      throw new AppError('Invalid identity document format. Must be 13 digits.', 400)
+      throw new AppError("Invalid identity document format. Must be 13 digits.", 400)
     }
 
     if (!password) {
-      throw new AppError('Password is required', 400)
+      throw new AppError("Password is required", 400)
     }
 
     // Check if user already exists
     const existingUser = await userModel.findOne({ email: email.toLowerCase() })
     if (existingUser) {
-      throw new AppError('User already exists', 409)
+      throw new AppError("User already exists", 409)
     }
 
     // Generate verification code
@@ -127,8 +126,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${name} ${last_name}`
       },
-      provider: 'resend',
-      template: 'verification_code',
+      provider: "resend",
+      template: "verification_code",
       subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${name}`,
@@ -140,7 +139,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Verification code sent, please check your email.',
+      message: "Verification code sent, please check your email.",
       data: {
         ip: await getIpInfo(req.ip)
       }
@@ -149,12 +148,12 @@ userRouter.post(
 )
 
 userRouter.post(
-  '/verify-email',
+  "/verify-email",
   asyncHandler(async (req: Request<{}, {}, { email: string; code: string }>, res: Response, next: NextFunction) => {
     const { email, code } = req.body
 
     if (!email || !code) {
-      throw new AppError('Email and code are required', 400)
+      throw new AppError("Email and code are required", 400)
     }
 
     const verificationData = await verificationCodeModel.findOne({
@@ -163,7 +162,7 @@ userRouter.post(
     })
 
     if (!verificationData) {
-      throw new AppError('Invalid or expired verification code', 400)
+      throw new AppError("Invalid or expired verification code", 400)
     }
 
     // verificar si el usuario está logueado
@@ -194,7 +193,7 @@ userRouter.post(
       responseHandler({
         res,
         code: 200,
-        message: 'User logged in successfully',
+        message: "User logged in successfully",
         data: {
           user: rest,
           ip: await getIpInfo(req.ip)
@@ -233,7 +232,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Email verified successfully',
+      message: "Email verified successfully",
       data: {
         user: rest,
         token: accessToken,
@@ -244,7 +243,7 @@ userRouter.post(
 )
 
 userRouter.post(
-  '/login',
+  "/login",
   validateRequest(UserLoginSchema),
   asyncHandler(async (req: Request<{}, {}, { email: string; password: string }>, res: Response, next: NextFunction) => {
     let { email, password } = req.body
@@ -256,13 +255,13 @@ userRouter.post(
       throw new AppError(err, 500)
     })
 
-    if (!user) throw new AppError('User not found', 404)
+    if (!user) throw new AppError("User not found", 404)
 
     const userPassword = user.auth?.local?.password
-    if (!userPassword) throw new AppError('User not registered with local authentication', 404)
+    if (!userPassword) throw new AppError("User not registered with local authentication", 404)
 
     const isPasswordValid = await hashCompare(password, userPassword)
-    if (!isPasswordValid) throw new AppError('Password or email incorrect', 404)
+    if (!isPasswordValid) throw new AppError("Password or email incorrect", 404)
 
     // Transfer only the necessary data
     const userData = user.toObject()
@@ -286,7 +285,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'User logged in successfully',
+      message: "User logged in successfully",
       data: {
         user: userWithoutAuth,
         token,
@@ -297,7 +296,7 @@ userRouter.post(
 )
 
 userRouter.post(
-  '/logout',
+  "/logout",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await refreshTokenModel.findOneAndDelete({ userId: req.user?.userId })
@@ -309,13 +308,13 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Logged out successfully'
+      message: "Logged out successfully"
     })
   })
 )
 
 userRouter.delete(
-  '/delete-account',
+  "/delete-account",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     await userModel.findOneAndDelete({ _id: req.user?.userId })
@@ -324,26 +323,26 @@ userRouter.delete(
     cookies.deleteCookie(COOKIES.jwt_refresh_token.name)
     cookies.deleteCookie(COOKIES.jwt_access_token.name)
 
-    res.json({ success: true, message: 'Account deleted successfully' })
+    res.json({ success: true, message: "Account deleted successfully" })
   })
 )
 
 userRouter.patch(
-  '/',
+  "/",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const body = req.body
 
     // Agregar validación de campos automáticos
     const blockedFields = [
-      'auth.sms.verified',
-      'contact.is_phone_number_verified',
-      'personal_information.email_verified',
-      'personal_information.phone_number_verified'
+      "auth.sms.verified",
+      "contact.is_phone_number_verified",
+      "personal_information.email_verified",
+      "personal_information.phone_number_verified"
     ]
 
     if (blockedFields.some((field) => body[field])) {
-      throw new AppError(`Cannot update automatic fields: ${blockedFields.join(', ')}`, 400)
+      throw new AppError(`Cannot update automatic fields: ${blockedFields.join(", ")}`, 400)
     }
 
     // Validar que el email no exista en otro usuario
@@ -354,7 +353,7 @@ userRouter.patch(
       })
 
       if (existingUserWithEmail) {
-        throw new AppError('El correo electrónico ya está en uso por otro usuario', 400)
+        throw new AppError("El correo electrónico ya está en uso por otro usuario", 400)
       }
     }
 
@@ -365,13 +364,13 @@ userRouter.patch(
         $and: [
           { _id: { $ne: req.user?.userId } },
           {
-            $or: [{ 'contact.phone_number': phoneNumber }, { 'auth.sms.phoneNumber': phoneNumber }, { 'auth.sms.phoneNumber': `+504${phoneNumber}` }]
+            $or: [{ "contact.phone_number": phoneNumber }, { "auth.sms.phoneNumber": phoneNumber }, { "auth.sms.phoneNumber": `+504${phoneNumber}` }]
           }
         ]
       })
 
       if (existingUserWithPhone) {
-        throw new AppError('El número de teléfono ya está en uso por otro usuario', 400)
+        throw new AppError("El número de teléfono ya está en uso por otro usuario", 400)
       }
     }
 
@@ -379,56 +378,56 @@ userRouter.patch(
       const user = await userModel.findOne({ _id: req.user?.userId })
 
       if (!user) {
-        throw new AppError('User not found', 404)
+        throw new AppError("User not found", 404)
       }
 
       await userModel.updateOne({ _id: req.user?.userId }, body)
 
       // Obtener los datos actualizados del usuario para devolverlos
-      const updatedUser = await userModel.findById(req.user?.userId).select('-auth.local.password')
+      const updatedUser = await userModel.findById(req.user?.userId).select("-auth.local.password")
 
       responseHandler({
         res,
         code: 200,
-        message: 'User updated successfully',
+        message: "User updated successfully",
         data: {
           user: updatedUser
         }
       })
     } catch (error) {
-      throw new AppError('Error updating user: ' + error, 500)
+      throw new AppError("Error updating user: " + error, 500)
     }
   })
 )
 
 userRouter.post(
-  '/register-sms',
+  "/register-sms",
   asyncHandler(async (req: Request, res: Response) => {
     const { phone } = req.body
 
     if (!phone) {
-      throw new AppError('Phone number is required', 400)
+      throw new AppError("Phone number is required", 400)
     }
 
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
-      throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+      throw new AppError("Invalid phone number format. Must be a valid international phone number.", 400)
     }
 
     // Send the SMS
     const smsTwilioService = new SMSSender()
     await smsTwilioService.sendSMSCode({ phone }).catch((err) => {
       new Logs({
-        method: 'saveErrorLogs',
+        method: "saveErrorLogs",
         message: err
       })
-      throw new AppError(`Error sending SMS`, 500)
+      throw new AppError(`Error sending SMS: ${JSON.stringify(err)}`, 500)
     })
 
     responseHandler({
       res,
       code: 200,
-      message: 'SMS sent successfully'
+      message: "SMS sent successfully"
     })
   })
 )
@@ -440,7 +439,7 @@ userRouter.post(
  * @param code
  */
 userRouter.post(
-  '/verify-sms',
+  "/verify-sms",
   asyncHandler(async (req: Request, res: Response) => {
     let { phone, code } = req.body
 
@@ -448,17 +447,17 @@ userRouter.post(
     code = code?.toString()
 
     if (!phone || !code) {
-      throw new AppError('Phone and code are required', 400)
+      throw new AppError("Phone and code are required", 400)
     }
 
     // Check if the code is a number and has 6 digits
     if (!/^\d{6}$/.test(code)) {
-      throw new AppError('Invalid code format.', 400)
+      throw new AppError("Invalid code format.", 400)
     }
 
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
-      throw new AppError('Invalid phone number format. Must be a valid international phone number.', 400)
+      throw new AppError("Invalid phone number format. Must be a valid international phone number.", 400)
     }
 
     // Check if the code is valid in the twilio collection database
@@ -466,7 +465,7 @@ userRouter.post(
     const isUserPhoneNumber = await smsTwilioService.verifySMSCode({ phone, code })
 
     if (!isUserPhoneNumber) {
-      throw new AppError('Invalid or expired verification code', 409)
+      throw new AppError("Invalid or expired verification code", 409)
     }
 
     /**
@@ -474,7 +473,7 @@ userRouter.post(
      * de usuarios, o si está registrandose, si está registrandose no tiene sentido
      * que vayas al endpoint de complete profile
      */
-    const user = await userModel.findOne({ 'auth.sms.phoneNumber': phone })
+    const user = await userModel.findOne({ "auth.sms.phoneNumber": phone })
 
     if (user) {
       type UserDoc = { _id: string }
@@ -499,7 +498,7 @@ userRouter.post(
       return responseHandler({
         res,
         code: 200,
-        message: 'Login successfully',
+        message: "Login successfully",
         data: {
           user: rest
         }
@@ -511,7 +510,7 @@ userRouter.post(
 
     // Save in cookies
     const cookies = new Cookies(req, res)
-    cookies.saveCookie('tempToken', tempToken)
+    cookies.saveCookie("tempToken", tempToken)
 
     // Save user in pending user to complete the profile
     await pendingUserModel.create({ phone })
@@ -519,7 +518,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Phone number verified successfully. Complete the profile with the next step to complete.'
+      message: "Phone number verified successfully. Complete the profile with the next step to complete."
     })
   })
 )
@@ -528,7 +527,7 @@ userRouter.post(
  * If user exists, we will send a verification code to the email
  */
 userRouter.post(
-  '/email-exists',
+  "/email-exists",
   validateRequest(isValidEmail),
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body
@@ -536,7 +535,7 @@ userRouter.post(
     const user = await userModel.findOne({ email: email.trim().toLowerCase() })
 
     if (!user) {
-      throw new AppError('Unregistered email', 404)
+      throw new AppError("Unregistered email", 404)
     }
 
     const verificationCode = RandomIntUtils.randomInt()
@@ -556,8 +555,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'resend',
-      template: 'verification_code',
+      provider: "resend",
+      template: "verification_code",
       subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -569,25 +568,25 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Email already exists'
+      message: "Email already exists"
     })
   })
 )
 
 userRouter.post(
-  '/forgot-password',
+  "/forgot-password",
   validateRequest(isValidEmail),
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body
 
     if (!email) {
-      throw new AppError('Email is required', 400)
+      throw new AppError("Email is required", 400)
     }
 
     const user = await userModel.findOne({ email })
 
     if (!user) {
-      throw new AppError('Unregistered email', 404)
+      throw new AppError("Unregistered email", 404)
     }
 
     const userData = {
@@ -605,8 +604,8 @@ userRouter.post(
         email: email.trim().toLowerCase(),
         name: `${user.name} ${user.last_name}`
       },
-      provider: 'resend',
-      template: 'forgot_password',
+      provider: "resend",
+      template: "forgot_password",
       dynamicTemplateData: {
         name: `${user.name}`,
         code: userData.code,
@@ -617,19 +616,19 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Verification code sent successfully'
+      message: "Verification code sent successfully"
     })
   })
 )
 
 // Verify forgotten password code
 userRouter.post(
-  '/verify-forgot-password',
+  "/verify-forgot-password",
   asyncHandler(async (req: Request, res: Response) => {
     const { email, code, password } = req.body
 
     if (!email || !code || !password) {
-      throw new AppError('Email, code and password are required', 400)
+      throw new AppError("Email, code and password are required", 400)
     }
 
     const verificationCode = await verificationCodeModel.findOne({
@@ -638,20 +637,20 @@ userRouter.post(
     })
 
     if (!verificationCode) {
-      throw new AppError('Invalid or expired verification code', 400)
+      throw new AppError("Invalid or expired verification code", 400)
     }
 
     const userData = verificationCode.userData
     await verificationCodeModel.deleteOne({ _id: verificationCode._id })
 
     if (!userData) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     // Hash the new password
     const hashedPassword = await hashGen(password)
 
-    await userModel.updateOne({ _id: userData._id }, { $set: { 'auth.local.password': hashedPassword } })
+    await userModel.updateOne({ _id: userData._id }, { $set: { "auth.local.password": hashedPassword } })
 
     // Send email to the user
     const emailService = new EmailService()
@@ -661,34 +660,34 @@ userRouter.post(
         email: userData.email,
         name: userData.name
       },
-      subject: 'Password updated successfully',
+      subject: "Password updated successfully",
       html: `Your password has been updated successfully. You can now login with your new password.`,
-      provider: 'resend'
+      provider: "resend"
     })
 
     responseHandler({
       res,
       code: 200,
-      message: 'Password updated successfully'
+      message: "Password updated successfully"
     })
   })
 )
 
 // Resend verification code
 userRouter.post(
-  '/resend-verification-code',
+  "/resend-verification-code",
   validateRequest(isValidEmail),
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body
 
     if (!email) {
-      throw new AppError('Email is required', 400)
+      throw new AppError("Email is required", 400)
     }
 
     const user = await userModel.findOne({ email })
 
     if (!user) {
-      throw new AppError('Unregistered email', 404)
+      throw new AppError("Unregistered email", 404)
     }
 
     const verificationCode = RandomIntUtils.randomInt()
@@ -707,8 +706,8 @@ userRouter.post(
         email: userData.email,
         name: userData.userData.name
       },
-      provider: 'resend',
-      template: 'verification_code',
+      provider: "resend",
+      template: "verification_code",
       subject: `Tu código para acceder a hopta.hn`,
       dynamicTemplateData: {
         name: `${user.name}`,
@@ -720,7 +719,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Verification code sent successfully'
+      message: "Verification code sent successfully"
     })
   })
 )
@@ -729,27 +728,27 @@ userRouter.post(
  * @description This function create the account via SMS
  */
 userRouter.post(
-  '/complete-profile',
+  "/complete-profile",
   asyncHandler(async (req: Request, res: Response) => {
     const { name, last_name } = req.body
 
     const cookies = new Cookies(req, res)
-    const tempToken = cookies.getCookie('tempToken')
+    const tempToken = cookies.getCookie("tempToken")
 
     new Logs({ message: { tempToken, cookies, name, last_name } })
 
     if (!name || !last_name) {
-      throw new AppError('name and last name are required', 400)
+      throw new AppError("name and last name are required", 400)
     }
 
     if (!tempToken) {
-      throw new AppError('Temporary authorization token required', 401)
+      throw new AppError("Temporary authorization token required", 401)
     }
 
     const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
 
     if (!decoded.phone) {
-      throw new AppError('Invalid token', 401)
+      throw new AppError("Invalid token", 401)
     }
 
     const pendingUser = await pendingUserModel.findOne({ phone: decoded.phone })
@@ -757,7 +756,7 @@ userRouter.post(
     new Logs({ message: pendingUser })
 
     if (!pendingUser) {
-      throw new AppError('Invalid or expired verification', 400)
+      throw new AppError("Invalid or expired verification", 400)
     }
 
     const user = await userModel
@@ -776,11 +775,11 @@ userRouter.post(
         }
       })
       .catch((err) => {
-        throw new AppError('Error creating user: ' + err, 500)
+        throw new AppError("Error creating user: " + err, 500)
       })
 
     await pendingUserModel.deleteOne({ _id: pendingUser._id }).catch(() => {
-      console.error('Error deleting pending user line -> 713 file user/route.ts')
+      console.error("Error deleting pending user line -> 713 file user/route.ts")
     })
 
     const accessToken = TokenManager.accessToken({ payload: { userId: user._id } })
@@ -809,7 +808,7 @@ userRouter.post(
     responseHandler({
       res,
       code: 200,
-      message: 'Profile completed successfully',
+      message: "Profile completed successfully",
       data: {
         user: userWithoutAuth
       }
@@ -819,7 +818,7 @@ userRouter.post(
 
 // User properties likes
 userRouter.post(
-  '/likes',
+  "/likes",
   authMiddleware,
   validateRequest(z.object({ propertyId: z.string() })),
   asyncHandler(async (req: Request, res: Response) => {
@@ -829,16 +828,16 @@ userRouter.post(
       return responseHandler({
         res,
         code: 404,
-        message: 'propertyId is required'
+        message: "propertyId is required"
       })
     }
 
     const user = await userModel.findOne({ _id: req.user?.userId as string })
     const property = await RealStateModel.findOne({ _id: propertyId })
 
-    if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
+    if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
     if (!user) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     try {
@@ -848,22 +847,22 @@ userRouter.post(
       responseHandler({
         res,
         code: 200,
-        message: 'Property liked'
+        message: "Property liked"
       })
     } catch (error) {
-      throw new AppError('Error liking property', 500)
+      throw new AppError("Error liking property", 500)
     }
   })
 )
 
 userRouter.get(
-  '/likes',
+  "/likes",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = await userModel.findOne({ _id: req.user?.userId as string })
 
     if (!user) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     try {
@@ -875,7 +874,7 @@ userRouter.get(
         }
       })
     } catch (error) {
-      throw new AppError('Error getting likes', 500)
+      throw new AppError("Error getting likes", 500)
     }
   })
 )
@@ -884,7 +883,7 @@ userRouter.get(
  * Delete the like of a property
  */
 userRouter.delete(
-  '/likes',
+  "/likes",
   authMiddleware,
   validateRequest(z.object({ propertyId: z.string() })),
   asyncHandler(async (req: Request, res: Response) => {
@@ -894,7 +893,7 @@ userRouter.delete(
       return responseHandler({
         res,
         code: 404,
-        message: 'propertyId is required'
+        message: "propertyId is required"
       })
     }
 
@@ -903,9 +902,9 @@ userRouter.delete(
     const user = await userModel.findOne({ _id: userId })
     const property = await RealStateModel.findOne({ _id: propertyId })
 
-    if (!property) return responseHandler({ res, code: 404, message: 'Property not found' })
+    if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
     if (!user) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     try {
@@ -915,10 +914,10 @@ userRouter.delete(
       responseHandler({
         res,
         code: 200,
-        message: 'Property unliked successfully'
+        message: "Property unliked successfully"
       })
     } catch (error) {
-      throw new AppError('Error unliking property', 500)
+      throw new AppError("Error unliking property", 500)
     }
   })
 )
@@ -934,14 +933,14 @@ Buscador de todos los usuarios
 */
 
 userRouter.delete(
-  '/space/:id',
+  "/space/:id",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findByIdAndDelete(id)
-    if (!user) throw new AppError('User not found', 404)
+    if (!user) throw new AppError("User not found", 404)
 
     responseHandler({
       res,
@@ -951,14 +950,14 @@ userRouter.delete(
 )
 
 userRouter.patch(
-  '/space/:id',
+  "/space/:id",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
-    if (!user) throw new AppError('User not found', 404)
+    if (!user) throw new AppError("User not found", 404)
 
     responseHandler({
       res,
@@ -969,12 +968,12 @@ userRouter.patch(
 )
 
 userRouter.post(
-  '/space',
+  "/space",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const user = await userModel.create(req.body)
-    if (!user) throw new AppError('User not created', 404)
+    if (!user) throw new AppError("User not created", 404)
 
     responseHandler({
       res,
@@ -985,14 +984,14 @@ userRouter.post(
 )
 
 userRouter.get(
-  '/space',
+  "/space",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
-    const sortBy = (req.query.sortBy as string) || 'created_at'
-    const order = (req.query.order as 'asc' | 'desc') || 'desc'
+    const sortBy = (req.query.sortBy as string) || "created_at"
+    const order = (req.query.order as "asc" | "desc") || "desc"
 
     const users = await getPagination({
       limit,
@@ -1002,7 +1001,7 @@ userRouter.get(
       order
     })
 
-    if (!users) throw new AppError('Users not found', 404)
+    if (!users) throw new AppError("Users not found", 404)
 
     responseHandler({
       res,
@@ -1013,40 +1012,40 @@ userRouter.get(
 )
 
 userRouter.get(
-  '/space/:id',
+  "/space/:id",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findById(id)
-    if (!user) throw new AppError('User not found', 404)
+    if (!user) throw new AppError("User not found", 404)
 
     responseHandler({
       res,
       code: 200,
       data: user?.toObject(),
-      message: 'Your admin, role got user successfully'
+      message: "Your admin, role got user successfully"
     })
   })
 )
 
 // <================== GET PROFILE INFORMATION ==================>
 userRouter.get(
-  '/:id/profile',
+  "/:id/profile",
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params as { id: string }
-    if (!id) throw new AppError('error: id param cant be empty', 404)
+    if (!id) throw new AppError("error: id param cant be empty", 404)
 
-    const data = 'name last_name contact social_media about created_at properties contact reviews profile_picture'
-    const realStateData = 'title description images created_at visitors'
+    const data = "name last_name contact social_media about created_at properties contact reviews profile_picture"
+    const realStateData = "title description images created_at visitors"
     const user = await userModel.findById(id).select(data).populate({
-      path: 'properties',
+      path: "properties",
       select: realStateData
     })
 
     if (!user) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     // Convertir el documento de Mongoose a objeto plano

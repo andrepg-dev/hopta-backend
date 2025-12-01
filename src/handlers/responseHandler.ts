@@ -1,4 +1,4 @@
-import { Response } from 'express'
+import { Response } from "express"
 
 interface DataHandlerProps {
   /**
@@ -12,12 +12,12 @@ interface DataHandlerProps {
   /**
    * @description The status code to send
    * @default 200
-   * 
+   *
    * Explanation of success status codes:
    * 200: Success
    * 201: Created
    * 204: No Content
-   * 
+   *
    */
   code: number
   /**

@@ -1,5 +1,5 @@
-import { COOKIES } from '@/constants/cookies.constants'
-import { CookieOptions, Request, Response } from 'express'
+import { COOKIES } from "@/constants/cookies.constants"
+import { CookieOptions, Request, Response } from "express"
 
 export class Cookies {
   private req: Request
@@ -10,14 +10,14 @@ export class Cookies {
   constructor(req: Request, res: Response) {
     this.req = req
     this.res = res
-    this.isProd = process.env.NODE_ENV === 'production'
+    this.isProd = process.env.NODE_ENV === "production"
 
     this.baseOptions = {
       httpOnly: true,
       secure: this.isProd, // HTTPS obligatorio en prod
-      sameSite: this.isProd ? 'none' : 'lax', // 'none' permite subdominios / cross-site
-      domain: this.isProd ? '.hopta.hn' : undefined,
-      path: '/' // válido para todo el sitio
+      sameSite: this.isProd ? "none" : "lax", // 'none' permite subdominios / cross-site
+      domain: this.isProd ? ".hopta.hn" : undefined,
+      path: "/" // válido para todo el sitio
     }
   }
 

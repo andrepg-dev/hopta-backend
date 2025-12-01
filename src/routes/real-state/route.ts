@@ -1,21 +1,21 @@
-import { COOKIES } from '@/constants/cookies.constants'
-import asyncHandler from '@/src/actions/try-catch-async-handler'
-import { isAdmin } from '@/src/guards/isAdmin'
-import { AppError } from '@/src/handlers/error-handler'
-import { responseHandler } from '@/src/handlers/responseHandler'
-import { authMiddleware, UserJWT } from '@/src/middlewares/authMiddleware'
-import { validateRequest } from '@/src/middlewares/validate-request'
-import { geoModel } from '@/src/schemas/geo.schema'
-import { RealStateModel } from '@/src/schemas/real-state.schemas'
-import { userModel } from '@/src/schemas/user.schemas'
-import Logs from '@/src/services/logs/save-logs.service'
-import { getPagination } from '@/src/utils/get-pagination.utils'
-import { TokenManager } from '@/src/utils/JWT/tokens-manager'
-import { realStateSchema, realStateUpdateSchema } from '@/src/zod/real-state.zod'
-import { RealStateI, RealStateIWithOwner } from '@/types/real-state/types.real-state'
-import { Request, Response, Router } from 'express'
-import mongoose from 'mongoose'
-import { z } from 'zod'
+import { COOKIES } from "@/constants/cookies.constants"
+import asyncHandler from "@/src/actions/try-catch-async-handler"
+import { isAdmin } from "@/src/guards/isAdmin"
+import { AppError } from "@/src/handlers/error-handler"
+import { responseHandler } from "@/src/handlers/responseHandler"
+import { authMiddleware, UserJWT } from "@/src/middlewares/authMiddleware"
+import { validateRequest } from "@/src/middlewares/validate-request"
+import { geoModel } from "@/src/schemas/geo.schema"
+import { RealStateModel } from "@/src/schemas/real-state.schemas"
+import { userModel } from "@/src/schemas/user.schemas"
+import Logs from "@/src/services/logs/save-logs.service"
+import { getPagination } from "@/src/utils/get-pagination.utils"
+import { TokenManager } from "@/src/utils/JWT/tokens-manager"
+import { realStateSchema, realStateUpdateSchema } from "@/src/zod/real-state.zod"
+import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
+import { Request, Response, Router } from "express"
+import mongoose from "mongoose"
+import { z } from "zod"
 
 const RealStateRouter = Router()
 
@@ -23,12 +23,12 @@ const RealStateRouter = Router()
  * @description get all real state properties available
  */
 RealStateRouter.get(
-  '/',
+  "/",
   asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
-    const sortBy = (req.query.sortBy as string) || 'created_at'
-    const order = (req.query.order as 'asc' | 'desc') || 'desc'
+    const sortBy = (req.query.sortBy as string) || "created_at"
+    const order = (req.query.order as "asc" | "desc") || "desc"
 
     const paginatedData = await getPagination({
       limit,
@@ -38,7 +38,7 @@ RealStateRouter.get(
       order
     })
 
-    if (!paginatedData) throw new AppError('Properties not found', 404)
+    if (!paginatedData) throw new AppError("Properties not found", 404)
     responseHandler({
       res,
       code: 200,
@@ -48,9 +48,9 @@ RealStateRouter.get(
 )
 
 RealStateRouter.get(
-  '/populate',
+  "/populate",
   asyncHandler(async (req: Request, res: Response) => {
-    const data = await RealStateModel.find().populate('visitors.user owner', 'name _id ').lean()
+    const data = await RealStateModel.find().populate("visitors.user owner", "name _id ").lean()
 
     responseHandler({
       res,
@@ -61,19 +61,19 @@ RealStateRouter.get(
 )
 
 RealStateRouter.get(
-  '/autocomplete',
+  "/search",
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
-    if (!query) throw new AppError('Query is required', 400)
+    if (!query) throw new AppError("Query is required", 400)
 
     try {
-      const results = await RealStateModel.aggregate([
+      const results = await RealStateModel.aggregatePaginate([
         {
           $search: {
-            index: 'default',
+            index: "default",
             autocomplete: {
               query: query,
-              path: 'title',
+              path: "title",
               fuzzy: { maxEdits: 1 }
             }
           }
@@ -87,25 +87,25 @@ RealStateRouter.get(
         data: results
       })
     } catch (error) {
-      throw new AppError('Error autocompleting properties error: ' + error, 500)
+      throw new AppError("Error autocompleting properties error: " + error, 500)
     }
   })
 )
 
 RealStateRouter.get(
-  '/autocomplete-by-location',
+  "/autocomplete-by-location",
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
-    if (!query) throw new AppError('Query is required', 400)
+    if (!query) throw new AppError("Query is required", 400)
 
     try {
       const result = await geoModel.aggregate([
         {
           $search: {
-            index: 'default',
+            index: "default",
             autocomplete: {
               query,
-              path: 'properties.name',
+              path: "properties.name",
               fuzzy: {
                 maxEdits: 1
               }
@@ -121,58 +121,23 @@ RealStateRouter.get(
         data: result
       })
     } catch (error) {
-      throw new AppError('Error autocompleting properties error: ' + error, 500)
+      throw new AppError("Error autocompleting properties error: " + error, 500)
     }
   })
 )
 
 RealStateRouter.get(
-  '/search',
-  asyncHandler(async (req: Request, res: Response) => {
-    const { query } = req.query
-    if (!query) throw new AppError('Query is required', 400)
-
-    try {
-      const results = await RealStateModel.aggregate([
-        {
-          $search: {
-            index: 'default',
-            text: {
-              query: query,
-              path: ['title', 'location.title'],
-              fuzzy: {
-                maxEdits: 2,
-                prefixLength: 2
-              }
-            }
-          }
-        },
-        { $limit: 20 }
-      ])
-
-      responseHandler({
-        res,
-        code: 200,
-        data: results
-      })
-    } catch (error) {
-      throw new AppError('Error searching properties error: ' + error, 500)
-    }
-  })
-)
-
-RealStateRouter.get(
-  '/my-properties',
+  "/my-properties",
   authMiddleware,
-  asyncHandler(async (req: Request<{}, {}, {}, { page: string; limit: string; sortBy: string; order: 'asc' | 'desc' }>, res: Response) => {
+  asyncHandler(async (req: Request<{}, {}, {}, { page: string; limit: string; sortBy: string; order: "asc" | "desc" }>, res: Response) => {
     const user = req.user
 
-    if (!user) throw new AppError('User not found', 404)
+    if (!user) throw new AppError("User not found", 404)
 
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
-    const sortBy = (req.query.sortBy as string) || 'created_at'
-    const order = (req.query.order as 'asc' | 'desc') || 'desc'
+    const sortBy = (req.query.sortBy as string) || "created_at"
+    const order = (req.query.order as "asc" | "desc") || "desc"
 
     const paginatedData = await RealStateModel.paginate({ owner: user.userId }, { page, limit, sortBy, order })
 
@@ -188,14 +153,14 @@ RealStateRouter.get(
  * This endpoint is used in the dashboard section from the frontend client.
  */
 RealStateRouter.get(
-  '/likes',
+  "/likes",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
 
     const myProperties = await RealStateModel.find({ owner: user?.userId })
-      .select('_id title owner saved_by images')
-      .populate('saved_by.user', 'name last_name profile_picture')
+      .select("_id title owner saved_by images")
+      .populate("saved_by.user", "name last_name profile_picture")
     const userInDB = await userModel.findById(user?.userId)
 
     if (!myProperties) {
@@ -206,7 +171,7 @@ RealStateRouter.get(
       })
     }
 
-    if (!userInDB) throw new AppError('User not found', 404)
+    if (!userInDB) throw new AppError("User not found", 404)
 
     const properties = myProperties.filter((value) => {
       if (value) {
@@ -230,22 +195,22 @@ RealStateRouter.get(
       res,
       code: 200,
       data: { properties, total_saved_by: total },
-      message: 'Properties with likes retrieved successfully'
+      message: "Properties with likes retrieved successfully"
     })
   })
 )
 
 RealStateRouter.get(
-  '/:id',
+  "/:id",
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify if the property exists
-    const property = await RealStateModel.findById(id).populate('owner', 'name last_name email phone contact profile_picture created_at social_media about')
-    if (!property) throw new AppError('Property not found', 404)
+    const property = await RealStateModel.findById(id).populate("owner", "name last_name email phone contact profile_picture created_at social_media about")
+    if (!property) throw new AppError("Property not found", 404)
 
-    const { modify } = req.query
+    const { isVisit } = req.query
 
     // Actualizar las visitas de una propiedad
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
@@ -256,26 +221,26 @@ RealStateRouter.get(
     }
 
     // <================== IF USER EXISTS, log in ==================>
-    if (decoded && !modify) {
-      console.log('El usuario si existe, está logueado')
+    if (decoded && isVisit) {
+      console.log("El usuario si existe, está logueado: ", decoded)
 
       // Buscar si el usuario ya existe en visitors
       const existingVisitor = await RealStateModel.findOne({
         _id: id,
-        'visitors.user': decoded.userId
+        "visitors.user": decoded.userId
       })
 
       if (existingVisitor) {
         // Si el usuario ya existe, agregar nueva visita
         await RealStateModel.updateOne(
-          { _id: id, 'visitors.user': decoded.userId },
+          { _id: id, "visitors.user": decoded.userId },
           {
-            $push: { 'visitors.$.visit_date': new Date() },
-            $inc: { 'stats.total_visits': 1 }
+            $push: { "visitors.$.visit_date": new Date() },
+            $inc: { "stats.total_visits": 1 }
           }
         )
       } else {
-        console.log('Está logueado pero no ha visitado nada')
+        console.log("Está logueado pero no ha visitado nada")
 
         // Si es la primera visita del usuario, crear nueva entrada
         await RealStateModel.updateOne(
@@ -287,32 +252,32 @@ RealStateRouter.get(
                 visit_date: [new Date()]
               }
             },
-            $inc: { 'stats.total_visits': 1 }
+            $inc: { "stats.total_visits": 1 }
           }
         )
       }
     }
 
     // <================== IF USER DON'T EXIST, write in the database with a different approach ==================>
-    if (!decoded) {
+    if (!decoded && isVisit) {
       const existingAnonymousUser = await RealStateModel.findOne({
         _id: id,
-        'visitors.user': req.ip
+        "visitors.user": req.ip
       })
 
       if (existingAnonymousUser) {
-        console.log('El usuario ya existe en visitors por IP:', req.ip)
+        console.log("El usuario ya existe en visitors por IP:", req.ip)
 
         // Si el usuario ya existe, agregar nueva visita
         await RealStateModel.updateOne(
-          { _id: id, 'visitors.user': req.ip },
+          { _id: id, "visitors.user": req.ip },
           {
-            $push: { 'visitors.$.visit_date': new Date() },
-            $inc: { 'stats.total_visits': 1 }
+            $push: { "visitors.$.visit_date": new Date() },
+            $inc: { "stats.total_visits": 1 }
           }
         )
       } else {
-        console.log('El usuario no existe en visitors por IP:', req.ip)
+        console.log("El usuario no existe en visitors por IP:", req.ip)
 
         // Si es la primera visita del usuario, crear nueva entrada
         await RealStateModel.updateOne(
@@ -324,7 +289,7 @@ RealStateRouter.get(
                 visit_date: [new Date()]
               }
             },
-            $inc: { 'stats.total_visits': 1 }
+            $inc: { "stats.total_visits": 1 }
           }
         )
       }
@@ -339,7 +304,7 @@ RealStateRouter.get(
 )
 
 RealStateRouter.post(
-  '/',
+  "/",
   authMiddleware,
   validateRequest(realStateSchema),
   asyncHandler(async (req: Request<{}, {}, RealStateI, {}>, res: Response) => {
@@ -363,28 +328,28 @@ RealStateRouter.post(
     const owner = req?.user?.userId
 
     if (!owner) {
-      throw new AppError('Not authorized', 401)
+      throw new AppError("Not authorized", 401)
     }
 
     const foundUser = await userModel.findById(owner)
     if (!foundUser) {
-      throw new AppError('User not found', 404)
+      throw new AppError("User not found", 404)
     }
 
     try {
       // Validar que las imágenes sean URLs válidas
       if (!images || images.length < 3) {
-        throw new AppError('At least 3 images are required', 400)
+        throw new AppError("At least 3 images are required", 400)
       }
 
       // Validar que las coordenadas sean válidas
       if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
-        throw new AppError('Location coordinates are required', 400)
+        throw new AppError("Location coordinates are required", 400)
       }
 
       // Validar que el precio sea positivo
       if (!price || price <= 0) {
-        throw new AppError('Price must be greater than 0', 400)
+        throw new AppError("Price must be greater than 0", 400)
       }
 
       const property = await RealStateModel.create({
@@ -414,99 +379,99 @@ RealStateRouter.post(
 
       // Log de la creación exitosa
       new Logs({
-        method: 'saveLogs',
+        method: "saveLogs",
         message: `Property created successfully: ${title} by user ${owner}`
       })
 
       responseHandler({
         res,
         code: 201,
-        message: 'Propiedad creada exitosamente',
+        message: "Propiedad creada exitosamente",
         data: property
       })
     } catch (error: any) {
-      console.error('Error creating property:', error)
+      console.error("Error creating property:", error)
 
       // Si es un error de validación de Mongoose
-      if (error.name === 'ValidationError') {
+      if (error.name === "ValidationError") {
         const validationErrors = Object.values(error.errors).map((err: any) => err.message)
-        throw new AppError(`Validation error: ${validationErrors.join(', ')}`, 400)
+        throw new AppError(`Validation error: ${validationErrors.join(", ")}`, 400)
       }
 
       // Si es un error de duplicación
       if (error.code === 11000) {
-        throw new AppError('Ya existe una propiedad con estos datos', 409)
+        throw new AppError("Ya existe una propiedad con estos datos", 409)
       }
 
       // Error general
-      throw new AppError(error.message || 'Error interno del servidor al crear la propiedad', 500)
+      throw new AppError(error.message || "Error interno del servidor al crear la propiedad", 500)
     }
   })
 )
 
 RealStateRouter.delete(
-  '/:id',
+  "/:id",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     const { user } = req as any
     const { userId: owner } = user
 
     const foundUser = await userModel.findById(owner)
-    if (!foundUser) throw new AppError('User not found', 404)
+    if (!foundUser) throw new AppError("User not found", 404)
 
     const property = (await RealStateModel.findById(id)) as unknown as RealStateIWithOwner
-    if (!property) throw new AppError('Property not found', 404)
+    if (!property) throw new AppError("Property not found", 404)
 
     new Logs({
-      method: 'saveLogs',
+      method: "saveLogs",
       message: property
     })
 
-    if (property.owner.toString() !== owner) throw new AppError('You are not the owner of this property', 403)
+    if (property.owner.toString() !== owner) throw new AppError("You are not the owner of this property", 403)
 
     const deletedProperty = await RealStateModel.findByIdAndDelete(id)
-    if (!deletedProperty) throw new AppError('Property not found', 404)
+    if (!deletedProperty) throw new AppError("Property not found", 404)
 
     await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
 
     responseHandler({
       res,
       code: 200,
-      message: 'Property deleted successfully'
+      message: "Property deleted successfully"
     })
   })
 )
 
 RealStateRouter.patch(
-  '/:id',
+  "/:id",
   authMiddleware,
   validateRequest(realStateUpdateSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    if (!id) throw new AppError('Property ID is required', 400)
-    if (!req.body) throw new AppError('No data to update', 400)
+    if (!id) throw new AppError("Property ID is required", 400)
+    if (!req.body) throw new AppError("No data to update", 400)
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify property exists and user has permission to update it
     const property = (await RealStateModel.findById(id).lean()) as any
-    if (!property) throw new AppError('Property not found', 404)
+    if (!property) throw new AppError("Property not found", 404)
 
     // Optional: Check if user is the owner
     const { userId } = req.user as UserJWT
     if (property.owner.toString() !== userId) {
-      throw new AppError('Not authorized to update this property', 403)
+      throw new AppError("Not authorized to update this property", 403)
     }
 
     // Prohibed fields to update
-    const blocked = ['owner', 'created_at', 'updated_at', 'visitors', 'saved_by', 'ratings', 'stats', 'rating_summary']
+    const blocked = ["owner", "created_at", "updated_at", "visitors", "saved_by", "ratings", "stats", "rating_summary"]
     if (blocked.some((field) => req.body[field])) {
-      throw new AppError(`Not allowed to update these fields: ${blocked.join(', ')}`, 400)
+      throw new AppError(`Not allowed to update these fields: ${blocked.join(", ")}`, 400)
     }
 
     const updatedProperty = await RealStateModel.findByIdAndUpdate(
@@ -525,7 +490,7 @@ RealStateRouter.patch(
       res,
       data: updatedProperty,
       code: 200,
-      message: 'Property updated successfully'
+      message: "Property updated successfully"
     })
   })
 )
@@ -536,22 +501,22 @@ const recommendedPropertySchema = z.object({
 })
 
 RealStateRouter.post(
-  '/show-by-ids',
+  "/show-by-ids",
   authMiddleware,
   validateRequest(recommendedPropertySchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { property_ids } = req.body
-    if (!property_ids) throw new AppError('Property IDs are required', 400)
+    if (!property_ids) throw new AppError("Property IDs are required", 400)
 
     const propertyIds = property_ids.map((id: string) => new mongoose.Types.ObjectId(id))
     const properties = await RealStateModel.find({
       _id: { $in: propertyIds }
-    }).select('-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary')
+    }).select("-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary")
 
     const propertiesMap = new Map(properties.map((p: any) => [p._id.toString(), p]))
     const sortedProperties = property_ids.map((id: string) => propertiesMap.get(id)).filter(Boolean)
 
-    if (!sortedProperties) throw new AppError('Properties not found', 404)
+    if (!sortedProperties) throw new AppError("Properties not found", 404)
 
     responseHandler({
       res,
@@ -576,19 +541,19 @@ Buscador de todas las propiedades
 
 // Delete real state
 RealStateRouter.delete(
-  '/space/:id',
+  "/space/:id",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     const property = await RealStateModel.findOne({ _id: id })
-    if (!property) throw new AppError('Property not found', 404)
+    if (!property) throw new AppError("Property not found", 404)
 
     // @ts-expect-error: owner may not be in the TS type, but exists in the DB
     const owner = await userModel.findById(property?.owner)
-    if (!owner) throw new AppError('Owner not found', 404)
+    if (!owner) throw new AppError("Owner not found", 404)
 
     // remove the property and the owner
     await userModel.updateOne({ _id: owner._id }, { $pull: { properties: id } })
@@ -597,7 +562,7 @@ RealStateRouter.delete(
     responseHandler({
       res,
       code: 200,
-      message: 'Your admin, role deleted property successfully',
+      message: "Your admin, role deleted property successfully",
       data: property
     })
   })
@@ -605,33 +570,33 @@ RealStateRouter.delete(
 
 // Update real state
 RealStateRouter.patch(
-  '/space/:id',
+  "/space/:id",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid property ID', 400)
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
     const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true })
-    if (!property) throw new AppError('Property not found', 404)
+    if (!property) throw new AppError("Property not found", 404)
 
     responseHandler({
       res,
       code: 200,
       data: property,
-      message: 'Your admin, role updated property successfully'
+      message: "Your admin, role updated property successfully"
     })
   })
 )
 
 // Create real state
 RealStateRouter.post(
-  '/space',
+  "/space",
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     // To assign the owner, I need the id of the user given in the body.
     const property = await RealStateModel.create(req.body)
-    if (!property) throw new AppError('Property not created', 404)
+    if (!property) throw new AppError("Property not created", 404)
 
     await userModel.updateOne({ _id: req.body.owner }, { $push: { properties: property._id } })
 
@@ -639,7 +604,7 @@ RealStateRouter.post(
       res,
       code: 200,
       data: property,
-      message: 'Your admin, role created property successfully'
+      message: "Your admin, role created property successfully"
     })
   })
 )

@@ -1,6 +1,6 @@
-import { formatPhone } from "@/src/utils/services/format-phone";
-import twilio, { Twilio } from "twilio";
-import Logs from "../logs/save-logs.service";
+import { formatPhone } from "@/src/utils/services/format-phone"
+import twilio, { Twilio } from "twilio"
+import Logs from "../logs/save-logs.service"
 
 class SendWhatsAppMsgService {
   protected client: Twilio
@@ -23,13 +23,12 @@ class SendWhatsAppMsgService {
 
     new Logs({
       message: msg.body,
-      method: 'saveLogs'
+      method: "saveLogs"
     })
 
     return msg
   }
 }
-
 
 export class WhatsAppMSGSender extends SendWhatsAppMsgService {
   constructor(phone: string) {

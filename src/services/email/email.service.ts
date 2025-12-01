@@ -1,33 +1,33 @@
-import { envs } from '@/constants/env.constants'
-import { AppError } from '@/src/handlers/error-handler'
-import sendgrid, { MailDataRequired } from '@sendgrid/mail'
-import AWS from 'aws-sdk'
-import { SendEmailRequest } from 'aws-sdk/clients/ses'
-import nodemailer from 'nodemailer'
-import SMTPTransport from 'nodemailer/lib/smtp-transport'
-import { Resend } from 'resend'
-import Logs from '../logs/save-logs.service'
+import { envs } from "@/constants/env.constants"
+import { AppError } from "@/src/handlers/error-handler"
+import sendgrid, { MailDataRequired } from "@sendgrid/mail"
+import AWS from "aws-sdk"
+import { SendEmailRequest } from "aws-sdk/clients/ses"
+import nodemailer from "nodemailer"
+import SMTPTransport from "nodemailer/lib/smtp-transport"
+import { Resend } from "resend"
+import Logs from "../logs/save-logs.service"
 
 const ses = new AWS.SES({ region: process.env.AWS_REGION })
 
 interface SendMailOptions extends nodemailer.SendMailOptions {}
 
 const templates = {
-  verification_code: 'd-4c5c66eae47f47919e5d58f1b302539d',
-  forgot_password: 'd-4a0965ccf5e5485ba6c218202906af7b',
-  contact: 'd-a0f7418714bb4f9ebac4890f892d029f'
+  verification_code: "d-4c5c66eae47f47919e5d58f1b302539d",
+  forgot_password: "d-4a0965ccf5e5485ba6c218202906af7b",
+  contact: "d-a0f7418714bb4f9ebac4890f892d029f"
 }
 
 const templatesAmazonSES = {
-  contact: 'hopta-contact',
-  forgot_password: 'hopta-forgot-password',
-  verification_code: 'hopta-code-verification-v2'
+  contact: "hopta-contact",
+  forgot_password: "hopta-forgot-password",
+  verification_code: "hopta-code-verification-v2"
 }
 
 const resendTemplates = {
-  contact: '333b90c3-2bb9-46fa-8d13-bf2bc358e132',
-  forgot_password: 'bc6898c3-7945-4e13-930a-9203d4a4c131',
-  verification_code: 'f898ac5e-b489-4d9a-8f78-89fad6bf6e18'
+  contact: "333b90c3-2bb9-46fa-8d13-bf2bc358e132",
+  forgot_password: "bc6898c3-7945-4e13-930a-9203d4a4c131",
+  verification_code: "f898ac5e-b489-4d9a-8f78-89fad6bf6e18"
 }
 
 class EmailServiceResend {
@@ -65,7 +65,7 @@ class EmailServiceResend {
         .send({
           from: `Hopta <${process.env.RESEND_FROM_EMAIL}>`,
           to,
-          replyTo: 'admin@hopta.hn',
+          replyTo: "admin@hopta.hn",
           subject,
           template: {
             id: resendTemplates[template],
@@ -81,7 +81,7 @@ class EmailServiceResend {
       .send({
         from: `Hopta <${process.env.RESEND_FROM_EMAIL}>`,
         to,
-        replyTo: 'admin@hopta.hn',
+        replyTo: "admin@hopta.hn",
         subject,
         html
       })
@@ -120,7 +120,7 @@ class EmailServiceSendGrid {
           subject: subject,
           content: [
             {
-              type: 'text/html',
+              type: "text/html",
               value: html
             }
           ]
@@ -138,7 +138,7 @@ class EmailServiceSendGrid {
       return response
     } catch (error: any) {
       new Logs({
-        method: 'saveErrorLogs',
+        method: "saveErrorLogs",
         message: error
       })
 
@@ -167,14 +167,14 @@ class EmailServiceNodeMailer {
         })
 
         new Logs({
-          method: 'saveLogs',
+          method: "saveLogs",
           message: sentInfo
         })
 
         resolve(sentInfo)
       } catch (error: any) {
         new Logs({
-          method: 'saveErrorLogs',
+          method: "saveErrorLogs",
           message: error
         })
         reject(error)
@@ -208,11 +208,11 @@ class EmailServiceAmazonSESService {
         // Using AWS SES TEMPLATES
         Template: templatesAmazonSES[template],
         TemplateData: JSON.stringify(dynamicTemplateData),
-        ConfigurationSetName: 'my-first-configuration-set',
+        ConfigurationSetName: "my-first-configuration-set",
         Tags: [
           {
-            Name: 'source',
-            Value: 'hopta-admin'
+            Name: "source",
+            Value: "hopta-admin"
           }
         ]
       }
@@ -222,8 +222,8 @@ class EmailServiceAmazonSESService {
         console.log(result)
         return result
       } catch (error) {
-        console.error('Error sending email with Amazon SES:', error)
-        throw new AppError('Failed to send email with Amazon SES', 500)
+        console.error("Error sending email with Amazon SES:", error)
+        throw new AppError("Failed to send email with Amazon SES", 500)
       }
     }
 
@@ -235,12 +235,12 @@ class EmailServiceAmazonSESService {
       Message: {
         Body: {
           Html: {
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
             Data: html
           }
         },
         Subject: {
-          Charset: 'UTF-8',
+          Charset: "UTF-8",
           Data: subject
         }
       },
@@ -252,8 +252,8 @@ class EmailServiceAmazonSESService {
       console.log(result)
       return result
     } catch (error) {
-      console.error('Error sending email with Amazon SES:', error)
-      throw new AppError('Failed to send email with Amazon SES', 500)
+      console.error("Error sending email with Amazon SES:", error)
+      throw new AppError("Failed to send email with Amazon SES", 500)
     }
   }
 }
@@ -267,7 +267,7 @@ export interface EmailServiceOptions {
   html?: string
   dynamicTemplateData?: Record<string, string>
   template?: keyof typeof templates | keyof typeof templatesAmazonSES | undefined
-  provider: 'sendgrid' | 'nodemailer' | 'amazon-ses' | 'resend'
+  provider: "sendgrid" | "nodemailer" | "amazon-ses" | "resend"
 }
 
 export class EmailService {
@@ -289,12 +289,12 @@ export class EmailService {
    * @returns
    */
   async sendEmail(options: EmailServiceOptions) {
-    if (options.provider == 'amazon-ses') {
+    if (options.provider == "amazon-ses") {
       if (options.template) {
         return this.amazonSESService.sendEmail({
           to: options.to,
-          subject: options.subject ?? '',
-          html: options.html ?? '',
+          subject: options.subject ?? "",
+          html: options.html ?? "",
           template: options.template,
           dynamicTemplateData: options.dynamicTemplateData
         })
@@ -302,25 +302,25 @@ export class EmailService {
 
       return this.amazonSESService.sendEmail({
         to: options.to,
-        subject: options.subject ?? '',
-        html: options.html ?? ''
+        subject: options.subject ?? "",
+        html: options.html ?? ""
       })
     }
 
-    if (options.provider == 'sendgrid') {
+    if (options.provider == "sendgrid") {
       if (options.template) {
-        return this.sendGridService.sendEmail(options.to, options.subject ?? '', options.html ?? '', options.dynamicTemplateData ?? {}, options.template)
+        return this.sendGridService.sendEmail(options.to, options.subject ?? "", options.html ?? "", options.dynamicTemplateData ?? {}, options.template)
       } else {
-        return this.sendGridService.sendEmail(options.to, options.subject ?? '', options.html ?? '')
+        return this.sendGridService.sendEmail(options.to, options.subject ?? "", options.html ?? "")
       }
     }
 
-    if (options.provider == 'resend') {
+    if (options.provider == "resend") {
       if (options.template) {
         return this.resendService.sendEmail({
           to: [options.to.email],
-          subject: options.subject ?? '',
-          html: options.html ?? '',
+          subject: options.subject ?? "",
+          html: options.html ?? "",
           template: options.template,
           dynamicTemplateData: options.dynamicTemplateData
         })
@@ -330,8 +330,8 @@ export class EmailService {
       if (!options.template) {
         return this.resendService.sendEmail({
           to: [options.to.email],
-          subject: options.subject ?? '',
-          html: options.html ?? ''
+          subject: options.subject ?? "",
+          html: options.html ?? ""
         })
       }
     }

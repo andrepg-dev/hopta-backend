@@ -1,9 +1,9 @@
-import asyncHandler from '@/src/actions/try-catch-async-handler'
-import { responseHandler } from '@/src/handlers/responseHandler'
-import { authMiddleware } from '@/src/middlewares/authMiddleware'
-import { contactModel } from '@/src/schemas/contact.schema'
-import { RealStateModel } from '@/src/schemas/real-state.schemas'
-import { Request, Response, Router } from 'express'
+import asyncHandler from "@/src/actions/try-catch-async-handler"
+import { responseHandler } from "@/src/handlers/responseHandler"
+import { authMiddleware } from "@/src/middlewares/authMiddleware"
+import { contactModel } from "@/src/schemas/contact.schema"
+import { RealStateModel } from "@/src/schemas/real-state.schemas"
+import { Request, Response, Router } from "express"
 
 const statsRouter = Router()
 
@@ -30,7 +30,7 @@ New structure of the saved_by
  * Analitycs of the manager
  */
 statsRouter.get(
-  '/',
+  "/",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
@@ -46,7 +46,7 @@ statsRouter.get(
     // Get from the database all the properties and leads of the owner
     const properties = await RealStateModel.find({
       owner: user?.userId
-    })
+    }).select("saved_by visitors")
 
     const leads = await contactModel.find({ ownerId: user?.userId, createdAt: { $gte: fromDate, $lt: toDate } })
 
@@ -97,7 +97,7 @@ export function getVisistsWithFormat(visits: Array<string | Date>) {
 
   for (const iso of visits) {
     const dateString = iso instanceof Date ? iso.toISOString() : String(iso)
-    const date = dateString.split('T')[0] as keyof typeof map
+    const date = dateString.split("T")[0] as keyof typeof map
 
     if (!map[date]) {
       map[date] = { date, count: 0 }

@@ -1,10 +1,10 @@
-import { Types } from 'mongoose'
+import { Types } from "mongoose"
 
-export type InteriorExtrasType = 'water_tank' | 'water_cistern' | 'closets' | 'furnished' | 'air_conditioning' | 'garage' | 'allowPets'
-export type ExteriorExtrasType = 'balcony' | 'patio' | 'terrace' | 'garden' | 'swimming_pool'
-export type CommunityExtrasType = 'gym' | 'parks' | 'schools' | 'shopping_malls' | 'supermarkets' | 'elevator'
-export type SecurityType = 'gated_community' | '24_7_security'
-export type UtilitiesType = 'water' | 'electricity' | 'internet'
+export type InteriorExtrasType = "water_tank" | "water_cistern" | "closets" | "furnished" | "air_conditioning" | "garage" | "allowPets"
+export type ExteriorExtrasType = "balcony" | "patio" | "terrace" | "garden" | "swimming_pool"
+export type CommunityExtrasType = "gym" | "parks" | "schools" | "shopping_malls" | "supermarkets" | "elevator"
+export type SecurityType = "gated_community" | "24_7_security"
+export type UtilitiesType = "water" | "electricity" | "internet"
 
 export interface InteriorExtras {
   [key: string]: InteriorExtrasType[]
@@ -83,12 +83,13 @@ export interface RealStateI {
   description: string
   images: string[]
   property_id: [String]
-  property_type: 'rent_house' | 'rent_premises' | 'land' | 'sell_house'
+  property_type: "rent_house" | "rent_premises" | "land" | "sell_house"
   one_month_upfront: boolean
+  isAccepted: boolean
   location: Location
   square_meters?: number
   price: number
-  currency: 'HNL' | 'USD' | 'EUR'
+  currency: "HNL" | "USD" | "EUR"
   population?: number
   house_features: HouseFeatures
   house_status?: HouseStatus

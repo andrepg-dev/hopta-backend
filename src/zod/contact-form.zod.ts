@@ -1,12 +1,12 @@
-import validator from 'validator'
-import z from 'zod'
+import validator from "validator"
+import z from "zod"
 
 export const contactFormSchema = z.object({
   agency: z.string().max(120).optional(),
-  name: z.string().min(3, 'Name must be at least 3 characters long.').max(120),
+  name: z.string().min(3, "Name must be at least 3 characters long.").max(120),
   phone: z
     .string()
     .max(30)
-    .refine((v) => validator.isMobilePhone(v, 'any'), { message: 'invalid' }),
+    .refine((v) => validator.isMobilePhone(v, "any"), { message: "invalid" }),
   who_is_the_client: z.string().max(120).optional()
 })

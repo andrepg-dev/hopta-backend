@@ -1,6 +1,6 @@
-import { AppError } from '@/src/handlers/error-handler'
-import { NextFunction, Request, Response } from 'express'
-import z from 'zod'
+import { AppError } from "@/src/handlers/error-handler"
+import { NextFunction, Request, Response } from "express"
+import z from "zod"
 
 export const validateRequest = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -9,13 +9,13 @@ export const validateRequest = (schema: z.ZodSchema) => (req: Request, res: Resp
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map((e) => ({
-        field: e.path.join('.'),
+        field: e.path.join("."),
         message: e.message,
         code: e.code
       }))
 
       // Crear un mensaje de error más legible
-      const errorMessages = formattedErrors.map((err) => `${err.field}: ${err.message}`).join(', ')
+      const errorMessages = formattedErrors.map((err) => `${err.field}: ${err.message}`).join(", ")
       throw new AppError(`zod validation error: ${errorMessages}`, 400)
     }
 

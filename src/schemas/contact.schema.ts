@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 // i need to know who did send the message, the name, email, phone number of the client
 // i need to know if the clients are getting in contact to the owners, see if people really want to contact or not
@@ -9,7 +9,7 @@ import mongoose from 'mongoose'
 const contactSchema = new mongoose.Schema({
   property: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'RealState',
+    ref: "RealState",
     required: true
   },
   ownerId: {
@@ -19,7 +19,7 @@ const contactSchema = new mongoose.Schema({
   client: {
     id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "User"
     },
     name: {
       type: String,
@@ -44,4 +44,4 @@ const contactSchema = new mongoose.Schema({
   }
 })
 
-export const contactModel = mongoose.model('contact-schema', contactSchema)
+export const contactModel = mongoose.model("contact-schema", contactSchema)

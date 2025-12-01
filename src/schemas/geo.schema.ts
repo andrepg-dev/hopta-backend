@@ -1,60 +1,60 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
 
 export const geoSchema = new mongoose.Schema({
   type: {
     type: String,
-    default: 'Feature',
+    default: "Feature"
   },
   properties: {
     _id: {
       type: String,
-      alias: '@id',
+      alias: "@id"
     },
     admin_level: {
       type: String,
-      default: '10',
+      default: "10"
     },
     boundary: {
       type: String,
-      default: 'administrative',
+      default: "administrative"
     },
     name: {
       type: String,
-      required: false,
+      required: false
     },
     alt_name: {
       type: String,
-      required: false,
+      required: false
     },
     place: {
       type: String,
-      default: 'quarter',
+      default: "quarter"
     },
     type: {
       type: String,
-      default: 'boundary',
+      default: "boundary"
     },
     geometry: {
       type: String,
-      default: 'center',
-      alias: '@geometry',
-    },
+      default: "center",
+      alias: "@geometry"
+    }
   },
   geometry: {
     type: {
       type: String,
-      default: 'Point',
+      default: "Point"
     },
     coordinates: {
       type: [Number],
       required: true,
-      index: '2dsphere',
-    },
+      index: "2dsphere"
+    }
   },
   id: {
     type: String,
-    required: true,
-  },
+    required: true
+  }
 })
 
-export const geoModel = mongoose.model('geo', geoSchema)
+export const geoModel = mongoose.model("geo", geoSchema)

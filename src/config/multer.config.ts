@@ -1,17 +1,9 @@
 import multer from "multer"
 
-const ALLOWED_MIMES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'application/pdf',
-  'image/webp',
-  'image/jpg',
-  'image/avif'
-]
+const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/gif", "application/pdf", "image/webp", "image/jpg", "image/avif"]
 
 export const upload = multer({
-  dest: 'uploads/',
+  dest: "uploads/",
   limits: {
     fileSize: 1024 * 1024 * 10, // 13
     files: 20
@@ -20,23 +12,33 @@ export const upload = multer({
     if (ALLOWED_MIMES.includes(file.mimetype)) {
       cb(null, true)
     } else {
-      cb(new Error('Invalid file type'))
+      cb(new Error("Invalid file type"))
     }
   }
-}).array('file', 20)
+}).array("file", 20)
 
-export function multerConfig({ allowedMimes = ALLOWED_MIMES, maxFiles = 20, maxSize = 1024 * 1024 * 10, propName = 'file' }: { allowedMimes?: string[], maxFiles?: number, maxSize?: number, propName?: string }) {
+export function multerConfig({
+  allowedMimes = ALLOWED_MIMES,
+  maxFiles = 20,
+  maxSize = 1024 * 1024 * 10,
+  propName = "file"
+}: {
+  allowedMimes?: string[]
+  maxFiles?: number
+  maxSize?: number
+  propName?: string
+}) {
   return multer({
-    dest: 'uploads/',
+    dest: "uploads/",
     limits: {
       fileSize: maxSize,
-      files: maxFiles,
+      files: maxFiles
     },
     fileFilter: (_req, file, cb) => {
       if (allowedMimes.includes(file.mimetype)) {
         cb(null, true)
       } else {
-        cb(new Error('Invalid file type'))
+        cb(new Error("Invalid file type"))
       }
     }
   }).array(propName, maxFiles)

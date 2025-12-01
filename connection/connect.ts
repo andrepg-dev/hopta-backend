@@ -1,6 +1,6 @@
-import mongoose from 'mongoose'
-import { CONNECTIONS } from '../constants/connection.constants'
-import Logs from '@/src/services/logs/save-logs.service'
+import mongoose from "mongoose"
+import { CONNECTIONS } from "../constants/connection.constants"
+import Logs from "@/src/services/logs/save-logs.service"
 
 const connectionString = `mongodb+srv://admin:${CONNECTIONS.PASSWORD}@hopta.g94msvw.mongodb.net/${CONNECTIONS.DATABASE_NAME}?retryWrites=true&w=majority&appName=hopta`
 
@@ -9,13 +9,13 @@ export const connectToDatabase = async () => {
     await mongoose.connect(connectionString)
 
     new Logs({
-      method: 'saveLogs',
-      message: 'Connected to database'
+      method: "saveLogs",
+      message: "Connected to database"
     })
   } catch (error) {
     new Logs({
-      method: 'saveErrorLogs',
-      message: 'Error connecting to database'
+      method: "saveErrorLogs",
+      message: "Error connecting to database"
     })
   }
 }

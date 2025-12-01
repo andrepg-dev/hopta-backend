@@ -10,7 +10,7 @@
 //     onTick: async () => {
 //       try {
 //         await birthdayService.checkAndSendBirthdayEmails()
-        
+
 //         new Logs({
 //           method: 'saveLogs',
 //           message: 'Birthday check completed successfully'
@@ -23,4 +23,4 @@
 //       }
 //     }
 //   })
-// } 
+// }

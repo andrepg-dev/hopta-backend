@@ -1,20 +1,20 @@
-import axios from 'axios'
+import axios from "axios"
 
 export interface IpInfo {
-  status: string;
-  country: string;
-  countryCode: string;
-  region: string;
-  regionName: string;
-  city: string;
-  zip: string;
-  lat: number;
-  lon: number;
-  timezone: string;
-  isp: string;
-  org: string;
-  as: string;
-  query: string;
+  status: string
+  country: string
+  countryCode: string
+  region: string
+  regionName: string
+  city: string
+  zip: string
+  lat: number
+  lon: number
+  timezone: string
+  isp: string
+  org: string
+  as: string
+  query: string
 }
 
 export async function getIpInfo(ip: string | undefined) {
@@ -31,7 +31,7 @@ export async function getIpInfo(ip: string | undefined) {
     zip: response.data.zip,
     lat: response.data.lat,
     lon: response.data.lon,
-    timezone: response.data.timezone,
+    timezone: response.data.timezone
     // isp: response.data.isp,
     // org: response.data.org,
     // as: response.data.as,
