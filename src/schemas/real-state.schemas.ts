@@ -2,6 +2,7 @@ import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
 import Logs from "@/src/services/logs/save-logs.service"
 import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
 import mongoose, { model } from "mongoose"
+import aggregatePaginate from "mongoose-aggregate-paginate-v2"
 import mongoosePaginate from "mongoose-paginate-v2"
 
 const realStateSchema = new mongoose.Schema(
@@ -223,7 +224,11 @@ realStateSchema.post("save", async function (doc: RealStateIWithOwner) {
 })
 
 realStateSchema.plugin(mongoosePaginate)
+realStateSchema.plugin(aggregatePaginate)
 
 interface RealStateDocument extends mongoose.Document, RealStateI {}
 
-export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument>>("RealState", realStateSchema)
+export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument> & mongoose.AggregatePaginateModel<RealStateDocument>>(
+  "RealState",
+  realStateSchema
+)

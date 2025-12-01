@@ -421,7 +421,7 @@ userRouter.post(
         method: "saveErrorLogs",
         message: err
       })
-      throw new AppError(`Error sending SMS`, 500)
+      throw new AppError(`Error sending SMS: ${JSON.stringify(err)}`, 500)
     })
 
     responseHandler({

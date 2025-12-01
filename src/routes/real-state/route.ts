@@ -61,13 +61,13 @@ RealStateRouter.get(
 )
 
 RealStateRouter.get(
-  "/autocomplete",
+  "/search",
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
     if (!query) throw new AppError("Query is required", 400)
 
     try {
-      const results = await RealStateModel.aggregate([
+      const results = await RealStateModel.aggregatePaginate([
         {
           $search: {
             index: "default",
@@ -122,41 +122,6 @@ RealStateRouter.get(
       })
     } catch (error) {
       throw new AppError("Error autocompleting properties error: " + error, 500)
-    }
-  })
-)
-
-RealStateRouter.get(
-  "/search",
-  asyncHandler(async (req: Request, res: Response) => {
-    const { query } = req.query
-    if (!query) throw new AppError("Query is required", 400)
-
-    try {
-      const results = await RealStateModel.aggregate([
-        {
-          $search: {
-            index: "default",
-            text: {
-              query: query,
-              path: ["title", "location.title"],
-              fuzzy: {
-                maxEdits: 2,
-                prefixLength: 2
-              }
-            }
-          }
-        },
-        { $limit: 20 }
-      ])
-
-      responseHandler({
-        res,
-        code: 200,
-        data: results
-      })
-    } catch (error) {
-      throw new AppError("Error searching properties error: " + error, 500)
     }
   })
 )
