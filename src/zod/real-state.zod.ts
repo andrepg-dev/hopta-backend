@@ -13,10 +13,8 @@ export const realStateSchema = z.object({
   one_month_upfront: z.boolean(),
   location: z.object({
     title: z.string().min(4, "Title must be at least 4 characters long.").max(300, "Title must be at most 300 characters long."),
-    coordinates: z.object({
-      lat: z.number().min(-90, "Latitude must be between -90 and 90.").max(90, "Latitude must be between -90 and 90."),
-      lng: z.number().min(-180, "Longitude must be between -180 and 180.").max(180, "Longitude must be between -180 and 180.")
-    })
+    type: z.string().min(3).max(15),
+    coordinates: z.array(z.number()).max(2)
   }),
   square_meters: z.number().positive("Square meters must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),
   price: z.number().int("Price must be an integer").positive("Price must be a positive number").max(90000000, "Price must be at most $90,000,000"),
@@ -57,10 +55,8 @@ export const realStateUpdateSchema = z
     location: z
       .object({
         title: z.string().min(4, "Title must be at least 4 characters long.").max(300, "Title must be at most 300 characters long."),
-        coordinates: z.object({
-          lat: z.number().min(-90, "Latitude must be between -90 and 90.").max(90, "Latitude must be between -90 and 90."),
-          lng: z.number().min(-180, "Longitude must be between -180 and 180.").max(180, "Longitude must be between -180 and 180.")
-        })
+        type: z.string().min(3).max(15),
+        coordinates: z.array(z.number()).max(2)
       })
       .optional(),
     square_meters: z.number().positive("Square meters must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),

@@ -24,12 +24,11 @@ export const createUserSchema = z.object({
   favorites_properties: z.array(z.string()).optional(), // Favorite properties
   profile_picture: z.string().url("Invalid URL format.").max(500, "Profile picture URL is too long.").optional(),
   location: z
-    .array(
-      z.object({
-        lat: z.number().min(-90, "Latitude must be between -90 and 90.").max(90, "Latitude must be between -90 and 90."),
-        lng: z.number().min(-180, "Longitude must be between -180 and 180.").max(180, "Longitude must be between -180 and 180.")
-      })
-    )
+    .object({
+      title: z.string().min(4, "Title must be at least 4 characters long.").max(300, "Title must be at most 300 characters long."),
+      type: z.string().min(3).max(15),
+      coordinates: z.array(z.number()).max(2)
+    })
     .optional(),
   social_media: z
     .object({

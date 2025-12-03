@@ -36,15 +36,13 @@ const realStateSchema = new mongoose.Schema(
         type: String,
         required: true
       },
+      type: {
+        type: String,
+        default: "Point"
+      },
       coordinates: {
-        lat: {
-          type: Number,
-          required: true
-        },
-        lng: {
-          type: Number,
-          required: true
-        }
+        type: [Number, Number],
+        index: "2dsphere"
       }
     },
     square_meters: {
@@ -71,26 +69,21 @@ const realStateSchema = new mongoose.Schema(
         required: true
       },
       interior_extras: {
-        type: [String],
-        enum: ["water_tank", "water_cistern", "closets", "furnished", "air_conditioning", "garage", "allowPets"]
+        type: [String]
       },
       exterior_extras: {
-        type: [String],
-        enum: ["balcony", "patio", "terrace", "garden", "swimming_pool"]
+        type: [String]
       },
       community_extras: {
-        type: [String],
-        enum: ["gym", "parks", "schools", "shopping_malls", "supermarkets", "elevator"]
+        type: [String]
       },
       security: {
-        type: [String],
-        enum: ["gated_community", "24_7_security"]
+        type: [String]
       }
     },
     additional_cost: {
       utilities_included: {
-        type: [String],
-        enum: ["water", "electricity"]
+        type: [String]
       },
       water: {
         type: Number
@@ -122,10 +115,9 @@ const realStateSchema = new mongoose.Schema(
       type: [
         {
           user: {
-            type: mongoose.Schema.Types.Mixed,
+            type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
-            immutable: true
+            required: true
           },
           visit_date: [
             {
@@ -142,8 +134,7 @@ const realStateSchema = new mongoose.Schema(
         user: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
-          required: true,
-          immutable: true
+          required: true
         },
         saved_at: {
           type: Date,
@@ -219,7 +210,7 @@ realStateSchema.pre("save", function (next) {
 realStateSchema.post("save", async function (doc: RealStateIWithOwner) {
   new Logs({
     method: "saveLogs",
-    message: `New property created: ${doc.title} at (${doc.location.coordinates.lat}, ${doc.location.coordinates.lng})`
+    message: `New property created: ${doc.title} at (${doc.location.coordinates[1]}, ${doc.location.coordinates[0]})`
   })
 })
 

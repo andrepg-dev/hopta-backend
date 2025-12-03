@@ -48,19 +48,6 @@ RealStateRouter.get(
 )
 
 RealStateRouter.get(
-  "/populate",
-  asyncHandler(async (req: Request, res: Response) => {
-    const data = await RealStateModel.find().populate("visitors.user owner", "name _id ").lean()
-
-    responseHandler({
-      res,
-      code: 200,
-      data
-    })
-  })
-)
-
-RealStateRouter.get(
   "/search",
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
@@ -346,7 +333,7 @@ RealStateRouter.post(
       }
 
       // Validar que las coordenadas sean válidas
-      if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
+      if (!location?.coordinates[0] || !location?.coordinates[1]) {
         throw new AppError("Location coordinates are required", 400)
       }
 

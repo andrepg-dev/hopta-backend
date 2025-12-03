@@ -27,7 +27,7 @@ googleRouter.get(
     const user = req.user
     const callbackUrl = req.query.state as string
 
-    const URL_TO_REDIRECT = ["/user/dashboard", "/publicar-propiedad"]
+    const URL_TO_REDIRECT = ["/user/dashboard", "/new/property-ad"]
     const finalCallbackUrl = callbackUrl || "/user/dashboard" // default url
 
     if (!URL_TO_REDIRECT.includes(finalCallbackUrl)) {

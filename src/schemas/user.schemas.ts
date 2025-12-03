@@ -89,12 +89,14 @@ const userSchema = new mongoose.Schema(
       }
     },
     location: {
-      type: [
-        {
-          lat: { type: Number, required: true },
-          lng: { type: Number, required: true }
-        }
-      ]
+      title: { type: String },
+      type: {
+        type: String
+      },
+      coordinates: {
+        type: [Number, Number],
+        index: "2dsphere"
+      }
     },
     created_at: {
       type: Date,

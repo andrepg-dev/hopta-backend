@@ -37,10 +37,8 @@ export interface HouseFeatures {
 
 export interface Location {
   title: string
-  coordinates: {
-    lat: number
-    lng: number
-  }
+  type: string
+  coordinates: [number, number]
 }
 
 export interface HouseStatus {
