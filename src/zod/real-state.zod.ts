@@ -13,7 +13,7 @@ export const realStateSchema = z.object({
   one_month_upfront: z.boolean(),
   location: z.object({
     title: z.string().min(4, "Title must be at least 4 characters long.").max(300, "Title must be at most 300 characters long."),
-    type: z.string().min(3).max(15),
+    type: z.string().min(3).max(15).optional().default("Point"),
     coordinates: z.array(z.number()).max(2)
   }),
   square_meters: z.number().positive("Square meters must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),
@@ -55,7 +55,7 @@ export const realStateUpdateSchema = z
     location: z
       .object({
         title: z.string().min(4, "Title must be at least 4 characters long.").max(300, "Title must be at most 300 characters long."),
-        type: z.string().min(3).max(15),
+        type: z.string().min(3).max(15).default("Point"),
         coordinates: z.array(z.number()).max(2)
       })
       .optional(),
