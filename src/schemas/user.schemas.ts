@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       unique: true,
-      sparse: true
+      sparse: true,
+      lowercase: true,
+      trim: true
     },
     suscription: {
       type: mongoose.Schema.Types.ObjectId,

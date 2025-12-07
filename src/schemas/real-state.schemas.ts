@@ -1,9 +1,11 @@
 import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
-import Logs from "@/src/services/logs/save-logs.service"
-import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
+import { RealStateI } from "@/types/real-state/types.real-state"
+import { Request } from "express"
 import mongoose, { model } from "mongoose"
 import aggregatePaginate from "mongoose-aggregate-paginate-v2"
 import mongoosePaginate from "mongoose-paginate-v2"
+import { increaseVisit } from "../methods/realstate/increase-visit.method"
+import { UserJWT } from "../middlewares/authMiddleware"
 
 const realStateSchema = new mongoose.Schema(
   {
@@ -115,7 +117,7 @@ const realStateSchema = new mongoose.Schema(
       type: [
         {
           user: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.Mixed,
             ref: "User",
             required: true
           },
@@ -207,17 +209,17 @@ realStateSchema.pre("save", function (next) {
   next()
 })
 
-realStateSchema.post("save", async function (doc: RealStateIWithOwner) {
-  new Logs({
-    method: "saveLogs",
-    message: `New property created: ${doc.title} at (${doc.location.coordinates[1]}, ${doc.location.coordinates[0]})`
-  })
-})
-
+realStateSchema.methods.increaseVisit = increaseVisit
 realStateSchema.plugin(mongoosePaginate)
 realStateSchema.plugin(aggregatePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI {}
+interface RealStateDocument extends RealStateI, mongoose.Document {
+  /**
+   * @description Increase the visits of one property based on the user ID or IP Address
+   * @param params
+   */
+  increaseVisit(params: { decoded: UserJWT | null; isVisit?: any; id?: string; req: Request<any> }): Promise<void>
+}
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument> & mongoose.AggregatePaginateModel<RealStateDocument>>(
   "RealState",
