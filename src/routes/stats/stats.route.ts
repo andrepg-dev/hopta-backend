@@ -89,79 +89,82 @@ statsRouter.get(
     ]).exec()
 
     // <================== Leads ==================>
-    const leads = await contactModel.aggregate([
-      {
-        $match:
-          /**
-           * query: The query in MQL.
-           */
-          {
-            ownerId: parsedUserId,
-            createdAt: {
-              $gte: new Date(from),
-              $lte: new Date(to)
+
+    const leads = await contactModel
+      .aggregate([
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              ownerId: parsedUserId,
+              createdAt: {
+                $gte: new Date(from),
+                $lte: new Date(to)
+              }
             }
-          }
-      },
-      {
-        $project:
-          /**
-           * specifications: The fields to
-           *   include or exclude.
-           */
-          {
-            client: "$client.name",
-            reason: 1,
-            createdAt: 1,
-            propertyId: 1
-          }
-      },
-      {
-        $addFields:
-          /**
-           * newField: The new field name.
-           * expression: The new field expression.
-           */
-          {
-            propertyId: {
-              $toObjectId: "$propertyId"
+        },
+        {
+          $project:
+            /**
+             * specifications: The fields to
+             *   include or exclude.
+             */
+            {
+              client: "$client.name",
+              reason: 1,
+              createdAt: 1,
+              propertyId: 1
             }
+        },
+        {
+          $addFields:
+            /**
+             * newField: The new field name.
+             * expression: The new field expression.
+             */
+            {
+              propertyId: {
+                $toObjectId: "$propertyId"
+              }
+            }
+        },
+        {
+          $lookup: {
+            from: "realstates",
+            localField: "propertyId",
+            foreignField: "_id",
+            as: "property"
           }
-      },
-      {
-        $lookup: {
-          from: "realstates",
-          localField: "propertyId",
-          foreignField: "_id",
-          as: "property"
+        },
+        {
+          $unwind:
+            /**
+             * path: Path to the array field.
+             * includeArrayIndex: Optional name for index.
+             * preserveNullAndEmptyArrays: Optional
+             *   toggle to unwind null and empty values.
+             */
+            {
+              path: "$property"
+            }
+        },
+        {
+          $project:
+            /**
+             * specifications: The fields to
+             *   include or exclude.
+             */
+            {
+              client: 1,
+              reason: 1,
+              createdAt: 1,
+              property: "$property.title"
+            }
         }
-      },
-      {
-        $unwind:
-          /**
-           * path: Path to the array field.
-           * includeArrayIndex: Optional name for index.
-           * preserveNullAndEmptyArrays: Optional
-           *   toggle to unwind null and empty values.
-           */
-          {
-            path: "$property"
-          }
-      },
-      {
-        $project:
-          /**
-           * specifications: The fields to
-           *   include or exclude.
-           */
-          {
-            client: 1,
-            reason: 1,
-            createdAt: 1,
-            property: "$property.title"
-          }
-      }
-    ])
+      ])
+      .exec()
 
     responseHandler({
       res,

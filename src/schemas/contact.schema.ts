@@ -7,7 +7,7 @@ import mongoose from "mongoose"
 // need to know the owner id
 
 const contactSchema = new mongoose.Schema({
-  property: {
+  propertyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "RealState",
     required: true
