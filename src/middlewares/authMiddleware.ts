@@ -17,7 +17,6 @@ declare global {
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const accessToken = req.cookies[COOKIES.jwt_access_token.name]
-
   if (!accessToken) throw new AppError("Unauthorized", 401)
 
   try {
@@ -29,6 +28,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     req.user = decoded as UserJWT
+
     next()
   } catch (error) {
     throw new AppError("Invalid token", 401)
