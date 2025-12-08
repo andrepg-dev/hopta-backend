@@ -91,15 +91,86 @@ statsRouter.get(
     ]).exec()
 
     // <================== Leads ==================>
-    const leads = await contactModel.find({ ownerId: user?.userId, createdAt: { $gte: new Date(from), $lt: new Date(to) } })
-    const leadsContactDate = leads.map((value) => value.createdAt)
+    const leads = await contactModel.aggregate([
+      {
+        $match:
+          /**
+           * query: The query in MQL.
+           */
+          {
+            ownerId: new mongoose.Types.ObjectId("68af49ee11f127c69bf46b1a"),
+            createdAt: {
+              $gte: new Date("2025-01-01T00:00:00.000Z"),
+              $lte: new Date("2025-12-01T00:00:00.000Z")
+            }
+          }
+      },
+      {
+        $project:
+          /**
+           * specifications: The fields to
+           *   include or exclude.
+           */
+          {
+            client: "$client.name",
+            reason: 1,
+            createdAt: 1,
+            propertyId: 1
+          }
+      },
+      {
+        $addFields:
+          /**
+           * newField: The new field name.
+           * expression: The new field expression.
+           */
+          {
+            propertyId: {
+              $toObjectId: "$propertyId"
+            }
+          }
+      },
+      {
+        $lookup: {
+          from: "realstates",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      {
+        $unwind:
+          /**
+           * path: Path to the array field.
+           * includeArrayIndex: Optional name for index.
+           * preserveNullAndEmptyArrays: Optional
+           *   toggle to unwind null and empty values.
+           */
+          {
+            path: "$property"
+          }
+      },
+      {
+        $project:
+          /**
+           * specifications: The fields to
+           *   include or exclude.
+           */
+          {
+            client: 1,
+            reason: 1,
+            createdAt: 1,
+            property: "$property.title"
+          }
+      }
+    ])
 
     responseHandler({
       res,
       code: 200,
       data: {
         visits_and_likes: visits,
-        leads: leadsContactDate,
+        leads,
         from,
         to
       }
