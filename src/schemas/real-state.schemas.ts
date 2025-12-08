@@ -201,10 +201,25 @@ const realStateSchema = new mongoose.Schema(
       default: Date.now
     }
   },
-  { versionKey: false }
+  {
+    versionKey: false,
+    toJSON: {
+      transform(doc, ret) {
+        delete ret.visitors
+        delete ret.saved_by
+      }
+    },
+    toObject: {
+      transform(doc, ret) {
+        delete ret.visitors
+        delete ret.saved_by
+      }
+    }
+  }
 )
 
 realStateSchema.pre("save", function (next) {
+  // @ts-ignore
   this.updated_at = new Date()
   next()
 })

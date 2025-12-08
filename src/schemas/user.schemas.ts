@@ -174,7 +174,21 @@ const userSchema = new mongoose.Schema(
       default: "user"
     }
   },
-  { versionKey: false }
+  {
+    versionKey: false,
+    toJSON: {
+      transform(doc, ret) {
+        delete ret.auth
+        return ret
+      }
+    },
+    toObject: {
+      transform(doc, ret) {
+        delete ret.auth
+        return ret
+      }
+    }
+  }
 )
 
 // Middleware para actualizar `updated_at` automáticamente antes de guardar
