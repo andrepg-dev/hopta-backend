@@ -3,7 +3,6 @@ import mongoose from "mongoose"
 import mongoosePaginate from "mongoose-paginate-v2"
 
 // TODO: add if the user is married or not as optional
-
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -72,10 +71,6 @@ const userSchema = new mongoose.Schema(
         }
       ],
       default: []
-    },
-    properties: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "RealState"
     },
     favorites_properties: {
       type: [mongoose.Schema.Types.ObjectId],
@@ -180,16 +175,24 @@ const userSchema = new mongoose.Schema(
       transform(doc, ret) {
         delete ret.auth
         return ret
-      }
+      },
+      virtuals: true
     },
     toObject: {
       transform(doc, ret) {
         delete ret.auth
         return ret
-      }
+      },
+      virtuals: true
     }
   }
 )
+
+userSchema.virtual("properties", {
+  ref: "RealState",
+  localField: "_id",
+  foreignField: "owner"
+})
 
 // Middleware para actualizar `updated_at` automáticamente antes de guardar
 userSchema.pre("save", function (next) {
