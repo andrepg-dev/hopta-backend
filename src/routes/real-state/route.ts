@@ -1,4 +1,3 @@
-import { COOKIES } from "@/constants/cookies.constants"
 import asyncHandler from "@/src/actions/try-catch-async-handler"
 import { isAdmin } from "@/src/guards/isAdmin"
 import { AppError } from "@/src/handlers/error-handler"
@@ -9,8 +8,8 @@ import { geoModel } from "@/src/schemas/geo.schema"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import Logs from "@/src/services/logs/save-logs.service"
+import { decodeUserToken } from "@/src/utils/decode-user"
 import { getPagination } from "@/src/utils/get-pagination.utils"
-import { TokenManager } from "@/src/utils/JWT/tokens-manager"
 import { realStateSchema, realStateUpdateSchema } from "@/src/zod/real-state.zod"
 import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
 import { Request, Response, Router } from "express"
@@ -24,6 +23,7 @@ const RealStateRouter = Router()
  */
 RealStateRouter.get(
   "/",
+  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
@@ -35,7 +35,8 @@ RealStateRouter.get(
       page,
       Model: RealStateModel,
       sortBy,
-      order
+      order,
+      user: req.user
     })
 
     if (!paginatedData) throw new AppError("Properties not found", 404)
@@ -47,8 +48,10 @@ RealStateRouter.get(
   })
 )
 
+// this probably dont gonna work
 RealStateRouter.get(
   "/search",
+  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
     if (!query) throw new AppError("Query is required", 400)
@@ -126,7 +129,7 @@ RealStateRouter.get(
     const sortBy = (req.query.sortBy as string) || "created_at"
     const order = (req.query.order as "asc" | "desc") || "desc"
 
-    const paginatedData = await RealStateModel.paginate({ owner: user.userId }, { page, limit, sortBy, order })
+    const paginatedData = await RealStateModel.paginate({ owner: user.userId }, { page, limit, sortBy, order, options: { user: req?.user } })
 
     responseHandler({
       res,
@@ -146,6 +149,7 @@ RealStateRouter.get(
     const user = req.user
 
     const myProperties = await RealStateModel.find({ owner: user?.userId })
+      .setOptions({ user: req.user })
       .select("_id title owner saved_by images")
       .populate("saved_by.user", "name last_name profile_picture")
     const userInDB = await userModel.findById(user?.userId)
@@ -187,32 +191,22 @@ RealStateRouter.get(
   })
 )
 
-let visitCount = 0
 RealStateRouter.get(
   "/:id",
+  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify if the property exists
-    const property = await RealStateModel.findById(id).populate("owner", "name last_name email phone contact profile_picture created_at social_media about")
+    const property = await RealStateModel.findById(id)
+      .populate("owner", "name last_name email phone contact profile_picture created_at social_media about")
+      .setOptions({ user: req.user })
+
     if (!property) throw new AppError("Property not found", 404)
 
     const { isVisit } = req.query
-
-    visitCount++
-    console.log("Visita del usuario número: ", visitCount)
-
-    // Actualizar las visitas de una propiedad
-    const accessToken = req.cookies[COOKIES.jwt_access_token.name]
-    let decoded: UserJWT | null = null
-
-    if (accessToken) {
-      decoded = TokenManager.verifyToken(accessToken) as UserJWT
-    }
-
-    // <================== IF USER EXISTS, log in ==================>
-    property.increaseVisit({ req, decoded, id, isVisit })
+    property.increaseVisit({ req, decoded: req?.user, id, isVisit })
 
     responseHandler({
       res,
@@ -342,7 +336,7 @@ RealStateRouter.delete(
     const foundUser = await userModel.findById(owner)
     if (!foundUser) throw new AppError("User not found", 404)
 
-    const property = (await RealStateModel.findById(id)) as unknown as RealStateIWithOwner
+    const property = (await RealStateModel.findById(id).setOptions({ user: req.user })) as unknown as RealStateIWithOwner
     if (!property) throw new AppError("Property not found", 404)
 
     new Logs({
@@ -352,7 +346,7 @@ RealStateRouter.delete(
 
     if (property.owner.toString() !== owner) throw new AppError("You are not the owner of this property", 403)
 
-    const deletedProperty = await RealStateModel.findByIdAndDelete(id)
+    const deletedProperty = await RealStateModel.findByIdAndDelete(id, { user: req?.user })
     if (!deletedProperty) throw new AppError("Property not found", 404)
 
     await userModel.updateOne({ _id: (deletedProperty as unknown as RealStateIWithOwner).owner }, { $pull: { properties: id } })
@@ -378,7 +372,7 @@ RealStateRouter.patch(
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify property exists and user has permission to update it
-    const property = (await RealStateModel.findById(id).lean()) as any
+    const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as any
     if (!property) throw new AppError("Property not found", 404)
 
     // Optional: Check if user is the owner
@@ -401,9 +395,10 @@ RealStateRouter.patch(
       },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
+        user: req?.user
       }
-    )
+    ).setOptions({ user: req.user })
 
     responseHandler({
       res,
@@ -430,7 +425,9 @@ RealStateRouter.post(
     const propertyIds = property_ids.map((id: string) => new mongoose.Types.ObjectId(id))
     const properties = await RealStateModel.find({
       _id: { $in: propertyIds }
-    }).select("-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary")
+    })
+      .select("-owner -created_at -updated_at -visitors -saved_by -ratings -stats -rating_summary")
+      .setOptions({ user: req.user })
 
     const propertiesMap = new Map(properties.map((p: any) => [p._id.toString(), p]))
     const sortedProperties = property_ids.map((id: string) => propertiesMap.get(id)).filter(Boolean)
@@ -467,7 +464,7 @@ RealStateRouter.delete(
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
-    const property = await RealStateModel.findOne({ _id: id })
+    const property = await RealStateModel.findOne({ _id: id }).setOptions({ user: req.user })
     if (!property) throw new AppError("Property not found", 404)
 
     // @ts-expect-error: owner may not be in the TS type, but exists in the DB
@@ -476,7 +473,7 @@ RealStateRouter.delete(
 
     // remove the property and the owner
     await userModel.updateOne({ _id: owner._id }, { $pull: { properties: id } })
-    await RealStateModel.findByIdAndDelete(id)
+    await RealStateModel.findByIdAndDelete(id).setOptions({ user: req.user })
 
     responseHandler({
       res,
@@ -495,7 +492,7 @@ RealStateRouter.patch(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
-    const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true })
+    const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true }).setOptions({ user: req.user })
     if (!property) throw new AppError("Property not found", 404)
 
     responseHandler({

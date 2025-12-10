@@ -1,3 +1,4 @@
+import { UserJWT } from "../middlewares/authMiddleware"
 import Logs from "../services/logs/save-logs.service"
 
 interface Pagination {
@@ -7,16 +8,18 @@ interface Pagination {
   sortBy?: string
   order?: "asc" | "desc"
   filters?: Record<string, any>
+  user?: UserJWT | null
 }
 
-export async function getPagination({ page, limit, Model, order = "desc", sortBy = "created_at", filters = {} }: Pagination) {
+export async function getPagination({ page, limit, Model, order = "desc", sortBy = "created_at", filters = {}, user }: Pagination) {
   try {
     const sortOrder = order === "desc" ? -1 : 1
 
     const options = {
       page,
       limit,
-      sort: { [sortBy]: sortOrder }
+      sort: { [sortBy]: sortOrder },
+      options: { user }
     }
 
     const result = await Model.paginate(filters, options)

@@ -60,7 +60,7 @@ contactRouter.post(
     }
 
     const userOwnerData = await userModel.findById(owner_id)
-    const propertyData = await RealStateModel.findById(propertyId)
+    const propertyData = await RealStateModel.findById(propertyId).setOptions({ user: req.user })
 
     if (!propertyData) throw new AppError("Property not found", 404)
     if (!userOwnerData) throw new AppError("User not found", 404)

@@ -832,7 +832,7 @@ userRouter.post(
     }
 
     const user = await userModel.findOne({ _id: req.user?.userId as string })
-    const property = await RealStateModel.findOne({ _id: propertyId })
+    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user })
 
     if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
     if (!user) {
@@ -902,7 +902,7 @@ userRouter.delete(
     const userId = req?.user?.userId
 
     const user = await userModel.findOne({ _id: userId })
-    const property = await RealStateModel.findOne({ _id: propertyId })
+    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user })
 
     if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
     if (!user) {
@@ -1000,7 +1000,8 @@ userRouter.get(
       page,
       Model: userModel,
       sortBy,
-      order
+      order,
+      user: req.user
     })
 
     if (!users) throw new AppError("Users not found", 404)

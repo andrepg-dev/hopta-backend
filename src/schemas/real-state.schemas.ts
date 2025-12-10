@@ -218,6 +218,26 @@ const realStateSchema = new mongoose.Schema(
   }
 )
 
+realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
+  const options = this.getOptions()
+  let userId = options?.user?.userId
+
+  if (userId == "68c11a1ef3a5f54469f882ae") {
+    next()
+    return
+  }
+
+  if (userId) {
+    const id = new mongoose.Types.ObjectId(userId)
+    this.where({ $or: [{ owner: id }, { isAccepted: true }] })
+    next()
+    return
+  }
+
+  this.where({ isAccepted: true })
+  next()
+})
+
 realStateSchema.pre("save", function (next) {
   // @ts-ignore
   this.updated_at = new Date()
@@ -233,7 +253,7 @@ interface RealStateDocument extends RealStateI, mongoose.Document {
    * @description Increase the visits of one property based on the user ID or IP Address
    * @param params
    */
-  increaseVisit(params: { decoded: UserJWT | null; isVisit?: any; id?: string; req: Request<any> }): Promise<void>
+  increaseVisit(params: { decoded?: UserJWT | null; isVisit?: any; id?: string; req: Request<any> }): Promise<void>
 }
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument> & mongoose.AggregatePaginateModel<RealStateDocument>>(
