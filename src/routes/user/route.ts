@@ -1001,7 +1001,9 @@ userRouter.get(
       Model: userModel,
       sortBy,
       order,
-      user: req.user
+      options: {
+        user: req.user
+      }
     })
 
     if (!users) throw new AppError("Users not found", 404)

@@ -36,7 +36,10 @@ RealStateRouter.get(
       Model: RealStateModel,
       sortBy,
       order,
-      user: req.user
+      options: {
+        user: req.user,
+        pathname: "/"
+      }
     })
 
     if (!paginatedData) throw new AppError("Properties not found", 404)
@@ -467,7 +470,6 @@ RealStateRouter.delete(
     const property = await RealStateModel.findOne({ _id: id }).setOptions({ user: req.user })
     if (!property) throw new AppError("Property not found", 404)
 
-    // @ts-expect-error: owner may not be in the TS type, but exists in the DB
     const owner = await userModel.findById(property?.owner)
     if (!owner) throw new AppError("Owner not found", 404)
 

@@ -8,10 +8,13 @@ interface Pagination {
   sortBy?: string
   order?: "asc" | "desc"
   filters?: Record<string, any>
-  user?: UserJWT | null
+  options: {
+    user?: UserJWT | null
+    pathname?: string
+  }
 }
 
-export async function getPagination({ page, limit, Model, order = "desc", sortBy = "created_at", filters = {}, user }: Pagination) {
+export async function getPagination({ page, limit, Model, order = "desc", sortBy = "created_at", filters = {}, options: optionsParam }: Pagination) {
   try {
     const sortOrder = order === "desc" ? -1 : 1
 
@@ -19,7 +22,7 @@ export async function getPagination({ page, limit, Model, order = "desc", sortBy
       page,
       limit,
       sort: { [sortBy]: sortOrder },
-      options: { user }
+      options: optionsParam
     }
 
     const result = await Model.paginate(filters, options)

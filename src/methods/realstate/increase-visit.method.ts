@@ -1,11 +1,14 @@
-import { UserJWT } from "@/src/middlewares/authMiddleware"
-import { RealStateModel } from "@/src/schemas/real-state.schemas"
-import { Request } from "express"
+import { UserJWT } from "@/src/middlewares/authMiddleware";
+import { RealStateModel } from "@/src/schemas/real-state.schemas";
+import { Request } from "express";
 
 export async function increaseVisit({ decoded, isVisit, id, req }: { decoded?: UserJWT | null; isVisit: string; id: string | undefined; req: Request<any> }) {
-  if (decoded && isVisit) {
-    console.log("El usuario si existe, está logueado: ", decoded)
+  const userId = req.user?.userId
 
+  const property = await RealStateModel.findById(id).setOptions({ user: req.user })
+  if (property && property?.owner && userId === String(property.owner)) return
+
+  if (decoded && isVisit) {
     const existingVisitor = await RealStateModel.findOne({
       _id: id,
       "visitors.user": decoded.userId
@@ -21,8 +24,6 @@ export async function increaseVisit({ decoded, isVisit, id, req }: { decoded?: U
         }
       )
     } else {
-      console.log("Está logueado pero no ha visitado nada")
-
       // Si es la primera visita del usuario, crear nueva entrada
       await RealStateModel.updateOne(
         { _id: id },
@@ -47,8 +48,6 @@ export async function increaseVisit({ decoded, isVisit, id, req }: { decoded?: U
     }).setOptions({ user: req.user })
 
     if (existingAnonymousUser) {
-      console.log("El usuario ya existe en visitors por IP:", req.ip)
-
       // Si el usuario ya existe, agregar nueva visita
       await RealStateModel.updateOne(
         { _id: id, "visitors.user": req.ip },
@@ -58,8 +57,6 @@ export async function increaseVisit({ decoded, isVisit, id, req }: { decoded?: U
         }
       )
     } else {
-      console.log("El usuario no existe en visitors por IP:", req.ip)
-
       // Si es la primera visita del usuario, crear nueva entrada
       await RealStateModel.updateOne(
         { _id: id },

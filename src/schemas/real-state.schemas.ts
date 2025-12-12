@@ -1,5 +1,5 @@
 import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
-import { RealStateI } from "@/types/real-state/types.real-state"
+import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
 import { Request } from "express"
 import mongoose, { model } from "mongoose"
 import aggregatePaginate from "mongoose-aggregate-paginate-v2"
@@ -231,8 +231,16 @@ const realStateSchema = new mongoose.Schema(
 realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
   const options = this.getOptions()
   let userId = options?.user?.userId
+  const pathname = options?.pathname
 
   if (userId == "68c11a1ef3a5f54469f882ae") {
+    next()
+    return
+  }
+
+  // Show properties accepted
+  if (userId && pathname == "/") {
+    this.where({ isAccepted: true })
     next()
     return
   }
@@ -258,7 +266,7 @@ realStateSchema.methods.increaseVisit = increaseVisit
 realStateSchema.plugin(mongoosePaginate)
 realStateSchema.plugin(aggregatePaginate)
 
-interface RealStateDocument extends RealStateI, mongoose.Document {
+interface RealStateDocument extends RealStateIWithOwner, mongoose.Document {
   /**
    * @description Increase the visits of one property based on the user ID or IP Address
    * @param params
