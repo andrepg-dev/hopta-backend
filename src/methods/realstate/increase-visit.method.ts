@@ -1,6 +1,6 @@
-import { UserJWT } from "@/src/middlewares/authMiddleware";
-import { RealStateModel } from "@/src/schemas/real-state.schemas";
-import { Request } from "express";
+import { UserJWT } from "@/src/middlewares/authMiddleware"
+import { RealStateModel } from "@/src/schemas/real-state.schemas"
+import { Request } from "express"
 
 export async function increaseVisit({ decoded, isVisit, id, req }: { decoded?: UserJWT | null; isVisit: string; id: string | undefined; req: Request<any> }) {
   const userId = req.user?.userId

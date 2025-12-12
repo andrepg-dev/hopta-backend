@@ -527,4 +527,29 @@ RealStateRouter.post(
   })
 )
 
+RealStateRouter.post(
+  "/near-by/coordinates",
+  validateRequest(z.object({ coordinates: z.array(z.number()).max(2) })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { coordinates } = req.body as { coordinates: [number, number] }
+
+    const closerProperty = await RealStateModel.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: coordinates
+          },
+          distanceField: "distance"
+        }
+      },
+      {
+        $limit: 5
+      }
+    ])
+
+    responseHandler({ res, code: 200, data: closerProperty, message: "Properties retrieved succesfully" })
+  })
+)
+
 export default RealStateRouter

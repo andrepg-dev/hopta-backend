@@ -1,5 +1,5 @@
 import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
-import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
+import { RealStateIWithOwner } from "@/types/real-state/types.real-state"
 import { Request } from "express"
 import mongoose, { model } from "mongoose"
 import aggregatePaginate from "mongoose-aggregate-paginate-v2"
@@ -227,6 +227,35 @@ const realStateSchema = new mongoose.Schema(
     }
   }
 )
+
+realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDocument[]>, next) {
+  const options = this.options
+
+  const userId = options?.user?.userId
+  const pathname = options?.pathname
+
+  if (userId == "68c11a1ef3a5f54469f882ae") {
+    next()
+    return
+  }
+
+  // Show properties accepted
+  if (userId && pathname == "/") {
+    this.match({ isAccepted: true })
+    next()
+    return
+  }
+
+  if (userId) {
+    const id = new mongoose.Types.ObjectId(userId)
+    this.match({ $or: [{ owner: id }, { isAccepted: true }] })
+    next()
+    return
+  }
+
+  this.match({ isAccepted: true })
+  next()
+})
 
 realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
   const options = this.getOptions()
