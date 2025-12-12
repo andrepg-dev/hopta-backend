@@ -529,7 +529,7 @@ RealStateRouter.post(
 
 RealStateRouter.post(
   "/near-by/coordinates",
-  validateRequest(z.object({ coordinates: z.array(z.number()).max(2) })),
+  validateRequest(z.object({ coordinates: z.array(z.number()).length(2) })),
   asyncHandler(async (req: Request, res: Response) => {
     const { coordinates } = req.body as { coordinates: [number, number] }
 
@@ -544,7 +544,7 @@ RealStateRouter.post(
         }
       },
       {
-        $limit: 5
+        $limit: 4
       }
     ])
 

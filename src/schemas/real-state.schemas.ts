@@ -234,6 +234,8 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
   const userId = options?.user?.userId
   const pathname = options?.pathname
 
+  console.log({ userId })
+
   if (userId == "68c11a1ef3a5f54469f882ae") {
     next()
     return
@@ -241,19 +243,30 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
 
   // Show properties accepted
   if (userId && pathname == "/") {
-    this.match({ isAccepted: true })
+    this.pipeline().unshift({
+      $match: { isAccepted: true }
+    })
+
     next()
     return
   }
 
   if (userId) {
+    console.log("entro aqui")
+
     const id = new mongoose.Types.ObjectId(userId)
-    this.match({ $or: [{ owner: id }, { isAccepted: true }] })
+    this.pipeline().unshift({
+      $match: {
+        $or: [{ owner: id }, { isAccepted: true }]
+      }
+    })
     next()
     return
   }
 
-  this.match({ isAccepted: true })
+  this.pipeline().unshift({
+    $match: { isAccepted: true }
+  })
   next()
 })
 
