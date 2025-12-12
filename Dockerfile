@@ -14,7 +14,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 # Copiar el package lock para instalar dependencias
-COPY package*.json .
+COPY package*.json ./
 RUN npm install --production
 
 COPY nginx.conf /etc/nginx/conf.d/nginx.conf
