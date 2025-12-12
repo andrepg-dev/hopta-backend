@@ -3,7 +3,6 @@ import mongoose from "mongoose"
 import mongoosePaginate from "mongoose-paginate-v2"
 
 // TODO: add if the user is married or not as optional
-
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -17,7 +16,9 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       unique: true,
-      sparse: true
+      sparse: true,
+      lowercase: true,
+      trim: true
     },
     suscription: {
       type: mongoose.Schema.Types.ObjectId,
@@ -71,10 +72,6 @@ const userSchema = new mongoose.Schema(
       ],
       default: []
     },
-    properties: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "RealState"
-    },
     favorites_properties: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "RealState"
@@ -89,12 +86,14 @@ const userSchema = new mongoose.Schema(
       }
     },
     location: {
-      type: [
-        {
-          lat: { type: Number, required: true },
-          lng: { type: Number, required: true }
-        }
-      ]
+      title: { type: String },
+      type: {
+        type: String
+      },
+      coordinates: {
+        type: [Number, Number],
+        index: "2dsphere"
+      }
     },
     created_at: {
       type: Date,
@@ -170,8 +169,30 @@ const userSchema = new mongoose.Schema(
       default: "user"
     }
   },
-  { versionKey: false }
+  {
+    versionKey: false,
+    toJSON: {
+      transform(doc, ret) {
+        delete ret.auth
+        return ret
+      },
+      virtuals: true
+    },
+    toObject: {
+      transform(doc, ret) {
+        delete ret.auth
+        return ret
+      },
+      virtuals: true
+    }
+  }
 )
+
+userSchema.virtual("properties", {
+  ref: "RealState",
+  localField: "_id",
+  foreignField: "owner"
+})
 
 // Middleware para actualizar `updated_at` automáticamente antes de guardar
 userSchema.pre("save", function (next) {

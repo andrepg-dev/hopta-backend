@@ -21,7 +21,7 @@ reportsRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { id, message, reason, url } = req.body
 
-    const realState = await RealStateModel.findById(id)
+    const realState = await RealStateModel.findById(id).setOptions({ user: req.user })
 
     if (!realState) {
       throw new AppError("Real state not found", 404)

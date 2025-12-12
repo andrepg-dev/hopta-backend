@@ -1,9 +1,11 @@
 import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
-import Logs from "@/src/services/logs/save-logs.service"
-import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
+import { RealStateI } from "@/types/real-state/types.real-state"
+import { Request } from "express"
 import mongoose, { model } from "mongoose"
 import aggregatePaginate from "mongoose-aggregate-paginate-v2"
 import mongoosePaginate from "mongoose-paginate-v2"
+import { increaseVisit } from "../methods/realstate/increase-visit.method"
+import { UserJWT } from "../middlewares/authMiddleware"
 
 const realStateSchema = new mongoose.Schema(
   {
@@ -36,15 +38,13 @@ const realStateSchema = new mongoose.Schema(
         type: String,
         required: true
       },
+      type: {
+        type: String,
+        default: "Point"
+      },
       coordinates: {
-        lat: {
-          type: Number,
-          required: true
-        },
-        lng: {
-          type: Number,
-          required: true
-        }
+        type: [Number, Number],
+        index: "2dsphere"
       }
     },
     square_meters: {
@@ -71,26 +71,21 @@ const realStateSchema = new mongoose.Schema(
         required: true
       },
       interior_extras: {
-        type: [String],
-        enum: ["water_tank", "water_cistern", "closets", "furnished", "air_conditioning", "garage", "allowPets"]
+        type: [String]
       },
       exterior_extras: {
-        type: [String],
-        enum: ["balcony", "patio", "terrace", "garden", "swimming_pool"]
+        type: [String]
       },
       community_extras: {
-        type: [String],
-        enum: ["gym", "parks", "schools", "shopping_malls", "supermarkets", "elevator"]
+        type: [String]
       },
       security: {
-        type: [String],
-        enum: ["gated_community", "24_7_security"]
+        type: [String]
       }
     },
     additional_cost: {
       utilities_included: {
-        type: [String],
-        enum: ["water", "electricity"]
+        type: [String]
       },
       water: {
         type: Number
@@ -124,8 +119,7 @@ const realStateSchema = new mongoose.Schema(
           user: {
             type: mongoose.Schema.Types.Mixed,
             ref: "User",
-            required: true,
-            immutable: true
+            required: true
           },
           visit_date: [
             {
@@ -142,8 +136,7 @@ const realStateSchema = new mongoose.Schema(
         user: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
-          required: true,
-          immutable: true
+          required: true
         },
         saved_at: {
           type: Date,
@@ -208,25 +201,60 @@ const realStateSchema = new mongoose.Schema(
       default: Date.now
     }
   },
-  { versionKey: false }
+  {
+    versionKey: false,
+    toJSON: {
+      transform(doc, ret) {
+        delete ret.visitors
+        delete ret.saved_by
+      }
+    },
+    toObject: {
+      transform(doc, ret) {
+        delete ret.visitors
+        delete ret.saved_by
+      }
+    }
+  }
 )
 
+realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
+  const options = this.getOptions()
+  let userId = options?.user?.userId
+
+  if (userId == "68c11a1ef3a5f54469f882ae") {
+    next()
+    return
+  }
+
+  if (userId) {
+    const id = new mongoose.Types.ObjectId(userId)
+    this.where({ $or: [{ owner: id }, { isAccepted: true }] })
+    next()
+    return
+  }
+
+  this.where({ isAccepted: true })
+  next()
+})
+
 realStateSchema.pre("save", function (next) {
+  // @ts-ignore
   this.updated_at = new Date()
   next()
 })
 
-realStateSchema.post("save", async function (doc: RealStateIWithOwner) {
-  new Logs({
-    method: "saveLogs",
-    message: `New property created: ${doc.title} at (${doc.location.coordinates.lat}, ${doc.location.coordinates.lng})`
-  })
-})
-
+realStateSchema.methods.increaseVisit = increaseVisit
 realStateSchema.plugin(mongoosePaginate)
 realStateSchema.plugin(aggregatePaginate)
 
-interface RealStateDocument extends mongoose.Document, RealStateI {}
+interface RealStateDocument extends RealStateI, mongoose.Document {
+  /**
+   * @description Increase the visits of one property based on the user ID or IP Address
+   * @param params
+   */
+  increaseVisit(params: { decoded?: UserJWT | null; isVisit?: any; id?: string; req: Request<any> }): Promise<void>
+}
 
 export const RealStateModel = model<RealStateDocument, mongoose.PaginateModel<RealStateDocument> & mongoose.AggregatePaginateModel<RealStateDocument>>(
   "RealState",

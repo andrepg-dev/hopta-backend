@@ -24,7 +24,7 @@ contactRouter.get(
     const user = req.user
     const contacts = await contactModel
       .find({ ownerId: user?.userId })
-      .populate("property", "title images _id")
+      .populate("propertyId", "title images _id")
       .populate("client.id", "_id name last_name email profile_picture")
 
     responseHandler({
@@ -42,7 +42,7 @@ contactRouter.post(
   "/",
   validateRequest(contactSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, name, phone, reason, comment, owner_id, property: propertyId } = req.body
+    const { email, name, phone, reason, comment, owner_id, propertyId } = req.body
 
     const accessToken = req.cookies[COOKIES.jwt_access_token.name]
     let decoded: UserJWT | null = null
@@ -60,7 +60,7 @@ contactRouter.post(
     }
 
     const userOwnerData = await userModel.findById(owner_id)
-    const propertyData = await RealStateModel.findById(propertyId)
+    const propertyData = await RealStateModel.findById(propertyId).setOptions({ user: req.user })
 
     if (!propertyData) throw new AppError("Property not found", 404)
     if (!userOwnerData) throw new AppError("User not found", 404)
@@ -139,7 +139,7 @@ contactRouter.post(
     // Guardar el contacto en la base de datos
     try {
       await contactModel.create({
-        property: propertyId,
+        propertyId: propertyId,
         ownerId: owner_id,
         client: {
           name,
