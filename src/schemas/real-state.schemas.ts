@@ -205,14 +205,24 @@ const realStateSchema = new mongoose.Schema(
     versionKey: false,
     toJSON: {
       transform(doc, ret) {
-        delete ret?.visitors
-        delete ret?.saved_by
+        if (ret && "visitors" in ret) {
+          delete ret?.visitors
+        }
+
+        if (ret && "saved_by" in ret) {
+          delete ret?.saved_by
+        }
       }
     },
     toObject: {
       transform(doc, ret) {
-        delete ret?.visitors
-        delete ret?.saved_by
+        if (ret && "visitors" in ret) {
+          delete ret?.visitors
+        }
+
+        if (ret && "saved_by" in ret) {
+          delete ret?.saved_by
+        }
       }
     }
   }
