@@ -486,6 +486,31 @@ RealStateRouter.delete(
   })
 )
 
+RealStateRouter.post(
+  "/near-by/coordinates",
+  validateRequest(z.object({ coordinates: z.array(z.number()).length(2) })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { coordinates } = req.body as { coordinates: [number, number] }
+
+    const closerProperty = await RealStateModel.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: coordinates
+          },
+          distanceField: "distance"
+        }
+      },
+      {
+        $limit: 4
+      }
+    ])
+
+    responseHandler({ res, code: 200, data: closerProperty, message: "Properties retrieved succesfully" })
+  })
+)
+
 // Update real state
 RealStateRouter.patch(
   "/space/:id",
@@ -524,31 +549,6 @@ RealStateRouter.post(
       data: property,
       message: "Your admin, role created property successfully"
     })
-  })
-)
-
-RealStateRouter.post(
-  "/near-by/coordinates",
-  validateRequest(z.object({ coordinates: z.array(z.number()).length(2) })),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { coordinates } = req.body as { coordinates: [number, number] }
-
-    const closerProperty = await RealStateModel.aggregate([
-      {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: coordinates
-          },
-          distanceField: "distance"
-        }
-      },
-      {
-        $limit: 4
-      }
-    ])
-
-    responseHandler({ res, code: 200, data: closerProperty, message: "Properties retrieved succesfully" })
   })
 )
 

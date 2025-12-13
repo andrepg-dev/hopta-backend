@@ -230,11 +230,16 @@ const realStateSchema = new mongoose.Schema(
 
 realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDocument[]>, next) {
   const options = this.options
-
   const userId = options?.user?.userId
   const pathname = options?.pathname
+  const pipeline = this.pipeline()
 
-  console.log({ userId })
+  const hasGeoNear = pipeline.some((stage: any) => stage.$geoNear)
+
+  if (hasGeoNear) {
+    next()
+    return
+  }
 
   if (userId == "68c11a1ef3a5f54469f882ae") {
     next()
