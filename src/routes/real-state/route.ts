@@ -531,6 +531,29 @@ RealStateRouter.patch(
   })
 )
 
+RealStateRouter.patch(
+  "/space/accept/:id",
+  authMiddleware,
+  isAdmin,
+  validateRequest(z.object({ accept: z.boolean(), id: z.string() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id, accept } = req.params
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+
+    const property = await RealStateModel.findByIdAndUpdate(id, { isAccepted: accept }, { new: true }).setOptions({ user: req.user })
+
+    if (!property) throw new AppError("Property not found", 404)
+
+    responseHandler({
+      res,
+      code: 200,
+      data: property,
+      message: "Your admin, role updated property successfully"
+    })
+  })
+)
+
 // Create real state
 RealStateRouter.post(
   "/space",
