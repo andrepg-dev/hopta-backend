@@ -362,7 +362,7 @@ RealStateRouter.delete(
   })
 )
 
-RealStateRouter.patch(
+RealStateRouter.put(
   "/:id",
   authMiddleware,
   validateRequest(realStateUpdateSchema),
@@ -375,7 +375,7 @@ RealStateRouter.patch(
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify property exists and user has permission to update it
-    const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as any
+    const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as RealStateIWithOwner
     if (!property) throw new AppError("Property not found", 404)
 
     // Optional: Check if user is the owner
@@ -393,8 +393,7 @@ RealStateRouter.patch(
     const updatedProperty = await RealStateModel.findByIdAndUpdate(
       id,
       {
-        ...req.body,
-        updated_at: new Date()
+        ...req.body
       },
       {
         new: true,

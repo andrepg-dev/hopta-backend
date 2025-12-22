@@ -257,8 +257,6 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
   }
 
   if (userId) {
-    console.log("entro aqui")
-
     const id = new mongoose.Types.ObjectId(userId)
     this.pipeline().unshift({
       $match: {
@@ -304,6 +302,12 @@ realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[],
 })
 
 realStateSchema.pre("save", function (next) {
+  // @ts-ignore
+  this.updated_at = new Date()
+  next()
+})
+
+realStateSchema.pre("updateOne", function (next) {
   // @ts-ignore
   this.updated_at = new Date()
   next()
