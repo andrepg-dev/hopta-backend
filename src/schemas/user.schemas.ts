@@ -184,7 +184,8 @@ const userSchema = new mongoose.Schema(
         return ret
       },
       virtuals: true
-    }
+    },
+    id: false
   }
 )
 

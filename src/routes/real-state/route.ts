@@ -151,10 +151,11 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
 
-    const myProperties = await RealStateModel.find({ owner: user?.userId })
-      .setOptions({ user: req.user })
-      .select("_id title owner saved_by images")
-      .populate("saved_by.user", "name last_name profile_picture")
+    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title owner saved_by images").populate({
+      path: "owner",
+      select: "name last_name"
+    })
+
     const userInDB = await userModel.findById(user?.userId)
 
     if (!myProperties) {
