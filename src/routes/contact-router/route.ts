@@ -24,8 +24,16 @@ contactRouter.get(
     const user = req.user
     const contacts = await contactModel
       .find({ ownerId: user?.userId })
-      .populate("propertyId", "title images _id")
-      .populate("client.id", "_id name last_name email profile_picture")
+      .populate({
+        path: "propertyId",
+        select: "title images location price"
+      })
+      .populate({
+        path: "client.id",
+        model: "User",
+        select: "_id name last_name email profile_picture"
+      })
+      .sort({ createdAt: -1 })
 
     responseHandler({
       code: 200,
@@ -87,13 +95,13 @@ contactRouter.post(
           subject: `El usuario ${name} te ha contactado`,
           template: "contact",
           dynamicTemplateData: {
-            ownerName: userOwnerData?.name + " " + (userOwnerData?.last_name || ""),
-            name,
-            phone: phone || "No proporcionado",
-            reason: reason || "No proporcionado",
-            comment: comment || "No proporcionado",
-            email: email || "No proporcionado",
-            propertyId: propertyId
+            OWNERNAME: userOwnerData?.name + " " + (userOwnerData?.last_name || ""),
+            NAME: name,
+            PHONE: phone || "No proporcionado",
+            REASON: reason || "No proporcionado",
+            COMMENT: comment || "No proporcionado",
+            EMAIL: email || "No proporcionado",
+            PROPERTYID: propertyId
           }
         })
 
