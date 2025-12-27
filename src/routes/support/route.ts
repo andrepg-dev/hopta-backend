@@ -1,6 +1,6 @@
+import asyncHandler from "@/src/actions/try-catch-async-handler"
 import { AppError } from "@/src/handlers/error-handler"
 import { responseHandler } from "@/src/handlers/responseHandler"
-import asyncHandler from "@/src/actions/try-catch-async-handler"
 import { EmailService } from "@/src/services/email/email.service"
 import Logs from "@/src/services/logs/save-logs.service"
 import { TokenManager } from "@/src/utils/JWT/tokens-manager"

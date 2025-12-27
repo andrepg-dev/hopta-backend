@@ -45,7 +45,7 @@ const COOKIES = {
 export class TokenManager {
   /**
    *
-   * @description Generate a access token
+   * @description Generate a access token using secret keys based on userId
    *
    * @param payload
    * @returns string
@@ -93,8 +93,8 @@ export class TokenManager {
   static async findRefreshTokenInDB({ payload, token }: { payload: { userId: string }; token: string }) {
     if (!token) throw new AppError("Refresh token not provided", 404)
 
-    const storedToken = await refreshTokenModel.findOne(payload)
-    if (!storedToken) throw new AppError("Refresh token not found", 404)
+    const storedToken = await refreshTokenModel.findOne({ userId: payload.userId })
+    if (!storedToken) throw new AppError("Refresh token not found in database", 404)
 
     const isTokenValid = await hashCompare(token, storedToken.token)
     return isTokenValid
