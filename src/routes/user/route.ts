@@ -1058,10 +1058,8 @@ userRouter.get(
     }
 
     const data = "name last_name contact social_media about created_at properties contact reviews profile_picture"
-    const realStateData = "title description images created_at -owner"
     const user = await userModel.findById(id).select(data).populate({
-      path: "properties",
-      select: realStateData
+      path: "properties"
     })
 
     if (!user) {
