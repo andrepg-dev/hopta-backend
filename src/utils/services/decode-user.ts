@@ -1,7 +1,7 @@
 import { COOKIES } from "@/constants/cookies.constants"
 import { NextFunction, Request, Response } from "express"
-import { UserJWT } from "../middlewares/authMiddleware"
-import { TokenManager } from "./JWT/tokens-manager"
+import { UserJWT } from "../../middlewares/authMiddleware"
+import { TokenManager } from "../JWT/tokens-manager"
 
 /**
  * Extract user token if exits, otherwise, ignore it

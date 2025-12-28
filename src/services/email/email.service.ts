@@ -42,7 +42,7 @@ class EmailServiceResend {
 
     let entries = Object.entries(object)
     let capsEntries = entries.map((entry) => [entry[0].toUpperCase(), entry[1]]) // ['KEY', value]
-    return Object.fromEntries(capsEntries) // [] => {}
+    return Object.fromEntries(capsEntries)
   }
 
   async sendEmail({
@@ -59,8 +59,6 @@ class EmailServiceResend {
     dynamicTemplateData?: Record<string, string>
   }) {
     if (template) {
-      console.log({ variables: this.convertKeysOjectToUpperCase(dynamicTemplateData) })
-
       return await this.resend.emails
         .send({
           from: `Hopta <${process.env.RESEND_FROM_EMAIL}>`,
