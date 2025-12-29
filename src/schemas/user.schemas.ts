@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true
     },
+    last_seen: {
+      type: Date,
+      default: Date.now
+    },
     suscription: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "subscription"

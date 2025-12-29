@@ -54,6 +54,7 @@ interface About {
 export interface UserI {
   name: string
   last_name?: string
+  last_seen?: Date
   contact?: Contact
   email: string
   auth?: Auth

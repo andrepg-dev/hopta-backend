@@ -7,7 +7,6 @@ import { contactModel } from "@/src/schemas/contact.schema"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import { EmailService } from "@/src/services/email/email.service"
-import { decodeUserToken } from "@/src/utils/services/decode-user"
 import { contactFormSchema } from "@/src/zod/contact-form.zod"
 import { contactSchema } from "@/src/zod/contact-owner.zod"
 import { Request, Response, Router } from "express"
@@ -46,7 +45,6 @@ contactRouter.get(
 
 contactRouter.post(
   "/",
-  decodeUserToken,
   validateRequest(contactSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, name, phone, reason, comment, propertyId } = req.body

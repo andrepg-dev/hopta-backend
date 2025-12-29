@@ -9,6 +9,8 @@ import session from "express-session"
 import helmet from "helmet"
 import passport from "passport"
 import { errorHandler } from "./handlers/error-handler"
+import { decodeUserToken } from "./middlewares/decode-user"
+import LastSeen from "./middlewares/last-seen"
 import aiRouter from "./routes/ai/route"
 import "./routes/auth/google/google-auth.config"
 import googleRouter from "./routes/auth/google/google.route"
@@ -77,6 +79,9 @@ const port = CONNECTIONS.PORT
 app.get("/", async (_: Request, res: Response) => {
   res.status(200).send("Welcome to Hopta")
 })
+
+app.use(decodeUserToken)
+app.use(LastSeen)
 
 app.use("/health", healthRouter)
 app.use("/upload-image", s3UploadImageRouter)

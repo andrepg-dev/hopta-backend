@@ -8,7 +8,6 @@ import { geoModel } from "@/src/schemas/geo.schema"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import Logs from "@/src/services/logs/save-logs.service"
-import { decodeUserToken } from "@/src/utils/services/decode-user"
 import { getPagination } from "@/src/utils/get-pagination.utils"
 import { realStateSchema, realStateUpdateSchema } from "@/src/zod/real-state.zod"
 import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
@@ -23,7 +22,6 @@ const RealStateRouter = Router()
  */
 RealStateRouter.get(
   "/",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
@@ -54,7 +52,6 @@ RealStateRouter.get(
 // this probably dont gonna work
 RealStateRouter.get(
   "/search",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
     if (!query) throw new AppError("Query is required", 400)
@@ -197,7 +194,6 @@ RealStateRouter.get(
 
 RealStateRouter.get(
   "/:id",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
