@@ -8,7 +8,6 @@ import { geoModel } from "@/src/schemas/geo.schema"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import Logs from "@/src/services/logs/save-logs.service"
-import { decodeUserToken } from "@/src/utils/decode-user"
 import { getPagination } from "@/src/utils/get-pagination.utils"
 import { realStateSchema, realStateUpdateSchema } from "@/src/zod/real-state.zod"
 import { RealStateI, RealStateIWithOwner } from "@/types/real-state/types.real-state"
@@ -23,7 +22,6 @@ const RealStateRouter = Router()
  */
 RealStateRouter.get(
   "/",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
@@ -54,7 +52,6 @@ RealStateRouter.get(
 // this probably dont gonna work
 RealStateRouter.get(
   "/search",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query
     if (!query) throw new AppError("Query is required", 400)
@@ -151,10 +148,11 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const user = req.user
 
-    const myProperties = await RealStateModel.find({ owner: user?.userId })
-      .setOptions({ user: req.user })
-      .select("_id title owner saved_by images")
-      .populate("saved_by.user", "name last_name profile_picture")
+    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title owner saved_by images").populate({
+      path: "owner",
+      select: "name last_name"
+    })
+
     const userInDB = await userModel.findById(user?.userId)
 
     if (!myProperties) {
@@ -196,7 +194,6 @@ RealStateRouter.get(
 
 RealStateRouter.get(
   "/:id",
-  decodeUserToken,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
@@ -362,7 +359,7 @@ RealStateRouter.delete(
   })
 )
 
-RealStateRouter.patch(
+RealStateRouter.put(
   "/:id",
   authMiddleware,
   validateRequest(realStateUpdateSchema),
@@ -375,7 +372,7 @@ RealStateRouter.patch(
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify property exists and user has permission to update it
-    const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as any
+    const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as RealStateIWithOwner
     if (!property) throw new AppError("Property not found", 404)
 
     // Optional: Check if user is the owner
@@ -393,8 +390,7 @@ RealStateRouter.patch(
     const updatedProperty = await RealStateModel.findByIdAndUpdate(
       id,
       {
-        ...req.body,
-        updated_at: new Date()
+        ...req.body
       },
       {
         new: true,
@@ -503,7 +499,7 @@ RealStateRouter.post(
         }
       },
       {
-        $limit: 4
+        $limit: 5
       }
     ])
 

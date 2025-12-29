@@ -2,7 +2,6 @@
 // TODO: subir imágenes a la API de Anthropic
 // TODO: mostrar los datos de la ubicación a la API para que tenga los datos de la ubicación recolectada
 
-import { responseHandler } from "@/src/handlers/responseHandler"
 import Anthropic from "@anthropic-ai/sdk"
 import { Router } from "express"
 const aiRouter = Router()
@@ -128,58 +127,6 @@ aiRouter.post("/generate-description", async (req, res) => {
       })}\n\n`
     )
     res.end()
-  }
-})
-
-aiRouter.post("/generate-title", async (req, res) => {
-  const { form } = req.body
-
-  try {
-    const message = await anthropic.messages.create({
-      max_tokens: 900,
-      messages: [
-        {
-          role: "assistant",
-          content: `You are a professional assistant for generating real estate titles.
-
-          Your task is:
-            1. Write a property title in Spanish.
-            2. Output only the title, formatted as plain text.
-
-          Guidelines for the title:
-            1. The title should be in Spanish.
-            3. The title should be a single sentence.
-            4. Include just one of the most important house features in the title.
-            5. Include the location title.
-            7. The location is from Honduras
-            8. Format tile should be similar to "<property_type> <location> <house feature>(optional)"
-          
-          Important:
-          Return only the text with properly formatted content. Do not include any explanation, comments, or additional text.
-          `.trim()
-        },
-        {
-          role: "user",
-          content: `
-          Property data (input):
-            ${JSON.stringify(form)}
-          `.trim()
-        }
-      ],
-      model: "claude-3-5-haiku-latest"
-    })
-
-    responseHandler({
-      res,
-      code: 200,
-      data: message.content[0]
-    })
-  } catch (error) {
-    responseHandler({
-      res,
-      code: 500,
-      message: "Title cannot be created"
-    })
   }
 })
 

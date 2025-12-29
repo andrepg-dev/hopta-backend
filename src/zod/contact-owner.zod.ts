@@ -8,6 +8,6 @@ export const contactSchema = z.object({
   phone: z.string().refine((v) => validator.isMobilePhone(v, "any"), { message: "invalid" }),
   reason: z.string().max(2000).min(5),
   comment: z.string().max(2000).optional(),
-  owner_id: ObjectIdSchema,
+  owner_id: z.string().optional(),
   propertyId: ObjectIdSchema
 })

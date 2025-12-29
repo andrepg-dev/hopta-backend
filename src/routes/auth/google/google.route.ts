@@ -1,7 +1,5 @@
-import { COOKIES } from "@/constants/cookies.constants"
 import { AppError } from "@/src/handlers/error-handler"
-import { Cookies } from "@/src/services/cookies/cookies.service"
-import { TokenManager } from "@/src/utils/JWT/tokens-manager"
+import { saveAccessTokenAndRefreshToken } from "@/src/utils/JWT/save-token"
 import { Response, Router } from "express"
 import passport from "passport"
 
@@ -28,7 +26,7 @@ googleRouter.get(
     const callbackUrl = req.query.state as string
 
     const URL_TO_REDIRECT = ["/user/dashboard", "/new/property-ad"]
-    const finalCallbackUrl = callbackUrl || "/user/dashboard" // default url
+    const finalCallbackUrl = callbackUrl || "/user/dashboard"
 
     if (!URL_TO_REDIRECT.includes(finalCallbackUrl)) {
       throw new AppError("Invalid URL", 400)
@@ -38,13 +36,7 @@ googleRouter.get(
       throw new AppError("Authentication failed", 401)
     }
 
-    const accessToken = TokenManager.accessToken({ payload: { userId: user._id as string } })
-    const refreshToken = TokenManager.refreshToken({ payload: { userId: user._id as string } })
-
-    const cookies = new Cookies(req, res)
-
-    cookies.saveCookie(COOKIES.jwt_refresh_token.name, refreshToken)
-    cookies.saveCookie(COOKIES.jwt_access_token.name, accessToken)
+    saveAccessTokenAndRefreshToken({ userId: user._id, req, res })
 
     return res.redirect(`${process.env.FRONTEND_URL}${finalCallbackUrl}`)
   }

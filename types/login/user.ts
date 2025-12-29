@@ -54,6 +54,7 @@ interface About {
 export interface UserI {
   name: string
   last_name?: string
+  last_seen?: Date
   contact?: Contact
   email: string
   auth?: Auth
@@ -61,7 +62,11 @@ export interface UserI {
   properties?: mongoose.Types.ObjectId[]
   favorites_properties?: mongoose.Types.ObjectId[]
   profile_picture?: string
-  location?: { lat: number; lng: number }[]
+  location?: {
+    type: "Point"
+    title: string
+    coordinates: [number, number]
+  }
   readonly created_at: Date
   readonly updated_at: Date
   social_media?: SocialMedia
