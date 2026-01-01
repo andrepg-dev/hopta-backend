@@ -66,12 +66,10 @@ const realStateSchema = new mongoose.Schema(
     },
     house_features: {
       rooms: {
-        type: Number,
-        required: true
+        type: Number
       },
       bathrooms: {
-        type: Number,
-        required: false
+        type: Number
       },
       interior_extras: {
         type: [String]

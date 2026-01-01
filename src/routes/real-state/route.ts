@@ -195,8 +195,6 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    console.log({ idTomado: id })
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify if the property exists
