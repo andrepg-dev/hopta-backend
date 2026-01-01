@@ -129,22 +129,26 @@ const realStateSchema = new mongoose.Schema(
           ]
         }
       ],
-      default: []
+      default: [],
+      select: false
     },
-    saved_by: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true
-        },
-        saved_at: {
-          type: Date,
-          default: Date.now,
-          immutable: true
+    saved_by: {
+      type: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+          },
+          saved_at: {
+            type: Date,
+            default: Date.now,
+            immutable: true
+          }
         }
-      }
-    ],
+      ],
+      select: false
+    },
     stats: {
       total_visits: {
         type: Number,
@@ -202,29 +206,7 @@ const realStateSchema = new mongoose.Schema(
     }
   },
   {
-    versionKey: false,
-    toJSON: {
-      transform(doc, ret) {
-        if (ret && "visitors" in ret) {
-          delete (ret as any).visitors
-        }
-
-        if (ret && "saved_by" in ret) {
-          delete (ret as any).saved_by
-        }
-      }
-    },
-    toObject: {
-      transform(doc, ret) {
-        if (ret && "visitors" in ret) {
-          delete (ret as any).visitors
-        }
-
-        if (ret && "saved_by" in ret) {
-          delete (ret as any).saved_by
-        }
-      }
-    }
+    versionKey: false
   }
 )
 
@@ -278,25 +260,29 @@ realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[],
   let userId = options?.user?.userId
   const pathname = options?.pathname
 
+  // Show all properties for admin
   if (userId == "68c11a1ef3a5f54469f882ae") {
     next()
     return
   }
 
-  // Show properties accepted
+  // Show public properties
   if (userId && pathname == "/") {
     this.where({ isAccepted: true })
     next()
     return
   }
 
+  // Show user properties and publics properties
   if (userId) {
+    // Show visits and saved_by properties to user
     const id = new mongoose.Types.ObjectId(userId)
-    this.where({ $or: [{ owner: id }, { isAccepted: true }] })
+    this.where({ $or: [{ owner: id }, { isAccepted: true }] }).select("+visitors +saved_by")
     next()
     return
   }
 
+  // Default value is show every public propertie
   this.where({ isAccepted: true })
   next()
 })
