@@ -1,9 +1,9 @@
 import { Types } from "mongoose"
 
-export type InteriorExtrasType = "water_tank" | "water_cistern" | "closets" | "furnished" | "air_conditioning" | "garage" | "allowPets"
+export type InteriorExtrasType = "water_tank" | "water_cistern" | "closets" | "furnished" | "air_conditioning" | "garage" | "allowPets" | "parking"
 export type ExteriorExtrasType = "balcony" | "patio" | "terrace" | "garden" | "swimming_pool"
 export type CommunityExtrasType = "gym" | "parks" | "schools" | "shopping_malls" | "supermarkets" | "elevator"
-export type SecurityType = "gated_community" | "24_7_security"
+export type SecurityType = "gated_community" | "24_7_security" | "security_guard"
 export type UtilitiesType = "water" | "electricity" | "internet"
 
 export interface InteriorExtras {

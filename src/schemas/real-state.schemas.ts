@@ -68,7 +68,7 @@ const realStateSchema = new mongoose.Schema(
       },
       bathrooms: {
         type: Number,
-        required: true
+        required: false
       },
       interior_extras: {
         type: [String]
