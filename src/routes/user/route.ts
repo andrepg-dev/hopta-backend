@@ -1057,7 +1057,7 @@ userRouter.get(
       }
     }
 
-    const data = "name last_name contact social_media about created_at properties contact reviews profile_picture last_seen"
+    const data = "name last_name email contact social_media about created_at properties contact reviews profile_picture last_seen"
     const user = await userModel.findById(id).select(data).populate({
       path: "properties"
     })

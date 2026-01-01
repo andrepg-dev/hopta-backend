@@ -30,7 +30,7 @@ export const realStateSchema = z.object({
     .optional(),
   house_features: z.object({
     rooms: z.number().positive("Rooms must be a positive number").max(20, "Rooms must be at most 20."),
-    bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20."),
+    bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20.").optional(),
     interior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.interior)).optional(),
     exterior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.exterior)).optional(),
     community_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.community)).optional(),
