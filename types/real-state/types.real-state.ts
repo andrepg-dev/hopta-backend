@@ -85,6 +85,7 @@ export interface RealStateI {
   one_month_upfront: boolean
   isAccepted: boolean
   location: Location
+  square_varas?: number
   square_meters?: number
   price: number
   currency: "HNL" | "USD" | "EUR"

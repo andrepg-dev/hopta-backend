@@ -236,7 +236,8 @@ RealStateRouter.post(
       population,
       additional_cost,
       one_month_upfront,
-      property_type
+      property_type,
+      square_varas
     } = body
 
     const owner = req?.user?.userId
@@ -274,6 +275,7 @@ RealStateRouter.post(
         population,
         currency,
         square_meters,
+        square_varas,
         description,
         images,
         title,

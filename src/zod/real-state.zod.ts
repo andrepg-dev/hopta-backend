@@ -1,4 +1,3 @@
-import { HOUSE_FEATURES_ALLOWED } from "@/constants/real-state/house-features-allowed"
 import { PROPERTY_TYPE } from "@/constants/real-state/property_type"
 import z from "zod"
 
@@ -16,6 +15,7 @@ export const realStateSchema = z.object({
     type: z.string().min(3).max(15).optional().default("Point"),
     coordinates: z.array(z.number()).max(2)
   }),
+  square_varas: z.number().positive("Square varas must be a positive number").max(100000, "Square varas must be at most 100,000.").optional(),
   square_meters: z.number().positive("Square meters must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),
   price: z.number().int("Price must be an integer").positive("Price must be a positive number").max(90000000, "Price must be at most $90,000,000"),
   currency: z.enum(["HNL", "USD", "EUR"]),
@@ -23,19 +23,22 @@ export const realStateSchema = z.object({
   additional_cost: z
     .object({
       // owner will pay for these utilities
-      utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional(),
+      utilities_included: z.array(z.string()).optional(),
       water: z.number().optional().nullable(),
       electricity: z.number().optional().nullable()
     })
     .optional(),
-  house_features: z.object({
-    rooms: z.number().positive("Rooms must be a positive number").max(20, "Rooms must be at most 20."),
-    bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20.").optional(),
-    interior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.interior)).optional(),
-    exterior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.exterior)).optional(),
-    community_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.community)).optional(),
-    security: z.array(z.enum(HOUSE_FEATURES_ALLOWED.security)).optional()
-  }),
+  // All this one is optional because we manage lands
+  house_features: z
+    .object({
+      rooms: z.number().positive("Rooms must be a positive number").max(20, "Rooms must be at most 20.").optional(),
+      bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20.").optional(),
+      interior_extras: z.array(z.string()).optional(),
+      exterior_extras: z.array(z.string()).optional(),
+      community_extras: z.array(z.string()).optional(),
+      security: z.array(z.string()).optional()
+    })
+    .optional(),
   house_status: z
     .object({
       is_available: z.boolean().default(true),
@@ -59,6 +62,7 @@ export const realStateUpdateSchema = z
         coordinates: z.array(z.number()).max(2)
       })
       .optional(),
+    square_varas: z.number().positive("Square varas must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),
     square_meters: z.number().positive("Square meters must be a positive number").max(100000, "Square meters must be at most 100,000.").optional(),
     price: z.number().positive("Price must be a positive number").max(90000000, "Price must be at most $90,000,000").multipleOf(0.01).optional(),
     currency: z.enum(["HNL", "USD", "EUR"]).optional(),
@@ -66,21 +70,19 @@ export const realStateUpdateSchema = z
     additional_cost: z
       .object({
         // owner will pay for these utilities
-        utilities_included: z.array(z.enum(HOUSE_FEATURES_ALLOWED.utilities)).optional(),
+        utilities_included: z.array(z.string()).optional(),
         water: z.number().optional().nullable(),
         electricity: z.number().optional().nullable()
       })
       .optional(),
-    house_features: z
-      .object({
-        rooms: z.number().positive("Rooms must be a positive number").max(20, "Rooms must be at most 20.").optional(),
-        bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20.").optional(),
-        interior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.interior)).optional(),
-        exterior_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.exterior)).optional(),
-        community_extras: z.array(z.enum(HOUSE_FEATURES_ALLOWED.community)).optional(),
-        security: z.array(z.enum(HOUSE_FEATURES_ALLOWED.security)).optional()
-      })
-      .optional(),
+    house_features: z.object({
+      rooms: z.number().positive("Rooms must be a positive number").max(20, "Rooms must be at most 20.").optional(),
+      bathrooms: z.number().positive("Bathrooms must be a positive number").max(20, "Bathrooms must be at most 20.").optional(),
+      interior_extras: z.array(z.string()).optional(),
+      exterior_extras: z.array(z.string()).optional(),
+      community_extras: z.array(z.string()).optional(),
+      security: z.array(z.string()).optional()
+    }),
     house_status: z
       .object({
         is_available: z.boolean().optional(),
