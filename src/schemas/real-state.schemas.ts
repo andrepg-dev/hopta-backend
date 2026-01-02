@@ -286,8 +286,6 @@ realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[],
       next()
       return
     }
-
-
     this.where({ $or: [{ owner: id }, { isAccepted: true }] })
     next()
     return

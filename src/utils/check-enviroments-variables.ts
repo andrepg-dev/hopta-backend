@@ -47,7 +47,6 @@ if (require.main === module) {
   if (envPath) {
     const fileContent = getFileContent(envPath)
     const extract = extractEnviromentsNames(fileContent)
-    console.log(extract)
   } else {
     console.error("No se encontró el archivo .env")
   }

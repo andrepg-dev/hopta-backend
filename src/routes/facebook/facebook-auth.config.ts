@@ -10,7 +10,6 @@ passport.use(
       state: true
     },
     function verify(accessToken, refreshToken, profile, cb) {
-      console.log(profile)
       return cb(null, profile)
     }
   )
