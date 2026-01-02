@@ -149,7 +149,10 @@ RealStateRouter.get(
     const user = req.user
 
     // Show saved_by properties
-    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title images saved_by")
+    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title images saved_by").populate({
+      path: "saved_by.user",
+      select: "name last_name profile_picture"
+    })
 
     const userInDB = await userModel.findById(user?.userId)
 
@@ -195,8 +198,6 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    console.log({ idTomado: id })
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
 
     // Verify if the property exists
@@ -236,7 +237,8 @@ RealStateRouter.post(
       population,
       additional_cost,
       one_month_upfront,
-      property_type
+      property_type,
+      square_varas
     } = body
 
     const owner = req?.user?.userId
@@ -274,6 +276,7 @@ RealStateRouter.post(
         population,
         currency,
         square_meters,
+        square_varas,
         description,
         images,
         title,

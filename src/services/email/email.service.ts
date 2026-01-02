@@ -217,7 +217,6 @@ class EmailServiceAmazonSESService {
 
       try {
         const result = await ses.sendTemplatedEmail(params).promise()
-        console.log(result)
         return result
       } catch (error) {
         console.error("Error sending email with Amazon SES:", error)
@@ -247,7 +246,6 @@ class EmailServiceAmazonSESService {
 
     try {
       const result = await ses.sendEmail(params).promise()
-      console.log(result)
       return result
     } catch (error) {
       console.error("Error sending email with Amazon SES:", error)

@@ -28,7 +28,6 @@ paymentRouter.post(
     }
 
     const line_item = line_items[plan as keyof typeof line_items]
-    console.log(line_item)
 
     if (!line_item) {
       throw new AppError("Line item not found for the selected plan", 400)

@@ -50,6 +50,9 @@ const realStateSchema = new mongoose.Schema(
     square_meters: {
       type: Number
     },
+    square_varas: {
+      type: Number
+    },
     price: {
       type: Number,
       required: true
@@ -63,12 +66,10 @@ const realStateSchema = new mongoose.Schema(
     },
     house_features: {
       rooms: {
-        type: Number,
-        required: true
+        type: Number
       },
       bathrooms: {
-        type: Number,
-        required: false
+        type: Number
       },
       interior_extras: {
         type: [String]
@@ -258,6 +259,8 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
 realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
   const options = this.getOptions()
   let userId = options?.user?.userId
+  const showVisitorsAndSavedBy = options.showVisitorsAndSavedBy
+
   const pathname = options?.pathname
 
   // Show all properties for admin
@@ -277,7 +280,13 @@ realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[],
   if (userId) {
     // Show visits and saved_by properties to user
     const id = new mongoose.Types.ObjectId(userId)
-    this.where({ $or: [{ owner: id }, { isAccepted: true }] }).select("+visitors +saved_by")
+
+    if (showVisitorsAndSavedBy) {
+      this.where({ $or: [{ owner: id }, { isAccepted: true }] }).select("+visitors +saved_by")
+      next()
+      return
+    }
+    this.where({ $or: [{ owner: id }, { isAccepted: true }] })
     next()
     return
   }
