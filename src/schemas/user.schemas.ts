@@ -76,10 +76,6 @@ const userSchema = new mongoose.Schema(
       ],
       default: []
     },
-    favorites_properties: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "RealState"
-    },
     profile_picture: {
       type: String,
       validate: {
@@ -197,6 +193,22 @@ userSchema.virtual("properties", {
   ref: "RealState",
   localField: "_id",
   foreignField: "owner"
+})
+
+userSchema.virtual("properties_liked", {
+  ref: "RealState",
+  localField: "_id",
+  foreignField: "saved_by.user",
+  justOne: false
+})
+
+userSchema.pre(/^find/, function (next) {
+  ;(this as mongoose.Query<any, any>).populate({
+    path: "properties_liked",
+    select: "title images"
+  })
+
+  next()
 })
 
 // Middleware para actualizar `updated_at` automáticamente antes de guardar
