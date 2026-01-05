@@ -259,7 +259,7 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
 realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
   const options = this.getOptions()
   let userId = options?.user?.userId
-  const showVisitorsAndSavedBy = options.showVisitorsAndSavedBy
+  const showVisitorsAndSavedBy = options?.showVisitorsAndSavedBy
 
   const pathname = options?.pathname
 

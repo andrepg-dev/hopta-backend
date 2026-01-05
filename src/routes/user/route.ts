@@ -819,7 +819,7 @@ userRouter.post(
     const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user, showVisitorsAndSavedBy: true })
     if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
 
-      // validate user not like the same property two times
+    // validate user not like the same property two times
     if (property.saved_by?.some((userDB) => String(userDB.user) === req.user?.userId)) throw new AppError("User already liked the property", 400)
 
     await RealStateModel.updateOne(
@@ -849,9 +849,7 @@ userRouter.get(
       responseHandler({
         res,
         code: 200,
-        data: {
-          likes: user?.properties_liked
-        }
+        data: user?.properties_liked
       })
     } catch (error) {
       throw new AppError("Error getting likes", 500)

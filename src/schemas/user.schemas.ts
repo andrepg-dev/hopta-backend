@@ -205,7 +205,7 @@ userSchema.virtual("properties_liked", {
 userSchema.pre(/^find/, function (next) {
   ;(this as mongoose.Query<any, any>).populate({
     path: "properties_liked",
-    select: "title images"
+    select: "title description location house_features stats price images currency created_at updated_at"
   })
 
   next()
