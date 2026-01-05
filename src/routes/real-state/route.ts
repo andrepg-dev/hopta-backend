@@ -41,9 +41,8 @@ RealStateRouter.get(
     })
 
     if (!paginatedData) throw new AppError("Properties not found", 404)
-    responseHandler({
-      res,
-      code: 200,
+
+    res.sender({
       data: paginatedData
     })
   })

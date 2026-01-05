@@ -9,13 +9,7 @@ export interface UserJWT {
   exp: number
 }
 
-declare global {
-  namespace Express {
-    interface User extends UserJWT {}
-  }
-}
-
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, _: Response, next: NextFunction) => {
   const accessToken = req.cookies[COOKIES.jwt_access_token.name]
   if (!accessToken) throw new AppError("Unauthorized", 401)
 

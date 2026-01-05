@@ -824,6 +824,8 @@ userRouter.post(
     const { propertyId } = req.body as { propertyId: string }
 
     if (!propertyId) {
+      
+
       return responseHandler({
         res,
         code: 404,
@@ -832,28 +834,26 @@ userRouter.post(
     }
 
     const user = await userModel.findOne({ _id: req.user?.userId as string })
-    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user })
+    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user, showVisitorsAndSavedBy: true })
 
     if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
     if (!user) {
       throw new AppError("User not found", 404)
     }
 
-    try {
-      await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
-      await RealStateModel.updateOne(
-        { _id: propertyId },
-        { $push: { saved_by: { user: req.user?.userId, saved_at: Date.now() } }, $inc: { "stats.total_saves": 1 } }
-      )
+    if (property.saved_by?.some((userDB) => String(userDB.user) === req.user?.userId)) throw new AppError("User already liked the property", 400)
 
-      responseHandler({
-        res,
-        code: 200,
-        message: "Property liked"
-      })
-    } catch (error) {
-      throw new AppError("Error liking property", 500)
-    }
+    await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
+    await RealStateModel.updateOne(
+      { _id: propertyId },
+      { $push: { saved_by: { user: req.user?.userId, saved_at: Date.now() } }, $inc: { "stats.total_saves": 1 } }
+    )
+
+    responseHandler({
+      res,
+      code: 200,
+      message: "Property liked"
+    })
   })
 )
 
