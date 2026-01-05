@@ -206,9 +206,6 @@ const realStateSchema = new mongoose.Schema(
       default: Date.now
     }
   },
-  {
-    versionKey: false
-  }
 )
 
 realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDocument[]>, next) {
