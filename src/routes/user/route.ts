@@ -846,10 +846,13 @@ userRouter.get(
     }
 
     try {
+      // Extraer solo los IDs de las propiedades likeadas
+      const likesIds = user?.properties_liked?.map((property: any) => property._id?.toString()) || []
+
       responseHandler({
         res,
         code: 200,
-        data: user?.properties_liked
+        data: { likes: likesIds, properties: user?.properties_liked }
       })
     } catch (error) {
       throw new AppError("Error getting likes", 500)
