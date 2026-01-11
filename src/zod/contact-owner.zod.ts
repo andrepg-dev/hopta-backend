@@ -1,6 +1,5 @@
 import validator from "validator"
 import z from "zod"
-import { ObjectIdSchema } from "./validations/mongoose-id.validation"
 
 export const contactSchema = z.object({
   email: z.string().optional(),
@@ -9,5 +8,5 @@ export const contactSchema = z.object({
   reason: z.string().max(2000).min(5),
   comment: z.string().max(2000).optional(),
   owner_id: z.string().optional(),
-  propertyId: ObjectIdSchema
+  propertyId: z.string()
 })
