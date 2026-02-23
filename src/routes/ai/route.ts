@@ -41,7 +41,7 @@ aiRouter.post("/generate-description", async (req, res) => {
 
     // Crear stream con Anthropic
     const stream = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
+      model: "claude-haiku-4-5",
       messages: [
         {
           role: "assistant",
