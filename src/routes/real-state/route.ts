@@ -195,7 +195,8 @@ RealStateRouter.get(
 RealStateRouter.get(
   "/:id",
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
+    const rawId = req.params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
 
     if (!id) throw new AppError("Invalid property ID", 400)
 
@@ -206,7 +207,9 @@ RealStateRouter.get(
 
     if (!property) throw new AppError("Property not found", 404)
 
-    const { isVisit } = req.query
+    const rawIsVisit = req.query.isVisit
+    const isVisit = Array.isArray(rawIsVisit) ? rawIsVisit[0] : rawIsVisit
+
     property.increaseVisit({ req, decoded: req?.user, id, isVisit })
 
     responseHandler({

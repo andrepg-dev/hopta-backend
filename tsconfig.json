@@ -20,6 +20,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["**/*.ts", "jest.config.js"], // Incluye todos los archivos .ts
+  "include": ["**/*.ts", "jest.config.js", "src/routes/**/*.ts"], // Incluye todos los archivos .ts
   "files": ["./types/express.d.ts"]
 }
