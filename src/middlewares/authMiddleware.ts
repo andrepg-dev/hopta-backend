@@ -25,6 +25,6 @@ export const authMiddleware = (req: Request, _: Response, next: NextFunction) =>
 
     next()
   } catch (error) {
-    throw new AppError("Invalid token", 401)
+    throw new AppError("Token invalid", 401)
   }
 }

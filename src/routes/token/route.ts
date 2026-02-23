@@ -36,7 +36,7 @@ tokenRouter.get(
         data: { access_token }
       })
     } catch (error) {
-      throw new AppError("Invalid token there is an error" + error, 401)
+      throw new AppError("Token invalid, there is an error" + error, 401)
     }
   })
 )

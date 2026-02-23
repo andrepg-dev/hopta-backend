@@ -20,7 +20,7 @@ supportRouter.post(
     const authHeader = req.headers.authorization
     if (!authHeader) throw new AppError("Unauthorized", 401)
     const [bearer, token] = authHeader.split(" ")
-    if (bearer !== "Bearer" || !token) throw new AppError("Invalid token format", 401)
+    if (bearer !== "Bearer" || !token) throw new AppError("Token invalid format", 401)
     const decoded = TokenManager.verifyToken(token)
     const user = decoded as { userId: string; iat: number; exp: number }
 
