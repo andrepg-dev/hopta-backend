@@ -918,7 +918,8 @@ userRouter.delete(
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
+    const rawId = req.params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findByIdAndDelete(id)
     if (!user) throw new AppError("User not found", 404)
@@ -935,7 +936,8 @@ userRouter.patch(
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
+    const rawId = req.params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findByIdAndUpdate(id, req.body, { new: true })
     if (!user) throw new AppError("User not found", 404)
@@ -1000,7 +1002,8 @@ userRouter.get(
   authMiddleware,
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
+    const rawId = req.params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid user ID", 400)
     const user = await userModel.findById(id)
     if (!user) throw new AppError("User not found", 404)
