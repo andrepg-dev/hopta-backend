@@ -4,7 +4,6 @@ import path from "path"
 function checkEnviromentVariables(enviroments: string[]) {
   for (let name of enviroments) {
     if (!process.env[`${name}`]) {
-      console.log(`Error: ${name} IS MISSING`)
       process.exit(1) // exit with error
     }
   }

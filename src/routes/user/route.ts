@@ -180,7 +180,9 @@ userRouter.post(
         message: "User logged in successfully",
         data: {
           user: rest,
-          ip: await getIpInfo(req.ip)
+          ip: await getIpInfo(req.ip),
+          access_token: accessToken,
+          refresh_token: refreshToken
         }
       })
 
@@ -219,8 +221,9 @@ userRouter.post(
       message: "Email verified successfully",
       data: {
         user: rest,
-        token: accessToken,
-        ip: await getIpInfo(req.ip)
+        ip: await getIpInfo(req.ip),
+        access_token: accessToken,
+        refresh_token: refreshToken
       }
     })
   })
@@ -395,7 +398,7 @@ userRouter.post(
 
     // Check if the phone number is valid
     if (!isPhoneNumber(phone)) {
-      throw new AppError("Invalid phone number format. Must be a valid international phone number.", 400)
+      throw new AppError(`Invalid phone number format. Must be a valid international phone number. ${phone}`, 400)
     }
 
     // Send the SMS
@@ -732,7 +735,7 @@ userRouter.post(
     const decoded = TokenManager.verifyTempToken(tempToken) as unknown as { phone: string }
 
     if (!decoded.phone) {
-      throw new AppError("Invalid token", 401)
+      throw new AppError("Phone token decoded error", 500)
     }
 
     const pendingUser = await pendingUserModel.findOne({ phone: decoded.phone })

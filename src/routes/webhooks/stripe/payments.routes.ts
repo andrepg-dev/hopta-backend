@@ -34,11 +34,8 @@ stripeWebhookRouter.post(
 
     switch (event.type) {
       case "checkout.session.completed":
-        console.log("✅ Pago completado:", session)
         break
       case "invoice.paid":
-        console.log("✅ Factura pagada:", event.data.object)
-
         await userModel.findByIdAndUpdate(user._id, {
           suscription: "MONTHLY"
         })
@@ -72,8 +69,6 @@ stripeWebhookRouter.post(
         break
 
       case "invoice.payment_failed":
-        console.log("❌ Pago de factura fallido:", event.data.object)
-
         try {
           await emailService.sendEmail({
             to: { email: user.email, name: user.name },
@@ -95,7 +90,6 @@ stripeWebhookRouter.post(
         break
 
       default:
-        console.log("❌ Evento no manejado:", event.type)
         break
     }
     responseHandler({

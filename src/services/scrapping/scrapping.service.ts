@@ -7,10 +7,8 @@ export async function saveSession() {
 
   await page.goto("https://www.facebook.com/login")
 
-  console.log("🔐 Inicia sesión manualmente y presiona Enter en la terminal...")
   await new Promise((resolve) => process.stdin.once("data", resolve))
 
-  console.log("💾 Guardando sesión...")
   await context.storageState({ path: "session.json" })
 
   await browser.close()
