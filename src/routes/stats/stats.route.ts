@@ -124,18 +124,6 @@ statsRouter.get(
             }
         },
         {
-          $addFields:
-            /**
-             * newField: The new field name.
-             * expression: The new field expression.
-             */
-            {
-              propertyId: {
-                $toObjectId: "$propertyId"
-              }
-            }
-        },
-        {
           $lookup: {
             from: "realstates",
             localField: "propertyId",

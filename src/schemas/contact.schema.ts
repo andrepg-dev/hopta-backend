@@ -8,7 +8,7 @@ import mongoose from "mongoose"
 
 const contactSchema = new mongoose.Schema({
   propertyId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: "RealState",
     required: true
   },

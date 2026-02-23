@@ -41,9 +41,8 @@ RealStateRouter.get(
     })
 
     if (!paginatedData) throw new AppError("Properties not found", 404)
-    responseHandler({
-      res,
-      code: 200,
+
+    res.sender({
       data: paginatedData
     })
   })
@@ -198,7 +197,7 @@ RealStateRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
 
     // Verify if the property exists
     const property = await RealStateModel.findById(id)
@@ -268,7 +267,22 @@ RealStateRouter.post(
         throw new AppError("Price must be greater than 0", 400)
       }
 
+      // <================== PROPERTY ID GENERATION ==================>
+      const cleanTitle = title
+        .toLowerCase()
+        .match(/^[ a-záéíóúñ ]+/gi)?.[0]
+        .trim()
+      if (!cleanTitle) throw new AppError("Cannot generate id without title", 404)
+
+      const titleConversion = cleanTitle?.replaceAll(" ", "-")
+      const idGeneration = new mongoose.Types.ObjectId()
+      const stringId = idGeneration.toString()
+      const _id = titleConversion + `-${stringId.slice(12)}`
+
+      // <================== INSERT INTO THE DATABASE ==================>
+
       const property = await RealStateModel.create({
+        _id,
         price,
         location,
         house_status: house_status || { is_available: true, is_sold: false },
@@ -277,7 +291,7 @@ RealStateRouter.post(
         currency,
         square_meters,
         square_varas,
-        description,
+        description: description.split("\n").slice(2).join("\n"),
         images,
         title,
         owner,
@@ -332,7 +346,7 @@ RealStateRouter.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
 
     const { user } = req as any
     const { userId: owner } = user
@@ -373,7 +387,7 @@ RealStateRouter.put(
     if (!id) throw new AppError("Property ID is required", 400)
     if (!req.body) throw new AppError("No data to update", 400)
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
 
     // Verify property exists and user has permission to update it
     const property = (await RealStateModel.findById(id).setOptions({ user: req.user }).lean()) as RealStateIWithOwner
@@ -465,7 +479,7 @@ RealStateRouter.delete(
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
 
     const property = await RealStateModel.findOne({ _id: id }).setOptions({ user: req.user })
     if (!property) throw new AppError("Property not found", 404)
@@ -518,7 +532,7 @@ RealStateRouter.patch(
   isAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
     const property = await RealStateModel.findByIdAndUpdate(id, req.body, { new: true }).setOptions({ user: req.user })
     if (!property) throw new AppError("Property not found", 404)
 
@@ -539,7 +553,7 @@ RealStateRouter.patch(
   asyncHandler(async (req: Request, res: Response) => {
     const { id, accept } = req.params
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new AppError("Invalid property ID", 400)
+    if (!id) throw new AppError("Invalid property ID", 400)
 
     const property = await RealStateModel.findByIdAndUpdate(id, { isAccepted: accept }, { new: true }).setOptions({ user: req.user })
 

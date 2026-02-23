@@ -7,209 +7,208 @@ import mongoosePaginate from "mongoose-paginate-v2"
 import { increaseVisit } from "../methods/realstate/increase-visit.method"
 import { UserJWT } from "../middlewares/authMiddleware"
 
-const realStateSchema = new mongoose.Schema(
-  {
+const realStateSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true
+  },
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  property_type: {
+    type: String,
+    enum: PROPERTY_TYPE,
+    required: true
+  },
+  one_month_upfront: {
+    type: Boolean
+  },
+  isAccepted: {
+    type: Boolean,
+    default: false
+  },
+  images: {
+    type: [String],
+    required: true
+  },
+  location: {
     title: {
       type: String,
       required: true
     },
-    description: {
+    type: {
       type: String,
-      required: true
+      default: "Point"
     },
-    property_type: {
-      type: String,
-      enum: PROPERTY_TYPE,
-      required: true
+    coordinates: {
+      type: [Number, Number],
+      index: "2dsphere"
+    }
+  },
+  square_meters: {
+    type: Number
+  },
+  square_varas: {
+    type: Number
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  currency: {
+    type: String,
+    required: true
+  },
+  population: {
+    type: Number
+  },
+  house_features: {
+    rooms: {
+      type: Number
     },
-    one_month_upfront: {
-      type: Boolean
+    bathrooms: {
+      type: Number
     },
-    isAccepted: {
+    interior_extras: {
+      type: [String]
+    },
+    exterior_extras: {
+      type: [String]
+    },
+    community_extras: {
+      type: [String]
+    },
+    security: {
+      type: [String]
+    }
+  },
+  additional_cost: {
+    utilities_included: {
+      type: [String]
+    },
+    water: {
+      type: Number
+    },
+    electricity: {
+      type: Number
+    }
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    immutable: true
+  },
+  house_status: {
+    is_available: {
+      type: Boolean,
+      default: true
+    },
+    is_sold: {
       type: Boolean,
       default: false
     },
-    images: {
-      type: [String],
-      required: true
-    },
-    location: {
-      title: {
-        type: String,
-        required: true
-      },
-      type: {
-        type: String,
-        default: "Point"
-      },
-      coordinates: {
-        type: [Number, Number],
-        index: "2dsphere"
-      }
-    },
-    square_meters: {
-      type: Number
-    },
-    square_varas: {
-      type: Number
-    },
-    price: {
-      type: Number,
-      required: true
-    },
-    currency: {
-      type: String,
-      required: true
-    },
-    population: {
-      type: Number
-    },
-    house_features: {
-      rooms: {
-        type: Number
-      },
-      bathrooms: {
-        type: Number
-      },
-      interior_extras: {
-        type: [String]
-      },
-      exterior_extras: {
-        type: [String]
-      },
-      community_extras: {
-        type: [String]
-      },
-      security: {
-        type: [String]
-      }
-    },
-    additional_cost: {
-      utilities_included: {
-        type: [String]
-      },
-      water: {
-        type: Number
-      },
-      electricity: {
-        type: Number
-      }
-    },
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      immutable: true
-    },
-    house_status: {
-      is_available: {
-        type: Boolean,
-        default: true
-      },
-      is_sold: {
-        type: Boolean,
-        default: false
-      },
-      sold_date: {
-        type: Date
-      }
-    },
-    visitors: {
-      type: [
-        {
-          user: {
-            type: mongoose.Schema.Types.Mixed,
-            ref: "User",
-            required: true
-          },
-          visit_date: [
-            {
-              type: Date,
-              default: Date.now
-            }
-          ]
-        }
-      ],
-      default: [],
-      select: false
-    },
-    saved_by: {
-      type: [
-        {
-          user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true
-          },
-          saved_at: {
-            type: Date,
-            default: Date.now,
-            immutable: true
-          }
-        }
-      ],
-      select: false
-    },
-    stats: {
-      total_visits: {
-        type: Number,
-        default: 0
-      },
-      total_saves: {
-        type: Number,
-        default: 0
-      }
-    },
-    ratings: {
-      type: [
-        {
-          user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            immutable: true
-          },
-          rating: {
-            type: Number,
-            required: true,
-            min: 1,
-            max: 5
-          },
-          comment: {
-            type: String
-          },
-          created_at: {
+    sold_date: {
+      type: Date
+    }
+  },
+  visitors: {
+    type: [
+      {
+        user: {
+          type: mongoose.Schema.Types.Mixed,
+          ref: "User",
+          required: true
+        },
+        visit_date: [
+          {
             type: Date,
             default: Date.now
           }
-        }
-      ],
-      default: []
-    },
-    rating_summary: {
-      average_rating: {
-        type: Number,
-        default: 0
-      },
-      total_ratings: {
-        type: Number,
-        default: 0
+        ]
       }
+    ],
+    default: [],
+    select: false
+  },
+  saved_by: {
+    type: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        saved_at: {
+          type: Date,
+          default: Date.now,
+          immutable: true
+        }
+      }
+    ],
+    select: false
+  },
+  stats: {
+    total_visits: {
+      type: Number,
+      default: 0
     },
-    created_at: {
-      type: Date,
-      default: Date.now,
-      immutable: true
-    },
-    updated_at: {
-      type: Date,
-      default: Date.now
+    total_saves: {
+      type: Number,
+      default: 0
     }
   },
-  {
-    versionKey: false
+  ratings: {
+    type: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+          immutable: true
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5
+        },
+        comment: {
+          type: String
+        },
+        created_at: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+    default: []
+  },
+  rating_summary: {
+    average_rating: {
+      type: Number,
+      default: 0
+    },
+    total_ratings: {
+      type: Number,
+      default: 0
+    }
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+    immutable: true
+  },
+  updated_at: {
+    type: Date,
+    default: Date.now
   }
-)
+})
 
 realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDocument[]>, next) {
   const options = this.options
@@ -259,7 +258,7 @@ realStateSchema.pre("aggregate", function (this: mongoose.Aggregate<RealStateDoc
 realStateSchema.pre(/^find/, function (this: mongoose.Query<RealStateDocument[], RealStateDocument>, next) {
   const options = this.getOptions()
   let userId = options?.user?.userId
-  const showVisitorsAndSavedBy = options.showVisitorsAndSavedBy
+  const showVisitorsAndSavedBy = options?.showVisitorsAndSavedBy
 
   const pathname = options?.pathname
 

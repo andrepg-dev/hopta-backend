@@ -9,6 +9,7 @@ import session from "express-session"
 import helmet from "helmet"
 import passport from "passport"
 import { errorHandler } from "./handlers/error-handler"
+import { attactExpressResponse } from "./handlers/response-adapter"
 import { decodeUserToken } from "./middlewares/decode-user"
 import LastSeen from "./middlewares/last-seen"
 import aiRouter from "./routes/ai/route"
@@ -82,6 +83,11 @@ app.get("/", async (_: Request, res: Response) => {
 
 app.use(decodeUserToken)
 app.use(LastSeen)
+
+app.use((_, res, next) => {
+  attactExpressResponse(res)
+  next()
+})
 
 app.use("/health", healthRouter)
 app.use("/upload-image", s3UploadImageRouter)

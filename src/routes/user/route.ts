@@ -32,19 +32,18 @@ userRouter.get(
   "/",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await userModel.findOne({ _id: req.user?.userId }).catch((err) => {
-      throw new AppError("User not found", 400)
+    const user = await userModel.findOne({ _id: req.user?.userId }).populate({
+      path: "properties_liked",
+      select: "title images"
     })
-    if (!user) return
 
-    const userData = user.toObject()
-    const { auth: _, ...rest } = userData
+    if (!user) throw new AppError("User not found", 404)
 
     responseHandler({
       res,
       code: 200,
       data: {
-        user: rest,
+        user,
         ip: await getIpInfo(req.ip)
       }
     })
@@ -55,20 +54,7 @@ userRouter.post(
   "/register",
   validateRequest(createUserSchema),
   asyncHandler(async (req: Request<{}, {}, CreateUserI>, res: Response, next: NextFunction) => {
-    const {
-      name,
-      last_name,
-      email,
-      password,
-      contact,
-      social_media,
-      favorites_properties,
-      personal_information,
-      location,
-      profile_picture,
-      properties,
-      about
-    } = req.body
+    const { name, last_name, email, password, contact, social_media, personal_information, location, profile_picture, properties, about } = req.body
 
     if (personal_information?.identity_document && !/^\d{13}$/.test(personal_information.identity_document)) {
       throw new AppError("Invalid identity document format. Must be 13 digits.", 400)
@@ -102,7 +88,6 @@ userRouter.post(
       last_name,
       contact,
       social_media,
-      favorites_properties,
       personal_information,
       location,
       profile_picture,
@@ -831,29 +816,22 @@ userRouter.post(
       })
     }
 
-    const user = await userModel.findOne({ _id: req.user?.userId as string })
-    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user })
-
+    const property = await RealStateModel.findOne({ _id: propertyId }).setOptions({ user: req.user, showVisitorsAndSavedBy: true })
     if (!property) return responseHandler({ res, code: 404, message: "Property not found" })
-    if (!user) {
-      throw new AppError("User not found", 404)
-    }
 
-    try {
-      await userModel.updateOne({ _id: req.user?.userId as string }, { $push: { favorites_properties: propertyId } })
-      await RealStateModel.updateOne(
-        { _id: propertyId },
-        { $push: { saved_by: { user: req.user?.userId, saved_at: Date.now() } }, $inc: { "stats.total_saves": 1 } }
-      )
+    // validate user not like the same property two times
+    if (property.saved_by?.some((userDB) => String(userDB.user) === req.user?.userId)) throw new AppError("User already liked the property", 400)
 
-      responseHandler({
-        res,
-        code: 200,
-        message: "Property liked"
-      })
-    } catch (error) {
-      throw new AppError("Error liking property", 500)
-    }
+    await RealStateModel.updateOne(
+      { _id: propertyId },
+      { $push: { saved_by: { user: req.user?.userId, saved_at: Date.now() } }, $inc: { "stats.total_saves": 1 } }
+    )
+
+    responseHandler({
+      res,
+      code: 200,
+      message: "Property liked"
+    })
   })
 )
 
@@ -861,19 +839,20 @@ userRouter.get(
   "/likes",
   authMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
-    const user = await userModel.findOne({ _id: req.user?.userId as string })
+    const user = (await userModel.findOne({ _id: req.user?.userId as string })) as any
 
     if (!user) {
       throw new AppError("User not found", 404)
     }
 
     try {
+      // Extraer solo los IDs de las propiedades likeadas
+      const likesIds = user?.properties_liked?.map((property: any) => property._id?.toString()) || []
+
       responseHandler({
         res,
         code: 200,
-        data: {
-          likes: user?.favorites_properties
-        }
+        data: { likes: likesIds, properties: user?.properties_liked }
       })
     } catch (error) {
       throw new AppError("Error getting likes", 500)
