@@ -39,11 +39,17 @@ userRouter.get(
 
     if (!user) throw new AppError("User not found", 404)
 
+    const authProvider = user.get("auth.google.id") ? "google" : user.get("auth.local.password") ? "email" : user.get("auth.sms.phoneNumber") ? "sms" : null
+    const userData = user.toJSON()
+
     responseHandler({
       res,
       code: 200,
       data: {
-        user,
+        user: {
+          ...userData,
+          auth_provider: authProvider
+        },
         ip: await getIpInfo(req.ip)
       }
     })
