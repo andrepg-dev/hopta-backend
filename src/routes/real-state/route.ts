@@ -148,7 +148,7 @@ RealStateRouter.get(
     const user = req.user
 
     // Show saved_by properties
-    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title images saved_by").populate({
+    const myProperties = await RealStateModel.find({ owner: user?.userId }).setOptions({ user: req.user }).select("title images +saved_by").populate({
       path: "saved_by.user",
       select: "name last_name profile_picture"
     })

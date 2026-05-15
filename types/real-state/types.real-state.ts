@@ -49,7 +49,7 @@ export interface HouseStatus {
 
 export interface Visitor {
   user: string | Types.ObjectId
-  visit_date?: Date
+  visit_date?: Date[]
   comments?: string
 }
 
