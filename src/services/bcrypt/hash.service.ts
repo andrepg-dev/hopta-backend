@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 
 export const hashGen = async (password: string, saltRounds: number = 10) => {
   return await bcrypt.hash(password, saltRounds)
