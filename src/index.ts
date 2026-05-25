@@ -7,6 +7,7 @@ import cors from "cors"
 import express, { Request, Response } from "express"
 import session from "express-session"
 import helmet from "helmet"
+import http from "http"
 import passport from "passport"
 import { errorHandler } from "./handlers/error-handler"
 import { attactExpressResponse } from "./handlers/response-adapter"
@@ -29,6 +30,7 @@ import suscribeRouter from "./routes/suscribe/route"
 import tokenRouter from "./routes/token/route"
 import userRouter from "./routes/user/route"
 import stripeWebhookRouter from "./routes/webhooks/stripe/payments.routes"
+import { configureSocketServer } from "./services/socket/socket.service"
 import { verifyEnviroment } from "./utils/check-enviroments-variables"
 
 // Check if all enviroments exists
@@ -110,7 +112,9 @@ app.use("/messages", messagesRouter)
 app.use(errorHandler)
 
 function main(port: number) {
-  const server = app.listen(port)
+  const server = http.createServer(app)
+  configureSocketServer(server)
+
   server.on("error", (error: Error) => {
     if (error.message.includes("EADDRINUSE")) {
       console.warn(`Port ${port} is already in use, trying with another port...`)
@@ -126,6 +130,8 @@ function main(port: number) {
       message: `Hopta server is running! http://localhost:${port}`
     })
   })
+
+  server.listen(port)
 }
 
 main(Number(port))

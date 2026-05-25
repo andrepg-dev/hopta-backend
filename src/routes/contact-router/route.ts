@@ -9,6 +9,7 @@ import { MessageModel } from "@/src/schemas/message.schemas"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import { EmailService } from "@/src/services/email/email.service"
+import { emitMessageEvents } from "@/src/services/socket/socket.service"
 import { contactFormSchema } from "@/src/zod/contact-form.zod"
 import { contactSchema } from "@/src/zod/contact-owner.zod"
 import { Request, Response, Router } from "express"
@@ -240,6 +241,11 @@ contactRouter.post(
         conversation.lastMessage = message._id
         conversation.lastMessageAt = message.createdAt
         await conversation.save()
+
+        await emitMessageEvents({
+          conversationId: conversation._id.toString(),
+          messageId: message._id.toString()
+        })
       }
     } catch (error) {
       throw new AppError("Error saving contact: " + error, 500)

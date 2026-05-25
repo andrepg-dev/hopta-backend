@@ -50,6 +50,7 @@
     "response-time": "^2.3.3",
     "session": "^0.1.0",
     "sharp": "^0.33.5",
+    "socket.io": "^4.8.3",
     "stripe": "^17.7.0",
     "twilio": "^5.4.5",
     "validator": "^13.15.15",

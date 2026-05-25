@@ -5,6 +5,7 @@ import { authMiddleware } from "@/src/middlewares/authMiddleware"
 import { validateRequest } from "@/src/middlewares/validate-request"
 import { MessageConversationModel } from "@/src/schemas/message-conversation.schemas"
 import { MessageModel } from "@/src/schemas/message.schemas"
+import { emitMessageEvents } from "@/src/services/socket/socket.service"
 import { sendMessageSchema } from "@/src/zod/message.zod"
 import { Request, Response, Router } from "express"
 import mongoose from "mongoose"
@@ -108,6 +109,11 @@ messagesRouter.post(
     const populatedMessage = await MessageModel.findById(message._id).populate({
       path: "sender",
       select: "_id name last_name email profile_picture"
+    })
+
+    await emitMessageEvents({
+      conversationId: conversation._id.toString(),
+      messageId: message._id.toString()
     })
 
     responseHandler({
