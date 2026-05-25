@@ -4,6 +4,8 @@ import { responseHandler } from "@/src/handlers/responseHandler"
 import { authMiddleware } from "@/src/middlewares/authMiddleware"
 import { validateRequest } from "@/src/middlewares/validate-request"
 import { contactModel } from "@/src/schemas/contact.schema"
+import { MessageConversationModel } from "@/src/schemas/message-conversation.schemas"
+import { MessageModel } from "@/src/schemas/message.schemas"
 import { RealStateModel } from "@/src/schemas/real-state.schemas"
 import { userModel } from "@/src/schemas/user.schemas"
 import { EmailService } from "@/src/services/email/email.service"
@@ -173,6 +175,72 @@ contactRouter.post(
         createdAt: Date.now(),
         comment
       })
+
+      if (propertyOwnerId) {
+        const participants = user?.userId ? [propertyOwnerId, user.userId] : [propertyOwnerId]
+        const clientMatch = user?.userId
+          ? { "client.userId": user.userId }
+          : {
+              "client.email": email || "",
+              "client.phone": phone || ""
+            }
+
+        let conversation = await MessageConversationModel.findOne({
+          propertyId,
+          ownerId: propertyOwnerId,
+          ...clientMatch
+        })
+
+        if (!conversation) {
+          conversation = await MessageConversationModel.create({
+            propertyId,
+            participants,
+            ownerId: propertyOwnerId,
+            client: {
+              userId: user?.userId || undefined,
+              name,
+              phone,
+              email
+            }
+          })
+        } else {
+          conversation.set({
+            client: {
+              userId: user?.userId || undefined,
+              name,
+              phone,
+              email
+            }
+          })
+
+          if (user?.userId) {
+            const participantIds = conversation.participants.map((participant: any) => participant.toString())
+            if (!participantIds.includes(user.userId)) {
+              conversation.participants.push(user.userId as any)
+            }
+          }
+
+          await conversation.save()
+        }
+
+        const messageBody = comment || reason || "Hola, quiero más información sobre esta propiedad."
+        const message = await MessageModel.create({
+          conversationId: conversation._id,
+          sender: user?.userId || undefined,
+          senderType: user?.userId ? "user" : "contact",
+          senderSnapshot: {
+            name,
+            phone,
+            email
+          },
+          body: messageBody,
+          readBy: user?.userId ? [user.userId] : []
+        })
+
+        conversation.lastMessage = message._id
+        conversation.lastMessageAt = message.createdAt
+        await conversation.save()
+      }
     } catch (error) {
       throw new AppError("Error saving contact: " + error, 500)
     }

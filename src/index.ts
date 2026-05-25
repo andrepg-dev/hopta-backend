@@ -19,6 +19,7 @@ import s3UploadImageRouter from "./routes/aws/s3/s3.route"
 import contactRouter from "./routes/contact-router/route"
 import facebookRouter from "./routes/facebook/facebook.route"
 import healthRouter from "./routes/health/route"
+import messagesRouter from "./routes/messages/route"
 import realStateReportRouter from "./routes/real-state-report/route"
 import RealStateRouter from "./routes/real-state/route"
 import statsRouter from "./routes/stats/stats.route"
@@ -104,6 +105,7 @@ app.use("/suscribe", suscribeRouter)
 app.use("/contact", contactRouter)
 app.use("/stats", statsRouter)
 app.use("/ai", aiRouter)
+app.use("/messages", messagesRouter)
 
 app.use(errorHandler)
 
