@@ -45,7 +45,8 @@ messagesRouter.get(
   "/conversations/:conversationId",
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.userId
-    const { conversationId } = req.params
+    const rawConversationId = req.params.conversationId
+    const conversationId = Array.isArray(rawConversationId) ? rawConversationId[0] : rawConversationId
     if (!userId) throw new AppError("Unauthorized", 401)
 
     if (!conversationId || !mongoose.Types.ObjectId.isValid(conversationId)) {
