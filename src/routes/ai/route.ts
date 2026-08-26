@@ -13,7 +13,7 @@ const anthropic = new Anthropic({
 aiRouter.post("/generate-description", async (req, res) => {
   const { form } = req.body
 
-  const allowedOrigins = ["https://hopta.hn", "https://www.hopta.hn", "https://admin.hopta.hn", "http://localhost:3005", "http://localhost:3002"]
+  const allowedOrigins = ["https://hopta.hn", "https://www.hopta.hn", "https://admin.hopta.hn", "https://development.hopta.hn", "http://localhost:3005", "http://localhost:3002"]
   const origin = req.headers.origin
 
   if (origin && allowedOrigins.includes(origin)) {

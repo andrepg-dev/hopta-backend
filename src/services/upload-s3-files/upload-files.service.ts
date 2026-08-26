@@ -33,7 +33,8 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
       const optimizedBuffer = await sharp(fileBuffer).toFormat("webp", { quality: 80 }).toBuffer()
 
       const webpKey = `${folder}/${randomName}.webp`
-      const webpUrl = `https://${bucketName}.s3.amazonaws.com/${webpKey}`
+      const region = process.env.AWS_REGION || "us-east-2"
+      const webpUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${webpKey}`
 
       const fileResult = await putObject({
         bucketName: bucketName,
@@ -48,7 +49,8 @@ export async function uploadS3Files({ files, folder, bucketName }: UploadS3Files
 
       fileUrls.push(webpUrl)
     } else {
-      const fileUrl = `https://${bucketName}.s3.amazonaws.com/${key}`
+      const region = process.env.AWS_REGION || "us-east-2"
+      const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`
 
       const fileResult = await putObject({
         bucketName: bucketName,

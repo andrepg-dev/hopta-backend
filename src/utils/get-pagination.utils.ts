@@ -32,5 +32,6 @@ export async function getPagination({ page, limit, Model, order = "desc", sortBy
       method: "saveErrorLogs",
       message: error
     })
+    throw error
   }
 }

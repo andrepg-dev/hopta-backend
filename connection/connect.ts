@@ -17,5 +17,6 @@ export const connectToDatabase = async () => {
       method: "saveErrorLogs",
       message: "Error connecting to database"
     })
+    throw error
   }
 }

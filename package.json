@@ -7,7 +7,8 @@
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
     "prettier": "prettier --write .",
     "build": "tsc --noEmit false && tsc-alias",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "migrate:s3": "ts-node -r tsconfig-paths/register scripts/migrate-s3-urls.ts"
   },
   "engines": {
     "node": "18.x"
