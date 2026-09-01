@@ -82,7 +82,7 @@ contactRouter.post(
     if (ownerEmail) {
       try {
         const emailService = new EmailService()
-        emailService.sendEmail({
+        await emailService.sendEmail({
           to: {
             email: ownerEmail,
             name: ownerUserData?.name
@@ -158,6 +158,8 @@ contactRouter.post(
         Email: ${email || "No proporcionado"} <br>
         Propiedad: ${propertyData?.title || "No proporcionado"} <br>
         `
+      }).catch((emailError: unknown) => {
+        console.error("Failed to send owner contact email:", emailError)
       })
     }
 
@@ -295,6 +297,8 @@ contactRouter.post(
       Teléfono: ${phone || "No proporcionado"} <br>
       Razón: ${"Quiero conocer mas información"} <br>
       `
+    }).catch((emailError: unknown) => {
+      console.error("Failed to send contact form email:", emailError)
     })
 
     responseHandler({

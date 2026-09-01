@@ -68,6 +68,8 @@ reportsRouter.post(
         <p>Un usuario ha reportado la propiedad <strong>${realState.title}</strong> por el motivo de <strong>${reason}</strong> dijo: <pre>${message}</pre></p>
         <p>De la siguiente URL: ${url}</p>
       `
+    }).catch((emailError: unknown) => {
+      console.error("Failed to send real-state-report email:", emailError)
     })
 
     try {

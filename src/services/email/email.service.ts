@@ -154,7 +154,10 @@ class EmailServiceNodeMailer {
     auth: {
       user: envs.MAILER_EMAIL,
       pass: envs.MAILER_PASSWORD
-    }
+    },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 30_000
   })
 
   async sendEmail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {

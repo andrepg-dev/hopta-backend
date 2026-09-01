@@ -33,6 +33,25 @@ import stripeWebhookRouter from "./routes/webhooks/stripe/payments.routes"
 import { configureSocketServer } from "./services/socket/socket.service"
 import { verifyEnviroment } from "./utils/check-enviroments-variables"
 
+// Prevent process crashes from failing background async tasks (e.g. email/SMTP timeouts).
+// Without these, an unhandled promise rejection kills the whole process and nginx
+// responds with 502 Bad Gateway until the container restarts.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Promise Rejection:", reason)
+  new Logs({
+    method: "saveErrorLogs",
+    message: `Unhandled Promise Rejection: ${reason}`
+  })
+})
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error)
+  new Logs({
+    method: "saveErrorLogs",
+    message: `Uncaught Exception: ${error.message}`
+  })
+})
+
 // Check if all enviroments exists
 verifyEnviroment()
 

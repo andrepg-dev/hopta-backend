@@ -43,6 +43,8 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
         },
         subject: "ALERTA! Errores en producción activos! 🚨",
         html: `El servidor está teniendo errores: <br>${err}</b>`
+      }).catch((emailError: unknown) => {
+        console.error("Failed to send error alert email:", emailError)
       })
     }
 
